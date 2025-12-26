@@ -93,7 +93,7 @@ export default async function Page({ params }) {
     <div className="mx-auto max-w-6xl px-4 py-12">
       {/* HERO / COVER */}
       <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur">
-        <div className="relative">
+         <div className="relative">
           {course.cover_image ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
