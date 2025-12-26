@@ -153,7 +153,7 @@ export default function RegistrationDetailClient({ locale = "th", id }) {
               Registration Detail
             </div>
             <div className="mt-1 text-sm text-white/60">
-              Ref: <span className="font-mono text-white/80">{refNo}</span>
+              Ref: <span className="font-mono">{item.ref_no}</span>
             </div>
           </div>
 

@@ -168,29 +168,23 @@ function formatThaiPhone(raw) {
   return { digits, formatted: digits, valid: false, type: "unknown" };
 }
 
+/** ✅ ใช้ draft key กลางสำหรับทุก step */
 function DraftKey(courseSlug) {
-  return `nx-register-step1:${courseSlug || ""}`;
+  return `nx-register-draft:${String(courseSlug || "").trim()}`;
 }
 
 function isValidEmail(x) {
   const s = String(x || "").trim();
   if (!s) return false;
-  // พอใช้งานจริงแบบไม่ strict เกิน
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
 }
 
-export default function RegisterStep1Client({ locale = "th", courseSlug }) {
-  const router = useRouter();
-  const isEN = locale === "en";
+function getDefaultForm() {
+  return {
+    // meta
+    courseSlug: "",
+    locale: "th",
 
-  // --- course meta ---
-  const [course, setCourse] = useState(null);
-
-  // --- thailand postcode db ---
-  const [thDb, setThDb] = useState(null);
-
-  // --- form state ---
-  const [form, setForm] = useState(() => ({
     // section 1
     trainee_count: 1,
     training_location: "",
@@ -203,14 +197,14 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
     position: "",
     department: "",
     contact_phone_raw: "",
-    contact_phone: "", // digits-only (จะ sync จาก raw)
+    contact_phone: "",
     email: "",
 
     // section 3
     company: "",
     tax_id: "",
     company_phone_raw: "",
-    company_phone: "", // digits-only (จะ sync จาก raw)
+    company_phone: "",
     receipt_address: "",
     province: "",
     district: "",
@@ -219,7 +213,61 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
 
     // section 4
     note: "",
-  }));
+  };
+}
+
+function sanitizeDraft(d = {}) {
+  const base = getDefaultForm();
+
+  const out = { ...base, ...(d && typeof d === "object" ? d : {}) };
+
+  // numbers
+  out.trainee_count = Math.max(1, Number(out.trainee_count || 1));
+
+  // strings
+  out.month_interest = String(out.month_interest || "");
+  out.year_interest =
+    String(out.year_interest || "") ||
+    String(YEARS[0] || new Date().getFullYear());
+
+  out.contact_phone_raw = String(out.contact_phone_raw || "").replace(
+    /\D/g,
+    ""
+  );
+  out.company_phone_raw = String(out.company_phone_raw || "").replace(
+    /\D/g,
+    ""
+  );
+
+  out.tax_id = String(out.tax_id || "")
+    .replace(/\D/g, "")
+    .slice(0, 13);
+
+  return out;
+}
+
+export default function RegisterStep1Client({ locale = "th", courseSlug }) {
+  const router = useRouter();
+  const isEN = locale === "en";
+
+  const [course, setCourse] = useState(null);
+  const [thDb, setThDb] = useState(null);
+
+  // ✅ init form from session draft
+  const [form, setForm] = useState(() => {
+    if (typeof window === "undefined") return sanitizeDraft(getDefaultForm());
+    try {
+      const raw = sessionStorage.getItem(DraftKey(courseSlug));
+      const parsed = raw ? JSON.parse(raw) : {};
+      return sanitizeDraft({
+        ...parsed,
+        courseSlug,
+        locale,
+      });
+    } catch {
+      return sanitizeDraft({ courseSlug, locale });
+    }
+  });
 
   // --- derived phone ---
   const contactPhone = useMemo(
@@ -233,33 +281,59 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
 
   // sync digits-only to form.contact_phone/company_phone (สำหรับส่ง API)
   useEffect(() => {
-    setForm((prev) => {
-      const next = { ...prev };
-      next.contact_phone = contactPhone.digits || "";
-      next.company_phone = companyPhone.digits || "";
-      return next;
-    });
+    setForm((prev) => ({
+      ...prev,
+      contact_phone: contactPhone.digits || "",
+      company_phone: companyPhone.digits || "",
+    }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contactPhone.digits, companyPhone.digits]);
 
-  // load draft
+  // ✅ load draft again when courseSlug changes (กรณีผู้ใช้เปลี่ยนคอร์ส/เปลี่ยน locale)
   useEffect(() => {
     try {
       const raw = sessionStorage.getItem(DraftKey(courseSlug));
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === "object") {
-        setForm((prev) => ({ ...prev, ...parsed }));
+      if (!raw) {
+        setForm((prev) =>
+          sanitizeDraft({
+            ...getDefaultForm(),
+            ...prev,
+            courseSlug,
+            locale,
+          })
+        );
+        return;
       }
-    } catch {}
-  }, [courseSlug]);
+      const parsed = JSON.parse(raw);
+      setForm((prev) =>
+        sanitizeDraft({
+          ...prev,
+          ...parsed,
+          courseSlug,
+          locale,
+        })
+      );
+    } catch {
+      setForm((prev) => sanitizeDraft({ ...prev, courseSlug, locale }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [courseSlug, locale]);
 
-  // persist draft
+  // ✅ persist draft (กลาง)
   useEffect(() => {
     try {
-      sessionStorage.setItem(DraftKey(courseSlug), JSON.stringify(form));
+      const payloadToSave = {
+        ...form,
+        courseSlug,
+        locale,
+        _updatedAt: Date.now(),
+      };
+      sessionStorage.setItem(
+        DraftKey(courseSlug),
+        JSON.stringify(payloadToSave)
+      );
     } catch {}
-  }, [form, courseSlug]);
+  }, [form, courseSlug, locale]);
 
   // fetch course by slug
   useEffect(() => {
@@ -286,7 +360,6 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
     let alive = true;
     (async () => {
       try {
-        // ✅ ต้องมีไฟล์ที่ public/data/thailand_postcode.json
         const res = await fetch("/data/thailand_postcode.json", {
           cache: "force-cache",
         });
@@ -321,7 +394,6 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
     return Object.keys(d).sort((a, b) => a.localeCompare(b, "th"));
   }, [thDb, form.province, form.district]);
 
-  // cascade disable
   const provinceDisabled = !thDb;
   const districtDisabled = !thDb || !form.province;
   const subdistrictDisabled = !thDb || !form.province || !form.district;
@@ -380,14 +452,12 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
   function validateStep1() {
     const errs = [];
 
-    // section 1
     if (!String(form.month_interest || "").trim())
       errs.push("เลือกเดือนที่สนใจ");
     if (!String(form.year_interest || "").trim()) errs.push("เลือกปีที่สนใจ");
     if (!String(form.training_location || "").trim())
       errs.push("ระบุสถานที่อบรม");
 
-    // section 2
     if (!String(form.first_name || "").trim()) errs.push("กรอกชื่อ");
     if (!String(form.last_name || "").trim()) errs.push("กรอกนามสกุล");
     if (!String(form.contact_phone_raw || "").trim())
@@ -398,7 +468,6 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
     if (form.email && !isValidEmail(form.email))
       errs.push("รูปแบบอีเมลไม่ถูกต้อง");
 
-    // section 3
     if (!String(form.company || "").trim()) errs.push("กรอกบริษัท");
     if (!String(form.tax_id || "").trim())
       errs.push("กรอกเลขประจำตัวผู้เสียภาษี");
@@ -406,11 +475,6 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
       errs.push("เลขประจำตัวผู้เสียภาษีต้องไม่เกิน 13 หลัก");
     if (!String(form.receipt_address || "").trim())
       errs.push("กรอกที่อยู่ออกใบเสร็จ");
-
-    // จังหวัด/อำเภอ/ตำบล (ถ้าต้องการบังคับค่อยเปิด)
-    // if (!form.province) errs.push("เลือกจังหวัด");
-    // if (!form.district) errs.push("เลือกอำเภอ/เขต");
-    // if (!form.subdistrict) errs.push("เลือกตำบล/แขวง");
 
     return errs;
   }
@@ -422,12 +486,20 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
       return;
     }
 
-    // ไป step-2
     router.push(`/${locale}/register/${encodeURIComponent(courseSlug)}/step-2`);
   }
 
   function onBack() {
     router.push(`/${locale}/courses/${encodeURIComponent(courseSlug)}`);
+  }
+
+  function onResetDraft() {
+    if (!confirm(isEN ? "Clear all form data?" : "ล้างข้อมูลที่กรอกทั้งหมด?"))
+      return;
+    try {
+      sessionStorage.removeItem(DraftKey(courseSlug));
+    } catch {}
+    setForm(sanitizeDraft({ ...getDefaultForm(), courseSlug, locale }));
   }
 
   if (!course) {
@@ -486,12 +558,18 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
             </div>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={onBack}
               className="h-11 rounded-2xl bg-white/10 px-5 text-sm font-extrabold text-white ring-1 ring-white/10 hover:bg-white/15"
             >
               Back
+            </button>
+            <button
+              onClick={onResetDraft}
+              className="h-11 rounded-2xl bg-rose-500/15 px-5 text-sm font-extrabold text-rose-100 ring-1 ring-rose-500/20 hover:bg-rose-500/20"
+            >
+              {isEN ? "Clear" : "ล้างข้อมูล"}
             </button>
           </div>
         </div>

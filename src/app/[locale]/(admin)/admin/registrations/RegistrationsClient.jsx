@@ -7,6 +7,31 @@ function cx(...a) {
   return a.filter(Boolean).join(" ");
 }
 
+async function downloadCsvFromPost(url, body, filename = "export.csv") {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body || {}),
+  });
+
+  if (!res.ok) {
+    const t = await res.text().catch(() => "");
+    throw new Error(t || "download failed");
+  }
+
+  const blob = await res.blob();
+  const href = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = href;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  URL.revokeObjectURL(href);
+}
+
 function fmtDate(iso) {
   if (!iso) return "-";
   const d = new Date(iso);
@@ -33,6 +58,14 @@ const STATUS_OPTIONS = [
   { value: "cancelled", label: "cancelled" },
 ];
 
+const STATUS_OPTIONS_QUICK = [
+  { value: "", label: "เลือกสถานะ..." },
+  { value: "new", label: "new" },
+  { value: "contacted", label: "contacted" },
+  { value: "done", label: "done" },
+  { value: "cancelled", label: "cancelled" },
+];
+
 export default function RegistrationsClient({ locale = "th" }) {
   const router = useRouter();
   const sp = useSearchParams();
@@ -45,6 +78,17 @@ export default function RegistrationsClient({ locale = "th" }) {
     total: 0,
     totalPages: 1,
   });
+
+  // selection
+  const [selected, setSelected] = useState({}); // {id:true}
+  const selectedIds = useMemo(
+    () => Object.keys(selected).filter((k) => selected[k]),
+    [selected]
+  );
+  const selectedCount = selectedIds.length;
+
+  const [bulkStatus, setBulkStatus] = useState("");
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   // filters from querystring
   const q0 = sp.get("q") || "";
@@ -60,7 +104,9 @@ export default function RegistrationsClient({ locale = "th" }) {
   const [from, setFrom] = useState(from0);
   const [to, setTo] = useState(to0);
 
-  // sync input when URL changed (back/forward)
+  const [exportBusy, setExportBusy] = useState(false);
+
+  // sync input when URL changed
   useEffect(() => {
     setQ(q0);
     setStatus(status0);
@@ -97,6 +143,10 @@ export default function RegistrationsClient({ locale = "th" }) {
         total: data.total || 0,
         totalPages: data.totalPages || 1,
       });
+
+      // reset selection เมื่อโหลดหน้าใหม่ (กันเผลอ)
+      setSelected({});
+      setBulkStatus("");
     } catch (e) {
       console.error(e);
       setItems([]);
@@ -130,6 +180,89 @@ export default function RegistrationsClient({ locale = "th" }) {
     const u = new URLSearchParams(sp.toString());
     u.set("page", String(p));
     router.push(`/${locale}/admin/registrations?${u.toString()}`);
+  }
+
+  function toggleOne(id, checked) {
+    setSelected((prev) => ({ ...prev, [id]: !!checked }));
+  }
+
+  function toggleAllOnPage(checked) {
+    if (!checked) {
+      setSelected({});
+      return;
+    }
+    const next = {};
+    for (const it of items) next[it._id] = true;
+    setSelected(next);
+  }
+
+  const allOnPageChecked =
+    items.length > 0 && items.every((it) => selected[it._id]);
+
+  async function applyBulkStatus() {
+    if (!selectedCount) {
+      alert("กรุณาเลือกอย่างน้อย 1 รายการ");
+      return;
+    }
+    if (!bulkStatus) {
+      alert("กรุณาเลือกสถานะที่จะเปลี่ยน");
+      return;
+    }
+    if (
+      !confirm(
+        `เปลี่ยนสถานะ ${selectedCount} รายการเป็น "${bulkStatus}" ใช่ไหม?`
+      )
+    )
+      return;
+
+    setBulkBusy(true);
+    try {
+      const res = await fetch("/api/admin/registrations/bulk-status", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ ids: selectedIds, status: bulkStatus }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!data?.ok) throw new Error(data?.error || "bulk update failed");
+      await load();
+    } catch (e) {
+      console.error(e);
+      alert("Bulk update failed");
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
+  function exportCsv() {
+    // export ตาม filter ปัจจุบัน (q0,status0,courseSlug0,from0,to0)
+    const u = new URLSearchParams();
+    if (q0) u.set("q", q0);
+    if (status0) u.set("status", status0);
+    if (courseSlug0) u.set("courseSlug", courseSlug0);
+    if (from0) u.set("from", from0);
+    if (to0) u.set("to", to0);
+    const url = `/api/admin/registrations/export.csv?${u.toString()}`;
+    window.open(url, "_blank");
+  }
+
+  async function exportSelectedCsv() {
+    if (!selectedCount) {
+      alert("กรุณาเลือกอย่างน้อย 1 รายการ");
+      return;
+    }
+    setExportBusy(true);
+    try {
+      await downloadCsvFromPost(
+        "/api/admin/registrations/export-selected.csv",
+        { ids: selectedIds },
+        "registrations-selected.csv"
+      );
+    } catch (e) {
+      console.error(e);
+      alert("Export selected failed");
+    } finally {
+      setExportBusy(false);
+    }
   }
 
   return (
@@ -248,12 +381,77 @@ export default function RegistrationsClient({ locale = "th" }) {
           </div>
         </div>
 
+        {/* Quick actions */}
+        <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-white/10 bg-black/10 p-4 md:flex-row md:items-center md:justify-between">
+          <div className="text-sm text-white/70">
+            Selected:{" "}
+            <span className="font-extrabold text-white">{selectedCount}</span>
+          </div>
+
+          <div className="flex flex-col gap-2 md:flex-row md:items-center">
+            <select
+              value={bulkStatus}
+              onChange={(e) => setBulkStatus(e.target.value)}
+              className={cx(
+                "h-10 rounded-xl border border-white/10 bg-black/15 px-3 text-sm text-white outline-none",
+                "focus:border-white/20 focus:ring-2 focus:ring-white/10"
+              )}
+            >
+              {STATUS_OPTIONS_QUICK.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+
+            <button
+              onClick={applyBulkStatus}
+              disabled={bulkBusy || selectedCount === 0}
+              className={cx(
+                "h-10 rounded-xl px-4 text-sm font-extrabold ring-1",
+                bulkBusy || selectedCount === 0
+                  ? "bg-white/5 text-white/30 ring-white/10"
+                  : "bg-white/10 text-white ring-white/10 hover:bg-white/15"
+              )}
+            >
+              {bulkBusy ? "Updating..." : "Apply Status"}
+            </button>
+
+            <button
+              onClick={exportCsv}
+              className="h-10 rounded-xl bg-white px-4 text-sm font-extrabold text-slate-900 hover:bg-white/90"
+            >
+              Export CSV
+            </button>
+
+            <button
+              onClick={exportSelectedCsv}
+              disabled={exportBusy || selectedCount === 0}
+              className={cx(
+                "h-10 rounded-xl px-4 text-sm font-extrabold ring-1",
+                exportBusy || selectedCount === 0
+                  ? "bg-white/5 text-white/30 ring-white/10"
+                  : "bg-white/10 text-white ring-white/10 hover:bg-white/15"
+              )}
+            >
+              {exportBusy ? "Exporting..." : "Export Selected CSV"}
+            </button>
+          </div>
+        </div>
+
         {/* Table */}
         <div className="mt-6 overflow-hidden rounded-2xl border border-white/10">
           <div className="overflow-auto">
-            <table className="min-w-[980px] w-full text-left text-sm">
+            <table className="min-w-[1040px] w-full text-left text-sm">
               <thead className="bg-white/5 text-white/70">
                 <tr>
+                  <th className="px-4 py-3 w-[44px]">
+                    <input
+                      type="checkbox"
+                      checked={!!allOnPageChecked}
+                      onChange={(e) => toggleAllOnPage(e.target.checked)}
+                    />
+                  </th>
                   <th className="px-4 py-3">Created</th>
                   <th className="px-4 py-3">Ref</th>
                   <th className="px-4 py-3">Name</th>
@@ -268,7 +466,7 @@ export default function RegistrationsClient({ locale = "th" }) {
               <tbody className="divide-y divide-white/10 text-white/85">
                 {items.length === 0 ? (
                   <tr>
-                    <td className="px-4 py-6 text-white/60" colSpan={8}>
+                    <td className="px-4 py-6 text-white/60" colSpan={9}>
                       {loading ? "Loading..." : "ไม่พบข้อมูล"}
                     </td>
                   </tr>
@@ -276,19 +474,46 @@ export default function RegistrationsClient({ locale = "th" }) {
                   items.map((it) => (
                     <tr
                       key={it._id}
-                      className="hover:bg-white/5 cursor-pointer"
-                      onClick={() =>
-                        router.push(`/${locale}/admin/registrations/${it._id}`)
-                      }
+                      className="hover:bg-white/5"
                       title="คลิกเพื่อดูรายละเอียด"
                     >
-                      <td className="px-4 py-3 whitespace-nowrap">
+                      <td className="px-4 py-3">
+                        <input
+                          type="checkbox"
+                          checked={!!selected[it._id]}
+                          onChange={(e) => toggleOne(it._id, e.target.checked)}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </td>
+
+                      <td
+                        className="px-4 py-3 whitespace-nowrap cursor-pointer"
+                        onClick={() =>
+                          router.push(
+                            `/${locale}/admin/registrations/${it._id}`
+                          )
+                        }
+                      >
                         {fmtDate(it.createdAt)}
                       </td>
-                      <td className="px-4 py-3 font-mono text-xs text-white/75">
-                        {String(it._id).slice(-8)}
+                      <td
+                        className="px-4 py-3 font-mono text-xs text-white/75 cursor-pointer"
+                        onClick={() =>
+                          router.push(
+                            `/${locale}/admin/registrations/${it._id}`
+                          )
+                        }
+                      >
+                        {it.ref_no || "-"}
                       </td>
-                      <td className="px-4 py-3">
+                      <td
+                        className="px-4 py-3 cursor-pointer"
+                        onClick={() =>
+                          router.push(
+                            `/${locale}/admin/registrations/${it._id}`
+                          )
+                        }
+                      >
                         {(it.first_name || "") + " " + (it.last_name || "")}
                       </td>
                       <td className="px-4 py-3">{it.email || "-"}</td>
@@ -348,7 +573,8 @@ export default function RegistrationsClient({ locale = "th" }) {
         </div>
 
         <div className="mt-3 text-xs text-white/40">
-          * คลิกแถวเพื่อไปหน้า detail (เดี๋ยวเราทำต่อ)
+          * Export CSV = export ตาม filter | Export Selected CSV = export
+          เฉพาะที่ติ๊กเลือก
         </div>
       </div>
     </div>

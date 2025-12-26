@@ -8,11 +8,12 @@ function cx(...a) {
   return a.filter(Boolean).join(" ");
 }
 
+/** ✅ key กลางเดียวกับ step-1/step-2 */
 function DraftKey(courseSlug) {
-  return `nx-register-step1:${courseSlug || ""}`;
+  return `nx-register-draft:${String(courseSlug || "").trim()}`;
 }
 function ResultKey(courseSlug) {
-  return `nx-register-result:${courseSlug || ""}`;
+  return `nx-register-result:${String(courseSlug || "").trim()}`;
 }
 
 function Section({ title, subtitle, children }) {
@@ -109,7 +110,7 @@ export default function RegisterStep3Client({ locale = "th", courseSlug }) {
     return () => (alive = false);
   }, [courseSlug]);
 
-  // load draft + result from sessionStorage
+  // ✅ load draft + result from sessionStorage
   useEffect(() => {
     try {
       const rawDraft = sessionStorage.getItem(DraftKey(courseSlug));
@@ -168,7 +169,10 @@ export default function RegisterStep3Client({ locale = "th", courseSlug }) {
     course?.title_en ||
     "";
 
-  const refNo = String(result?.registrationId || "").trim();
+  /** ✅ ใช้ ref_no ก่อน ถ้าไม่มีค่อย fallback */
+  const refNo = String(
+    serverData?.ref_no || result?.refNo || result?.registrationId || ""
+  ).trim();
 
   const contactName = useMemo(() => {
     if (!data) return "";
@@ -329,8 +333,7 @@ export default function RegisterStep3Client({ locale = "th", courseSlug }) {
                 <Item
                   label={isEN ? "Reference No." : "เลขอ้างอิง"}
                   value={
-                    refNo ||
-                    (isEN ? "(not generated yet)" : "(ยังไม่มีเลขอ้างอิง)")
+                    refNo || (isEN ? "(not available)" : "(ยังไม่มีเลขอ้างอิง)")
                   }
                   mono
                 />

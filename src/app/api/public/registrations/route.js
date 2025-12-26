@@ -1,10 +1,15 @@
 import dbConnect from "@/lib/dbConnect";
+import Course from "@/models/Course";
 import Registration from "@/models/Registration";
+import { generateRefNoByCourse } from "@/lib/refNo";
 import { sendWithTemplate } from "@/lib/postmark";
+import { verifyRecaptchaV3 } from "@/lib/recaptchaServer";
+import { rateLimitHit } from "@/lib/rateLimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+/* ---------------- helpers ---------------- */
 function isValidEmail(x) {
   const s = String(x || "").trim();
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
@@ -14,37 +19,41 @@ function normalizeDigits(x) {
   return String(x || "").replace(/\D/g, "");
 }
 
+function clean(s) {
+  return String(s || "").trim();
+}
+
 function pickDraft(draft = {}) {
   return {
-    courseSlug: String(draft.courseSlug || "").trim(),
-    locale: String(draft.locale || "th").trim(),
+    courseSlug: clean(draft.courseSlug),
+    locale: clean(draft.locale || "th"),
 
     trainee_count: Math.max(1, Number(draft.trainee_count || 1)),
-    training_location: String(draft.training_location || "").trim(),
-    month_interest: String(draft.month_interest || "").trim(),
-    year_interest: String(draft.year_interest || "").trim(),
+    training_location: clean(draft.training_location),
+    month_interest: clean(draft.month_interest),
+    year_interest: clean(draft.year_interest),
 
-    first_name: String(draft.first_name || "").trim(),
-    last_name: String(draft.last_name || "").trim(),
-    position: String(draft.position || "").trim(),
-    department: String(draft.department || "").trim(),
+    first_name: clean(draft.first_name),
+    last_name: clean(draft.last_name),
+    position: clean(draft.position),
+    department: clean(draft.department),
     contact_phone: normalizeDigits(
       draft.contact_phone || draft.contact_phone_raw
     ),
-    email: String(draft.email || "").trim(),
+    email: clean(draft.email),
 
-    company: String(draft.company || "").trim(),
+    company: clean(draft.company),
     tax_id: normalizeDigits(draft.tax_id),
     company_phone: normalizeDigits(
       draft.company_phone || draft.company_phone_raw
     ),
-    receipt_address: String(draft.receipt_address || "").trim(),
-    province: String(draft.province || "").trim(),
-    district: String(draft.district || "").trim(),
-    subdistrict: String(draft.subdistrict || "").trim(),
-    postcode: String(draft.postcode || "").trim(),
+    receipt_address: clean(draft.receipt_address),
+    province: clean(draft.province),
+    district: clean(draft.district),
+    subdistrict: clean(draft.subdistrict),
+    postcode: clean(draft.postcode),
 
-    note: String(draft.note || "").trim(),
+    note: clean(draft.note),
   };
 }
 
@@ -71,25 +80,70 @@ function validatePayload(p) {
   return errs;
 }
 
+function adminBccList() {
+  return (process.env.ADMIN_NOTIFY_EMAILS || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .join(",");
+}
+
+/* ---------------- route ---------------- */
 export async function POST(req) {
   await dbConnect();
+
+  // IP / UA
+  const ip =
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    req.headers.get("x-real-ip") ||
+    "unknown";
+  const userAgent = req.headers.get("user-agent") || "";
+
+  // ✅ rate limit (5 ครั้ง/นาที/IP)
+  const rl = rateLimitHit(`nxreg:${ip}`, { limit: 5, windowMs: 60_000 });
+  if (!rl.ok) {
+    return Response.json(
+      { ok: false, error: "rate limited" },
+      { status: 429, headers: { "retry-after": "60" } }
+    );
+  }
 
   const body = await req.json().catch(() => ({}));
   const draft = body?.draft || body || {};
   const payload = pickDraft(draft);
+
+  // ✅ verify reCAPTCHA v3 (server-side)
+  const recaptchaToken = clean(body?.recaptchaToken);
+  const vr = await verifyRecaptchaV3(recaptchaToken, "nx_register_submit");
+  if (!vr.ok) {
+    return Response.json(
+      { ok: false, error: "recaptcha failed", reason: vr.reason },
+      { status: 400 }
+    );
+  }
 
   const errs = validatePayload(payload);
   if (errs.length) {
     return Response.json({ ok: false, errors: errs }, { status: 400 });
   }
 
-  const ip =
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    req.headers.get("x-real-ip") ||
-    "";
-  const userAgent = req.headers.get("user-agent") || "";
+  // หา courseCode จาก courseSlug (ถ้าไม่มี fallback เป็น slug)
+  const course = await Course.findOne({ slug: payload.courseSlug })
+    .select("course_code slug title_th title_en")
+    .lean();
 
+  const courseCode = course?.course_code || payload.courseSlug || "COURSE";
+
+  // ✅ refNo แยกตามคอร์ส
+  const refNo = await generateRefNoByCourse({
+    prefix: "NX",
+    courseCode,
+  });
+
+  // ✅ create registration
   const doc = await Registration.create({
+    ref_no: refNo,
+    course_code: clean(courseCode).toUpperCase(),
     ...payload,
     ip,
     userAgent,
@@ -97,23 +151,24 @@ export async function POST(req) {
     source: "web",
   });
 
-  const refNo = String(doc._id);
-
   // ✅ BCC admin หลายคน
-  const adminBcc = (process.env.ADMIN_NOTIFY_EMAILS || "")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .join(",");
+  const adminBcc = adminBccList();
+
+  // ✅ title สำหรับ email (เอาชื่อคอร์สจริง ถ้ามี)
+  const courseTitle =
+    (payload.locale === "en" ? course?.title_en : course?.title_th) ||
+    course?.title_th ||
+    course?.title_en ||
+    payload.courseSlug;
 
   // ✅ Template Model (ต้องตรงกับตัวแปรใน Postmark Template)
   const templateModel = {
-    ref_no: refNo,
+    ref_no: doc.ref_no,
     submitted_at: new Date(doc.createdAt).toLocaleString("th-TH", {
       timeZone: "Asia/Bangkok",
     }),
 
-    course_title: payload.courseSlug,
+    course_title: courseTitle,
     trainee_count: payload.trainee_count,
     month_interest: payload.month_interest,
     year_interest: payload.year_interest,
@@ -127,18 +182,28 @@ export async function POST(req) {
     company_tax_id: payload.tax_id,
     company_address: payload.receipt_address,
 
+    current_status: doc.status,
     note: payload.note || "",
   };
 
-  // ✅ ส่งด้วย Postmark Template
+  // ✅ ส่งด้วย Postmark Template (template เดียว ส่งให้ user + BCC admin)
   try {
-    await sendWithTemplate({
-      to: payload.email,
-      bcc: adminBcc || undefined,
-      templateId: process.env.POSTMARK_NX_REG_USER_TH_TEMPLATE_ID,
-      model: templateModel,
-      tag: "nx-registration",
-    });
+    const tplId =
+      payload.locale === "en"
+        ? process.env.POSTMARK_NX_REG_USER_EN_TEMPLATE_ID
+        : process.env.POSTMARK_NX_REG_USER_TH_TEMPLATE_ID;
+
+    if (tplId) {
+      await sendWithTemplate({
+        to: payload.email,
+        bcc: adminBcc || undefined,
+        templateId: tplId,
+        model: templateModel,
+        tag: "nx-registration",
+      });
+    } else {
+      console.warn("Missing Postmark template env for locale:", payload.locale);
+    }
   } catch (e) {
     console.error("Send template email failed:", e);
     // ไม่ throw เพื่อไม่ให้การลงทะเบียนพัง
@@ -146,7 +211,8 @@ export async function POST(req) {
 
   return Response.json({
     ok: true,
-    registrationId: refNo,
+    registrationId: String(doc._id),
+    refNo: doc.ref_no,
     createdAt: doc.createdAt,
   });
 }

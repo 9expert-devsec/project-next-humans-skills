@@ -2,6 +2,9 @@ import mongoose from "mongoose";
 
 const RegistrationSchema = new mongoose.Schema(
   {
+    ref_no: { type: String, unique: true, index: true },
+    course_code: { type: String, trim: true, uppercase: true, index: true },
+
     courseSlug: { type: String, required: true, index: true },
     locale: { type: String, default: "th" },
 

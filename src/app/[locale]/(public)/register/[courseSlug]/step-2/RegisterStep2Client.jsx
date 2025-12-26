@@ -8,8 +8,9 @@ function cx(...a) {
   return a.filter(Boolean).join(" ");
 }
 
+/** ✅ ต้องใช้ key เดียวกับ Step 1 */
 function DraftKey(courseSlug) {
-  return `nx-register-step1:${courseSlug || ""}`;
+  return `nx-register-draft:${String(courseSlug || "").trim()}`;
 }
 
 function Section({ no, title, subtitle, children }) {
@@ -69,6 +70,40 @@ function formatThaiPhoneFromDigits(rawDigits) {
   return digits;
 }
 
+async function loadRecaptchaV3() {
+  if (typeof window === "undefined") return;
+  if (window.grecaptcha?.execute) return;
+
+  const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+  if (!siteKey) throw new Error("Missing NEXT_PUBLIC_RECAPTCHA_SITE_KEY");
+
+  await new Promise((resolve, reject) => {
+    const id = "recaptcha-v3";
+    if (document.getElementById(id)) return resolve();
+
+    const s = document.createElement("script");
+    s.id = id;
+    s.async = true;
+    s.defer = true;
+    s.src = `https://www.google.com/recaptcha/api.js?render=${encodeURIComponent(
+      siteKey
+    )}`;
+    s.onload = resolve;
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+async function getRecaptchaToken(action) {
+  const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+  if (!siteKey) throw new Error("Missing NEXT_PUBLIC_RECAPTCHA_SITE_KEY");
+
+  await loadRecaptchaV3();
+  await new Promise((resolve) => window.grecaptcha.ready(resolve));
+
+  return await window.grecaptcha.execute(siteKey, { action });
+}
+
 export default function RegisterStep2Client({ locale = "th", courseSlug }) {
   const router = useRouter();
   const isEN = locale === "en";
@@ -85,7 +120,7 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
     if (!courseSlug) router.replace(`/${locale}`);
   }, [courseSlug, locale, router]);
 
-  // fetch course by slug (เหมือน step-1 เพื่อโชว์ header)
+  // fetch course by slug (เพื่อ header)
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -105,7 +140,7 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
     return () => (alive = false);
   }, [courseSlug]);
 
-  // load draft from sessionStorage
+  // ✅ load draft from sessionStorage (key กลาง)
   useEffect(() => {
     try {
       const raw = sessionStorage.getItem(DraftKey(courseSlug));
@@ -122,7 +157,13 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
         );
         return;
       }
-      setDraft(parsed);
+
+      // บังคับ meta ให้ตรง
+      setDraft({
+        ...parsed,
+        courseSlug,
+        locale,
+      });
     } catch {
       router.replace(
         `/${locale}/register/${encodeURIComponent(courseSlug)}/step-1`
@@ -152,6 +193,7 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
   }, [draft]);
 
   function onBack() {
+    // ✅ ไม่ใช้ router.back() ให้ push ไป step-1 ตรง ๆ
     router.push(`/${locale}/register/${encodeURIComponent(courseSlug)}/step-1`);
   }
 
@@ -160,28 +202,36 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
     setSubmitting(true);
 
     try {
-      const raw = sessionStorage.getItem(`nx-register-step1:${courseSlug}`);
+      const raw = sessionStorage.getItem(`nx-register-draft:${courseSlug}`);
       const draft = raw ? JSON.parse(raw) : null;
       if (!draft) throw new Error("Draft not found");
+
+      const recaptchaToken = await getRecaptchaToken("nx_register_submit");
 
       const res = await fetch("/api/public/registrations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           draft: { ...draft, courseSlug, locale },
+          recaptchaToken,
         }),
       });
 
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
-        throw new Error((data?.errors || []).join(", ") || "Submit failed");
+        const msg =
+          (Array.isArray(data?.errors) && data.errors.length
+            ? data.errors.join(", ")
+            : data?.error || "Submit failed") +
+          (data?.reason ? ` (${data.reason})` : "");
+        throw new Error(msg);
       }
 
-      // ✅ เก็บ id ที่ได้จาก DB
       sessionStorage.setItem(
         `nx-register-result:${courseSlug}`,
         JSON.stringify({
           registrationId: data.registrationId,
+          refNo: data.refNo, // ✅ เก็บ refNo ไว้โชว์ step-3
         })
       );
 
@@ -210,6 +260,11 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
       </div>
     );
   }
+
+  const contactPhoneDigits =
+    draft.contact_phone || draft.contact_phone_raw || "";
+  const companyPhoneDigits =
+    draft.company_phone || draft.company_phone_raw || "";
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">
@@ -347,9 +402,7 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
               <div className="md:col-span-6">
                 <Item
                   label={isEN ? "Contact phone" : "เบอร์โทรติดต่อ"}
-                  value={
-                    formatThaiPhoneFromDigits(draft.contact_phone_raw) || "-"
-                  }
+                  value={formatThaiPhoneFromDigits(contactPhoneDigits) || "-"}
                   mono
                 />
               </div>
@@ -393,9 +446,7 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
               <div className="md:col-span-6">
                 <Item
                   label={isEN ? "Company phone" : "เบอร์โทรบริษัท"}
-                  value={
-                    formatThaiPhoneFromDigits(draft.company_phone_raw) || "-"
-                  }
+                  value={formatThaiPhoneFromDigits(companyPhoneDigits) || "-"}
                   mono
                 />
               </div>

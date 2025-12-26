@@ -29,6 +29,8 @@ const DaySchema = new Schema(
 
 const CourseSchema = new Schema(
   {
+    course_code: { type: String, trim: true, uppercase: true, index: true },
+
     // core
     slug: { type: String, required: true, unique: true, index: true },
     title_th: { type: String, required: true, trim: true },
