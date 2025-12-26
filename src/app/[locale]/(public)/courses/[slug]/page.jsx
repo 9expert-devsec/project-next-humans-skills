@@ -5,13 +5,14 @@ import { headers } from "next/headers";
 /* ---------------- helpers ---------------- */
 
 async function getOrigin() {
-  // Next 15/16: headers() เป็น async -> ต้อง await
   const h = await headers();
 
   const host = h.get("x-forwarded-host") || h.get("host");
-  const proto = h.get("x-forwarded-proto") || "http";
+  const proto = h.get("x-forwarded-proto") || "https";
 
-  // fallback ถ้า host ไม่มี
+  if (host) return `${proto}://${host}`;
+
+  // fallback เฉพาะตอน dev
   return process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 }
 
