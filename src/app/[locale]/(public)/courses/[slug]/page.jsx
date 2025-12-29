@@ -11,8 +11,6 @@ async function getOrigin() {
   const proto = h.get("x-forwarded-proto") || "https";
 
   if (host) return `${proto}://${host}`;
-
-  // fallback เฉพาะตอน dev
   return process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 }
 
@@ -62,10 +60,30 @@ function Section({ title, children }) {
   );
 }
 
+/* ---------------- partner helpers ---------------- */
+
+const PARTNER_LABEL = {
+  bitkub: "Bitkub",
+  "9expert": "9Expert",
+  key: "Key",
+};
+
+function renderPartners(session) {
+  const arr = Array.isArray(session?.partners)
+    ? session.partners.map((x) => String(x || "").trim()).filter(Boolean)
+    : [];
+
+  const fallback = session?.partner ? [String(session.partner).trim()] : [];
+
+  const list = arr.length ? arr : fallback;
+  if (!list.length) return "";
+
+  return list.map((k) => PARTNER_LABEL[k] || k).join(" + ");
+}
+
 /* ---------------- page ---------------- */
 
 export default async function Page({ params }) {
-  // ✅ โฟลเดอร์คุณคือ [local]
   const { local, slug } = await params;
   const safeLocale = local === "en" ? "en" : "th";
 
@@ -75,9 +93,9 @@ export default async function Page({ params }) {
   if (!course) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-16 text-white">
-        <h1 className="text-2xl font-extrabold">Course not found</h1>
+        <h1 className="text-2xl font-extrabold">Loading Course</h1>
         <p className="mt-2 text-white/60">
-          อาจยังไม่ published หรือปิดการใช้งาน
+          กำลังโหลดหลักสูตรที่คุณเลือกอยู่ กรุณารอสักครู่ หรือกลับไปหน้าแรก
         </p>
         <Link
           href={`/${safeLocale}`}
@@ -91,11 +109,10 @@ export default async function Page({ params }) {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12">
-      {/* HERO / COVER */}
+      {/* HERO */}
       <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur">
-         <div className="relative">
+        <div className="relative">
           {course.cover_image ? (
-            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={course.cover_image}
               alt={course.title_th}
@@ -123,7 +140,7 @@ export default async function Page({ params }) {
               <Badge>{course.level}</Badge>
               <Badge>{course.duration_days || 1} วัน</Badge>
               {(course.partners || []).map((p) => (
-                <Badge key={p}>{p}</Badge>
+                <Badge key={p}>{PARTNER_LABEL[p] || p}</Badge>
               ))}
             </div>
 
@@ -189,38 +206,41 @@ export default async function Page({ params }) {
                     </div>
 
                     <div className="mt-3 grid gap-3">
-                      {(d.sessions || []).map((s, si) => (
-                        <div
-                          key={si}
-                          className="rounded-2xl border border-white/10 bg-white/5 p-4"
-                        >
-                          <div className="text-xs font-extrabold text-white/70">
-                            {(s.period || "").toUpperCase()}
-                            {s.partner ? ` • ${s.partner}` : ""}
-                          </div>
-
-                          <div className="mt-2 text-sm font-bold text-white">
-                            {s.title}
-                          </div>
-
-                          {Array.isArray(s.topics) && s.topics.length ? (
-                            <ul className="mt-3 grid gap-2 text-sm text-white/75">
-                              {s.topics.map((t, ti) => (
-                                <li key={ti} className="flex gap-2">
-                                  <span className="mt-2 h-1.5 w-1.5 rounded-full bg-white/35" />
-                                  <span>{t}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          ) : null}
-
-                          {s.notes ? (
-                            <div className="mt-3 whitespace-pre-wrap text-xs text-white/55">
-                              {s.notes}
+                      {(d.sessions || []).map((s, si) => {
+                        const partnersText = renderPartners(s);
+                        return (
+                          <div
+                            key={si}
+                            className="rounded-2xl border border-white/10 bg-white/5 p-4"
+                          >
+                            <div className="text-xs font-extrabold text-white/70">
+                              {(s.period || "").toUpperCase()}
+                              {partnersText ? ` • ${partnersText}` : ""}
                             </div>
-                          ) : null}
-                        </div>
-                      ))}
+
+                            <div className="mt-2 text-sm font-bold text-white">
+                              {s.title}
+                            </div>
+
+                            {Array.isArray(s.topics) && s.topics.length ? (
+                              <ul className="mt-3 grid gap-2 text-sm text-white/75">
+                                {s.topics.map((t, ti) => (
+                                  <li key={ti} className="flex gap-2">
+                                    <span className="mt-2 h-1.5 w-1.5 rounded-full bg-white/35" />
+                                    <span>{t}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : null}
+
+                            {s.notes ? (
+                              <div className="mt-3 whitespace-pre-wrap text-xs text-white/55">
+                                {s.notes}
+                              </div>
+                            ) : null}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 ))}

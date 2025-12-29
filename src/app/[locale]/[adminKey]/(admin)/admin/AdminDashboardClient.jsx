@@ -25,10 +25,10 @@ export default function AdminDashboardClient({ locale = "th" }) {
         <div
           style={{ marginTop: 14, display: "flex", gap: 10, flexWrap: "wrap" }}
         >
-          <Link href={`/${locale}/admin/registrations`} style={btnStyle}>
+          <Link href={`/${locale}/k8Pz7M2xYn5R0wLq/admin/registrations`} style={btnStyle}>
             {locale === "en" ? "Registrations" : "รายการลงทะเบียน"}
           </Link>
-          <Link href={`/${locale}/admin/courses`} style={btnStyle}>
+          <Link href={`/${locale}/k8Pz7M2xYn5R0wLq/admin/courses`} style={btnStyle}>
             {locale === "en" ? "Courses" : "จัดการคอร์ส"}
           </Link>
         </div>

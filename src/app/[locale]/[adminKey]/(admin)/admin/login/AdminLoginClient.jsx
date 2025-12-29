@@ -25,7 +25,7 @@ export default function AdminLoginClient({ locale = "th" }) {
         return;
       }
 
-      location.href = `/${locale}/admin`;
+      location.href = `/${locale}/k8Pz7M2xYn5R0wLq/admin`;
     } catch {
       setErr("Network error");
     } finally {

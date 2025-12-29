@@ -15,7 +15,7 @@ export default function CourseEditClient({ locale, id }) {
   const [err, setErr] = useState("");
   const [item, setItem] = useState(null);
 
-  const backHref = useMemo(() => `/${locale}/admin/courses`, [locale]);
+  const backHref = useMemo(() => `/${locale}/k8Pz7M2xYn5R0wLq/admin/courses`, [locale]);
 
   async function load() {
     setErr("");

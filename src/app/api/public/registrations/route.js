@@ -1,3 +1,4 @@
+// /api/public/registrations/route.js
 import dbConnect from "@/lib/dbConnect";
 import Course from "@/models/Course";
 import Registration from "@/models/Registration";
@@ -43,6 +44,10 @@ function pickDraft(draft = {}) {
     email: clean(draft.email),
 
     company: clean(draft.company),
+
+    // ✅ NEW: branch (default ให้ปลอดภัย เผื่อ draft เก่า)
+    branch: clean(draft.branch) || "สำนักงานใหญ่",
+
     tax_id: normalizeDigits(draft.tax_id),
     company_phone: normalizeDigits(
       draft.company_phone || draft.company_phone_raw
@@ -72,6 +77,10 @@ function validatePayload(p) {
   if (p.email && !isValidEmail(p.email)) errs.push("email is invalid");
 
   if (!p.company) errs.push("company is required");
+
+  // ✅ NEW: branch required
+  if (!p.branch) errs.push("branch is required");
+
   if (!p.tax_id) errs.push("tax_id is required");
   if (p.tax_id && p.tax_id.length > 13)
     errs.push("tax_id must be <= 13 digits");
@@ -179,6 +188,10 @@ export async function POST(req) {
     coordinator_phone: payload.contact_phone,
 
     company_name: payload.company,
+
+    // ✅ NEW: map ไปให้ template ที่คุณใส่ {{company_branch}}
+    company_branch: payload.branch,
+
     company_tax_id: payload.tax_id,
     company_address: payload.receipt_address,
 

@@ -21,7 +21,7 @@ export default function Header({ locale = "th" }) {
             <Link className="navLink" href={`/${locale}`}>
               {t.home}
             </Link>
-            <Link className="navLink" href={`/${locale}/admin/login`}>
+            <Link className="navLink" href={`/${locale}/k8Pz7M2xYn5R0wLq/admin/login`}>
               {t.admin}
             </Link>
           </div>

@@ -169,17 +169,17 @@ export default function RegistrationsClient({ locale = "th" }) {
     if (from) u.set("from", from);
     if (to) u.set("to", to);
     u.set("page", "1");
-    router.push(`/${locale}/admin/registrations?${u.toString()}`);
+    router.push(`/${locale}/k8Pz7M2xYn5R0wLq/admin/registrations?${u.toString()}`);
   }
 
   function clearFilters() {
-    router.push(`/${locale}/admin/registrations`);
+    router.push(`/${locale}/k8Pz7M2xYn5R0wLq/admin/registrations`);
   }
 
   function goPage(p) {
     const u = new URLSearchParams(sp.toString());
     u.set("page", String(p));
-    router.push(`/${locale}/admin/registrations?${u.toString()}`);
+    router.push(`/${locale}/k8Pz7M2xYn5R0wLq/admin/registrations?${u.toString()}`);
   }
 
   function toggleOne(id, checked) {
@@ -490,7 +490,7 @@ export default function RegistrationsClient({ locale = "th" }) {
                         className="px-4 py-3 whitespace-nowrap cursor-pointer"
                         onClick={() =>
                           router.push(
-                            `/${locale}/admin/registrations/${it._id}`
+                            `/${locale}/k8Pz7M2xYn5R0wLq/admin/registrations/${it._id}`
                           )
                         }
                       >
@@ -500,7 +500,7 @@ export default function RegistrationsClient({ locale = "th" }) {
                         className="px-4 py-3 font-mono text-xs text-white/75 cursor-pointer"
                         onClick={() =>
                           router.push(
-                            `/${locale}/admin/registrations/${it._id}`
+                            `/${locale}/k8Pz7M2xYn5R0wLq/admin/registrations/${it._id}`
                           )
                         }
                       >
@@ -510,7 +510,7 @@ export default function RegistrationsClient({ locale = "th" }) {
                         className="px-4 py-3 cursor-pointer"
                         onClick={() =>
                           router.push(
-                            `/${locale}/admin/registrations/${it._id}`
+                            `/${locale}/k8Pz7M2xYn5R0wLq/admin/registrations/${it._id}`
                           )
                         }
                       >

@@ -418,6 +418,13 @@ export default function RegisterStep3Client({ locale = "th", courseSlug }) {
 
                 <div className="md:col-span-12">
                   <Item
+                    label={isEN ? "Branch" : "สาขา"} // ✅ เพิ่ม
+                    value={String(data?.branch || "").trim() || "-"}
+                  />
+                </div>
+
+                <div className="md:col-span-12">
+                  <Item
                     label={isEN ? "Tax ID" : "เลขประจำตัวผู้เสียภาษี"}
                     value={String(data?.tax_id || "").trim() || "-"}
                     mono

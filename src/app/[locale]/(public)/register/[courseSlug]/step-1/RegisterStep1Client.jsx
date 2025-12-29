@@ -58,14 +58,20 @@ function Section({ no, title, subtitle, children }) {
   );
 }
 
-function Field({ label, required, children, hint }) {
+function Field({ label, required, children, hint, error }) {
   return (
     <div>
       <div className="mb-2 text-sm font-bold text-white/85">
         {label} {required ? <span className="text-rose-300">*</span> : null}
       </div>
+
       {children}
-      {hint ? <div className="mt-2 text-xs text-white/50">{hint}</div> : null}
+
+      {error ? (
+        <div className="mt-2 text-xs font-semibold text-rose-300">{error}</div>
+      ) : hint ? (
+        <div className="mt-2 text-xs text-white/50">{hint}</div>
+      ) : null}
     </div>
   );
 }
@@ -78,58 +84,115 @@ function Input({
   disabled,
   readOnly,
   inputMode,
+  error,
+  onBlur,
+  dataField,
 }) {
   return (
     <input
+      data-field={dataField}
       type={type}
       inputMode={inputMode}
       value={value}
       onChange={onChange}
+      onBlur={onBlur}
       placeholder={placeholder}
       disabled={disabled}
       readOnly={readOnly}
       className={cx(
-        "h-11 w-full rounded-2xl border border-white/10 bg-black/15 px-4 text-sm text-white outline-none",
+        "h-11 w-full rounded-2xl border bg-black/15 px-4 text-sm text-white outline-none",
         "placeholder:text-white/35",
-        "focus:border-white/20 focus:ring-2 focus:ring-white/10",
+        "focus:ring-2",
+        error
+          ? "border-rose-400/50 focus:border-rose-300/70 focus:ring-rose-400/15"
+          : "border-white/10 focus:border-white/20 focus:ring-white/10",
         disabled || readOnly ? "opacity-60" : ""
       )}
     />
   );
 }
 
-function Textarea({ value, onChange, placeholder, disabled }) {
+function Textarea({
+  value,
+  onChange,
+  placeholder,
+  disabled,
+  error,
+  onBlur,
+  dataField,
+}) {
   return (
     <textarea
+      data-field={dataField}
       value={value}
       onChange={onChange}
+      onBlur={onBlur}
       placeholder={placeholder}
       disabled={disabled}
       rows={4}
       className={cx(
-        "min-h-[96px] w-full resize-y rounded-2xl border border-white/10 bg-black/15 px-4 py-3 text-sm text-white outline-none",
+        "min-h-[96px] w-full resize-y rounded-2xl border bg-black/15 px-4 py-3 text-sm text-white outline-none",
         "placeholder:text-white/35",
-        "focus:border-white/20 focus:ring-2 focus:ring-white/10",
+        "focus:ring-2",
+        error
+          ? "border-rose-400/50 focus:border-rose-300/70 focus:ring-rose-400/15"
+          : "border-white/10 focus:border-white/20 focus:ring-white/10",
         disabled ? "opacity-60" : ""
       )}
     />
   );
 }
 
-function Select({ value, onChange, disabled, children }) {
+function Select({
+  value,
+  onChange,
+  disabled,
+  children,
+  error,
+  onBlur,
+  dataField,
+}) {
   return (
     <select
+      data-field={dataField}
       value={value}
       onChange={onChange}
+      onBlur={onBlur}
       disabled={disabled}
       className={cx(
-        "h-11 w-full rounded-2xl border border-white/10 bg-black/15 px-4 text-sm text-white outline-none",
-        "focus:border-white/20 focus:ring-2 focus:ring-white/10",
+        "h-11 w-full rounded-2xl border bg-black/15 px-4 text-sm text-white outline-none",
+        "focus:ring-2",
+        error
+          ? "border-rose-400/50 focus:border-rose-300/70 focus:ring-rose-400/15"
+          : "border-white/10 focus:border-white/20 focus:ring-white/10",
         disabled ? "opacity-60" : ""
       )}
     >
       {children}
     </select>
+  );
+}
+
+function InfoTip({ text }) {
+  return (
+    <span className="group relative inline-flex items-center">
+      <span
+        className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/15 bg-white/5 text-[12px] font-extrabold text-white/70"
+        aria-label="info"
+      >
+        i
+      </span>
+
+      <span
+        className={cx(
+          "pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-72 -translate-x-1/2",
+          "rounded-2xl border border-white/10 bg-slate-950/95 px-3 py-2 text-xs text-white/85 shadow-xl",
+          "opacity-0 translate-y-1 transition group-hover:opacity-100 group-hover:translate-y-0"
+        )}
+      >
+        {text}
+      </span>
+    </span>
   );
 }
 
@@ -179,11 +242,15 @@ function isValidEmail(x) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
 }
 
-function getDefaultForm() {
+function defaultBranchByLocale(locale) {
+  return locale === "en" ? "Head Office" : "สำนักงานใหญ่";
+}
+
+function getDefaultForm(locale = "th") {
   return {
     // meta
     courseSlug: "",
-    locale: "th",
+    locale,
 
     // section 1
     trainee_count: 1,
@@ -202,6 +269,7 @@ function getDefaultForm() {
 
     // section 3
     company: "",
+    branch: defaultBranchByLocale(locale), // ✅ required + editable
     tax_id: "",
     company_phone_raw: "",
     company_phone: "",
@@ -216,8 +284,8 @@ function getDefaultForm() {
   };
 }
 
-function sanitizeDraft(d = {}) {
-  const base = getDefaultForm();
+function sanitizeDraft(d = {}, locale = "th") {
+  const base = getDefaultForm(locale);
 
   const out = { ...base, ...(d && typeof d === "object" ? d : {}) };
 
@@ -229,6 +297,8 @@ function sanitizeDraft(d = {}) {
   out.year_interest =
     String(out.year_interest || "") ||
     String(YEARS[0] || new Date().getFullYear());
+
+  out.branch = String(out.branch || defaultBranchByLocale(locale)); // ✅ ensure default
 
   out.contact_phone_raw = String(out.contact_phone_raw || "").replace(
     /\D/g,
@@ -255,19 +325,43 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
 
   // ✅ init form from session draft
   const [form, setForm] = useState(() => {
-    if (typeof window === "undefined") return sanitizeDraft(getDefaultForm());
+    if (typeof window === "undefined")
+      return sanitizeDraft(getDefaultForm(locale), locale);
     try {
       const raw = sessionStorage.getItem(DraftKey(courseSlug));
       const parsed = raw ? JSON.parse(raw) : {};
-      return sanitizeDraft({
-        ...parsed,
-        courseSlug,
-        locale,
-      });
+      return sanitizeDraft(
+        {
+          ...parsed,
+          courseSlug,
+          locale,
+        },
+        locale
+      );
     } catch {
-      return sanitizeDraft({ courseSlug, locale });
+      return sanitizeDraft({ courseSlug, locale }, locale);
     }
   });
+
+  // ✅ validation state (per-field)
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
+  const [submitted, setSubmitted] = useState(false);
+
+  const showError = (name) => submitted || touched[name];
+
+  const markTouched = (name) => () =>
+    setTouched((prev) => ({ ...prev, [name]: true }));
+
+  const clearErrorOnChange = (name) => (e) => {
+    const v = e?.target?.value ?? "";
+    setForm((prev) => ({ ...prev, [name]: v }));
+    setErrors((prev) => {
+      if (!prev[name]) return prev;
+      const { [name]: _, ...rest } = prev;
+      return rest;
+    });
+  };
 
   // --- derived phone ---
   const contactPhone = useMemo(
@@ -295,26 +389,48 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
       const raw = sessionStorage.getItem(DraftKey(courseSlug));
       if (!raw) {
         setForm((prev) =>
-          sanitizeDraft({
-            ...getDefaultForm(),
-            ...prev,
-            courseSlug,
-            locale,
-          })
+          sanitizeDraft(
+            {
+              ...getDefaultForm(locale),
+              ...prev,
+              courseSlug,
+              locale,
+              // ensure default branch if empty
+              branch: prev.branch || defaultBranchByLocale(locale),
+            },
+            locale
+          )
         );
         return;
       }
       const parsed = JSON.parse(raw);
       setForm((prev) =>
-        sanitizeDraft({
-          ...prev,
-          ...parsed,
-          courseSlug,
-          locale,
-        })
+        sanitizeDraft(
+          {
+            ...prev,
+            ...parsed,
+            courseSlug,
+            locale,
+            branch:
+              String(parsed?.branch || "").trim() ||
+              String(prev.branch || "").trim() ||
+              defaultBranchByLocale(locale),
+          },
+          locale
+        )
       );
     } catch {
-      setForm((prev) => sanitizeDraft({ ...prev, courseSlug, locale }));
+      setForm((prev) =>
+        sanitizeDraft(
+          {
+            ...prev,
+            courseSlug,
+            locale,
+            branch: prev.branch || defaultBranchByLocale(locale),
+          },
+          locale
+        )
+      );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseSlug, locale]);
@@ -399,11 +515,6 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
   const subdistrictDisabled = !thDb || !form.province || !form.district;
 
   // handlers
-  const setField = (name) => (e) => {
-    const v = e?.target?.value ?? "";
-    setForm((prev) => ({ ...prev, [name]: v }));
-  };
-
   const setProvince = (e) => {
     const province = e.target.value;
     setForm((prev) => ({
@@ -413,6 +524,17 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
       subdistrict: "",
       postcode: "",
     }));
+    // clear related errors when change chain
+    setErrors((prev) => {
+      const {
+        province: _p,
+        district: _d,
+        subdistrict: _s,
+        postcode: _pc,
+        ...rest
+      } = prev;
+      return rest;
+    });
   };
 
   const setDistrict = (e) => {
@@ -423,6 +545,10 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
       subdistrict: "",
       postcode: "",
     }));
+    setErrors((prev) => {
+      const { district: _d, subdistrict: _s, postcode: _pc, ...rest } = prev;
+      return rest;
+    });
   };
 
   const setSubdistrict = (e) => {
@@ -440,6 +566,10 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
       subdistrict,
       postcode,
     }));
+    setErrors((prev) => {
+      const { subdistrict: _s, postcode: _pc, ...rest } = prev;
+      return rest;
+    });
   };
 
   const coverUrl = course?.cover_image || "";
@@ -449,40 +579,70 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
     course?.title_en ||
     "";
 
-  function validateStep1() {
-    const errs = [];
+  // ✅ per-field validation
+  function validateStep1Fields() {
+    const e = {};
+    const t = (x) => String(x || "").trim();
 
-    if (!String(form.month_interest || "").trim())
-      errs.push("เลือกเดือนที่สนใจ");
-    if (!String(form.year_interest || "").trim()) errs.push("เลือกปีที่สนใจ");
-    if (!String(form.training_location || "").trim())
-      errs.push("ระบุสถานที่อบรม");
+    // section 1 (required)
+    if (!t(form.trainee_count))
+      e.trainee_count = isEN ? "Required" : "กรุณาระบุจำนวนผู้เข้าอบรม";
+    if (!t(form.month_interest))
+      e.month_interest = isEN ? "Required" : "กรุณาเลือกเดือนที่สนใจ";
+    if (!t(form.year_interest))
+      e.year_interest = isEN ? "Required" : "กรุณาเลือกปีที่สนใจ";
+    if (!t(form.training_location))
+      e.training_location = isEN ? "Required" : "กรุณาระบุสถานที่อบรม";
 
-    if (!String(form.first_name || "").trim()) errs.push("กรอกชื่อ");
-    if (!String(form.last_name || "").trim()) errs.push("กรอกนามสกุล");
-    if (!String(form.contact_phone_raw || "").trim())
-      errs.push("กรอกเบอร์โทรติดต่อ");
-    if (form.contact_phone_raw && !contactPhone.valid)
-      errs.push("รูปแบบเบอร์โทรไม่ถูกต้อง");
-    if (!String(form.email || "").trim()) errs.push("กรอกอีเมล");
-    if (form.email && !isValidEmail(form.email))
-      errs.push("รูปแบบอีเมลไม่ถูกต้อง");
+    // section 2 (required)
+    if (!t(form.first_name)) e.first_name = isEN ? "Required" : "กรุณากรอกชื่อ";
+    if (!t(form.last_name))
+      e.last_name = isEN ? "Required" : "กรุณากรอกนามสกุล";
 
-    if (!String(form.company || "").trim()) errs.push("กรอกบริษัท");
-    if (!String(form.tax_id || "").trim())
-      errs.push("กรอกเลขประจำตัวผู้เสียภาษี");
-    if (String(form.tax_id || "").replace(/\D/g, "").length > 13)
-      errs.push("เลขประจำตัวผู้เสียภาษีต้องไม่เกิน 13 หลัก");
-    if (!String(form.receipt_address || "").trim())
-      errs.push("กรอกที่อยู่ออกใบเสร็จ");
+    if (!t(form.contact_phone_raw))
+      e.contact_phone_raw = isEN ? "Required" : "กรุณากรอกเบอร์โทรติดต่อ";
+    else if (!contactPhone.valid)
+      e.contact_phone_raw = isEN
+        ? "Invalid phone format"
+        : "รูปแบบเบอร์โทรไม่ถูกต้อง";
 
-    return errs;
+    if (!t(form.email)) e.email = isEN ? "Required" : "กรุณากรอกอีเมล";
+    else if (!isValidEmail(form.email))
+      e.email = isEN ? "Invalid email format" : "รูปแบบอีเมลไม่ถูกต้อง";
+
+    // section 3 (required)
+    if (!t(form.company)) e.company = isEN ? "Required" : "กรุณากรอกบริษัท";
+    if (!t(form.branch)) e.branch = isEN ? "Required" : "กรุณาระบุสาขา";
+
+    if (!t(form.tax_id))
+      e.tax_id = isEN ? "Required" : "กรุณากรอกเลขประจำตัวผู้เสียภาษี";
+    else if (String(form.tax_id).replace(/\D/g, "").length !== 13)
+      e.tax_id = isEN
+        ? "Tax ID must be 13 digits"
+        : "เลขประจำตัวผู้เสียภาษีต้องเป็น 13 หลัก";
+
+    if (!t(form.receipt_address))
+      e.receipt_address = isEN ? "Required" : "กรุณากรอกที่อยู่ออกใบเสร็จ";
+
+    // ✅ ถ้าคุณต้องการ “บังคับ” จังหวัด/อำเภอ/ตำบลด้วย ให้ปลดคอมเมนต์ 3 บรรทัดนี้
+    // if (!t(form.province)) e.province = isEN ? "Required" : "กรุณาเลือกจังหวัด";
+    // if (!t(form.district)) e.district = isEN ? "Required" : "กรุณาเลือกอำเภอ/เขต";
+    // if (!t(form.subdistrict)) e.subdistrict = isEN ? "Required" : "กรุณาเลือกตำบล/แขวง";
+
+    return e;
   }
 
   async function onNext() {
-    const errs = validateStep1();
-    if (errs.length) {
-      alert("กรุณากรอกข้อมูลให้ครบ:\n- " + errs.join("\n- "));
+    setSubmitted(true);
+
+    const e = validateStep1Fields();
+    setErrors(e);
+
+    if (Object.keys(e).length) {
+      const firstKey = Object.keys(e)[0];
+      const el = document.querySelector(`[data-field="${firstKey}"]`);
+      if (el?.scrollIntoView)
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
 
@@ -499,7 +659,12 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
     try {
       sessionStorage.removeItem(DraftKey(courseSlug));
     } catch {}
-    setForm(sanitizeDraft({ ...getDefaultForm(), courseSlug, locale }));
+    setForm(
+      sanitizeDraft({ ...getDefaultForm(locale), courseSlug, locale }, locale)
+    );
+    setErrors({});
+    setTouched({});
+    setSubmitted(false);
   }
 
   if (!course) {
@@ -594,16 +759,25 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
                 <Field
                   label={isEN ? "Trainees count" : "จำนวนผู้เข้าอบรม"}
                   required
+                  error={showError("trainee_count") ? errors.trainee_count : ""}
                 >
                   <Input
                     type="number"
                     value={form.trainee_count}
-                    onChange={(e) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        trainee_count: Math.max(1, Number(e.target.value || 1)),
-                      }))
+                    onChange={(e) => {
+                      const v = Math.max(1, Number(e.target.value || 1));
+                      setForm((prev) => ({ ...prev, trainee_count: v }));
+                      setErrors((prev) => {
+                        if (!prev.trainee_count) return prev;
+                        const { trainee_count, ...rest } = prev;
+                        return rest;
+                      });
+                    }}
+                    onBlur={markTouched("trainee_count")}
+                    error={
+                      showError("trainee_count") ? errors.trainee_count : ""
                     }
+                    dataField="trainee_count"
                     placeholder="1"
                   />
                 </Field>
@@ -613,10 +787,18 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
                 <Field
                   label={isEN ? "Interested month" : "เดือนที่สนใจอบรม"}
                   required
+                  error={
+                    showError("month_interest") ? errors.month_interest : ""
+                  }
                 >
                   <Select
                     value={form.month_interest}
-                    onChange={setField("month_interest")}
+                    onChange={clearErrorOnChange("month_interest")}
+                    onBlur={markTouched("month_interest")}
+                    error={
+                      showError("month_interest") ? errors.month_interest : ""
+                    }
+                    dataField="month_interest"
                   >
                     <option value="">{isEN ? "Select..." : "เลือก..."}</option>
                     {(isEN ? MONTHS_EN : MONTHS_TH).map((m) => (
@@ -629,10 +811,19 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
               </div>
 
               <div className="md:col-span-4">
-                <Field label={isEN ? "Interested year" : "ปีที่สนใจ"} required>
+                <Field
+                  label={isEN ? "Interested year" : "ปีที่สนใจ"}
+                  required
+                  error={showError("year_interest") ? errors.year_interest : ""}
+                >
                   <Select
                     value={form.year_interest}
-                    onChange={setField("year_interest")}
+                    onChange={clearErrorOnChange("year_interest")}
+                    onBlur={markTouched("year_interest")}
+                    error={
+                      showError("year_interest") ? errors.year_interest : ""
+                    }
+                    dataField="year_interest"
                   >
                     <option value="">{isEN ? "Select..." : "เลือก..."}</option>
                     {YEARS.map((y) => (
@@ -650,10 +841,22 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
                     isEN ? "Training location requirement" : "ระบุสถานที่อบรม"
                   }
                   required
+                  error={
+                    showError("training_location")
+                      ? errors.training_location
+                      : ""
+                  }
                 >
                   <Textarea
                     value={form.training_location}
-                    onChange={setField("training_location")}
+                    onChange={clearErrorOnChange("training_location")}
+                    onBlur={markTouched("training_location")}
+                    error={
+                      showError("training_location")
+                        ? errors.training_location
+                        : ""
+                    }
+                    dataField="training_location"
                     placeholder={
                       isEN
                         ? "Please specify the training location requirement..."
@@ -678,20 +881,34 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
           >
             <div className="grid gap-5 md:grid-cols-12">
               <div className="md:col-span-6">
-                <Field label={isEN ? "First name" : "ชื่อ"} required>
+                <Field
+                  label={isEN ? "First name" : "ชื่อ"}
+                  required
+                  error={showError("first_name") ? errors.first_name : ""}
+                >
                   <Input
                     value={form.first_name}
-                    onChange={setField("first_name")}
+                    onChange={clearErrorOnChange("first_name")}
+                    onBlur={markTouched("first_name")}
+                    error={showError("first_name") ? errors.first_name : ""}
+                    dataField="first_name"
                     placeholder=""
                   />
                 </Field>
               </div>
 
               <div className="md:col-span-6">
-                <Field label={isEN ? "Last name" : "นามสกุล"} required>
+                <Field
+                  label={isEN ? "Last name" : "นามสกุล"}
+                  required
+                  error={showError("last_name") ? errors.last_name : ""}
+                >
                   <Input
                     value={form.last_name}
-                    onChange={setField("last_name")}
+                    onChange={clearErrorOnChange("last_name")}
+                    onBlur={markTouched("last_name")}
+                    error={showError("last_name") ? errors.last_name : ""}
+                    dataField="last_name"
                     placeholder=""
                   />
                 </Field>
@@ -701,7 +918,9 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
                 <Field label={isEN ? "Position" : "ตำแหน่ง"}>
                   <Input
                     value={form.position}
-                    onChange={setField("position")}
+                    onChange={clearErrorOnChange("position")}
+                    onBlur={markTouched("position")}
+                    dataField="position"
                     placeholder=""
                   />
                 </Field>
@@ -711,7 +930,9 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
                 <Field label={isEN ? "Department" : "แผนก"}>
                   <Input
                     value={form.department}
-                    onChange={setField("department")}
+                    onChange={clearErrorOnChange("department")}
+                    onBlur={markTouched("department")}
+                    dataField="department"
                     placeholder=""
                   />
                 </Field>
@@ -722,6 +943,11 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
                   label={isEN ? "Contact phone" : "เบอร์โทรติดต่อ"}
                   required
                   hint="มือถือ: 0xx-xxx-xxxx | เบอร์บ้าน: 0x-xxx-xxxx ต่อ 12345"
+                  error={
+                    showError("contact_phone_raw")
+                      ? errors.contact_phone_raw
+                      : ""
+                  }
                 >
                   <Input
                     inputMode="tel"
@@ -732,9 +958,22 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
                         ""
                       );
                       setForm((s) => ({ ...s, contact_phone_raw: digits }));
+                      setErrors((prev) => {
+                        if (!prev.contact_phone_raw) return prev;
+                        const { contact_phone_raw, ...rest } = prev;
+                        return rest;
+                      });
                     }}
+                    onBlur={markTouched("contact_phone_raw")}
+                    error={
+                      showError("contact_phone_raw")
+                        ? errors.contact_phone_raw
+                        : ""
+                    }
+                    dataField="contact_phone_raw"
                     placeholder="เช่น 089-123-4567 หรือ 02-123-4567 ต่อ 123"
                   />
+
                   {form.contact_phone_raw ? (
                     <div
                       className={cx(
@@ -745,7 +984,11 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
                       )}
                     >
                       {contactPhone.valid
-                        ? "รูปแบบเบอร์ถูกต้อง"
+                        ? isEN
+                          ? "Valid phone format"
+                          : "รูปแบบเบอร์ถูกต้อง"
+                        : isEN
+                        ? "Invalid phone format"
                         : "รูปแบบเบอร์ยังไม่ถูกต้อง"}
                     </div>
                   ) : null}
@@ -753,10 +996,17 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
               </div>
 
               <div className="md:col-span-6">
-                <Field label={isEN ? "Email" : "อีเมล"} required>
+                <Field
+                  label={isEN ? "Email" : "อีเมล"}
+                  required
+                  error={showError("email") ? errors.email : ""}
+                >
                   <Input
                     value={form.email}
-                    onChange={setField("email")}
+                    onChange={clearErrorOnChange("email")}
+                    onBlur={markTouched("email")}
+                    error={showError("email") ? errors.email : ""}
+                    dataField="email"
                     placeholder="name@company.com"
                   />
                 </Field>
@@ -779,20 +1029,58 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
           >
             <div className="grid gap-5 md:grid-cols-12">
               <div className="md:col-span-8">
-                <Field label="บริษัท" required>
+                <Field
+                  label={isEN ? "Company" : "บริษัท"}
+                  required
+                  error={showError("company") ? errors.company : ""}
+                >
                   <Input
                     value={form.company}
-                    onChange={setField("company")}
-                    placeholder="ชื่อบริษัท"
+                    onChange={clearErrorOnChange("company")}
+                    onBlur={markTouched("company")}
+                    error={showError("company") ? errors.company : ""}
+                    dataField="company"
+                    placeholder={isEN ? "Company name" : "ชื่อบริษัท"}
                   />
                 </Field>
               </div>
 
               <div className="md:col-span-4">
                 <Field
-                  label="เลขประจำตัวผู้เสียภาษี"
+                  label={
+                    <span className="inline-flex items-center gap-2">
+                      {isEN ? "Branch" : "สาขา"}
+                      <InfoTip
+                        text={
+                          isEN
+                            ? 'Default is "Head Office". You can change it to a branch name (e.g., "Bangna", "Chiang Mai").'
+                            : 'ค่าเริ่มต้นเป็น "สำนักงานใหญ่" หากเป็นสาขาอื่นสามารถแก้ไขได้ เช่น "บางนา", "เชียงใหม่"'
+                        }
+                      />
+                    </span>
+                  }
                   required
-                  hint="ตัวเลขเท่านั้น ไม่เกิน 13 หลัก"
+                  error={showError("branch") ? errors.branch : ""}
+                >
+                  <Input
+                    value={form.branch}
+                    onChange={clearErrorOnChange("branch")}
+                    onBlur={markTouched("branch")}
+                    error={showError("branch") ? errors.branch : ""}
+                    dataField="branch"
+                    placeholder={defaultBranchByLocale(locale)}
+                  />
+                </Field>
+              </div>
+
+              <div className="md:col-span-4">
+                <Field
+                  label={isEN ? "Tax ID" : "เลขประจำตัวผู้เสียภาษี"}
+                  required
+                  hint={
+                    isEN ? "Digits only, 13 digits" : "ตัวเลขเท่านั้น 13 หลัก"
+                  }
+                  error={showError("tax_id") ? errors.tax_id : ""}
                 >
                   <Input
                     inputMode="numeric"
@@ -802,16 +1090,28 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
                         .replace(/\D/g, "")
                         .slice(0, 13);
                       setForm((s) => ({ ...s, tax_id: digits }));
+                      setErrors((prev) => {
+                        if (!prev.tax_id) return prev;
+                        const { tax_id, ...rest } = prev;
+                        return rest;
+                      });
                     }}
-                    placeholder="13 หลัก"
+                    onBlur={markTouched("tax_id")}
+                    error={showError("tax_id") ? errors.tax_id : ""}
+                    dataField="tax_id"
+                    placeholder={isEN ? "13 digits" : "13 หลัก"}
                   />
                 </Field>
               </div>
 
               <div className="md:col-span-6">
                 <Field
-                  label="เบอร์โทรบริษัท"
-                  hint="ไม่บังคับ (รองรับรูปแบบเดียวกับเบอร์ติดต่อ)"
+                  label={isEN ? "Company phone" : "เบอร์โทรบริษัท"}
+                  hint={
+                    isEN
+                      ? "Optional (same format as contact phone)"
+                      : "ไม่บังคับ (รองรับรูปแบบเดียวกับเบอร์ติดต่อ)"
+                  }
                 >
                   <Input
                     inputMode="tel"
@@ -823,7 +1123,11 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
                       );
                       setForm((s) => ({ ...s, company_phone_raw: digits }));
                     }}
-                    placeholder="เช่น 02-123-4567 ต่อ 123"
+                    onBlur={markTouched("company_phone_raw")}
+                    dataField="company_phone_raw"
+                    placeholder={
+                      isEN ? "02-123-4567 ext 123" : "เช่น 02-123-4567 ต่อ 123"
+                    }
                   />
                 </Field>
               </div>
@@ -836,10 +1140,18 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
                       : "ที่อยู่สำหรับออกใบเสร็จ (รายละเอียด)"
                   }
                   required
+                  error={
+                    showError("receipt_address") ? errors.receipt_address : ""
+                  }
                 >
                   <Textarea
                     value={form.receipt_address}
-                    onChange={setField("receipt_address")}
+                    onChange={clearErrorOnChange("receipt_address")}
+                    onBlur={markTouched("receipt_address")}
+                    error={
+                      showError("receipt_address") ? errors.receipt_address : ""
+                    }
+                    dataField="receipt_address"
                     placeholder={
                       isEN
                         ? "Street / Building / etc."
@@ -852,16 +1164,28 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
               {/* cascade selects */}
               <div className="md:col-span-3">
                 <Field
-                  label="จังหวัด"
-                  hint="เลือกจังหวัดก่อน เพื่อปลดล็อคอำเภอ"
+                  label={isEN ? "Province" : "จังหวัด"}
+                  hint={
+                    isEN
+                      ? "Select province to unlock district"
+                      : "เลือกจังหวัดก่อน เพื่อปลดล็อคอำเภอ"
+                  }
                 >
                   <Select
                     value={form.province}
                     onChange={setProvince}
                     disabled={provinceDisabled}
+                    onBlur={markTouched("province")}
+                    dataField="province"
                   >
                     <option value="">
-                      {thDb ? "เลือก..." : "กำลังโหลดฐานข้อมูล..."}
+                      {thDb
+                        ? isEN
+                          ? "Select..."
+                          : "เลือก..."
+                        : isEN
+                        ? "Loading..."
+                        : "กำลังโหลดฐานข้อมูล..."}
                     </option>
                     {provinceOptions.map((p) => (
                       <option key={p} value={p}>
@@ -873,14 +1197,29 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
               </div>
 
               <div className="md:col-span-3">
-                <Field label="อำเภอ/เขต" hint="ปลดล็อคเมื่อเลือกจังหวัดแล้ว">
+                <Field
+                  label={isEN ? "District" : "อำเภอ/เขต"}
+                  hint={
+                    isEN
+                      ? "Unlocked after province"
+                      : "ปลดล็อคเมื่อเลือกจังหวัดแล้ว"
+                  }
+                >
                   <Select
                     value={form.district}
                     onChange={setDistrict}
                     disabled={districtDisabled}
+                    onBlur={markTouched("district")}
+                    dataField="district"
                   >
                     <option value="">
-                      {districtDisabled ? "เลือกจังหวัดก่อน" : "เลือก..."}
+                      {districtDisabled
+                        ? isEN
+                          ? "Select province first"
+                          : "เลือกจังหวัดก่อน"
+                        : isEN
+                        ? "Select..."
+                        : "เลือก..."}
                     </option>
                     {districtOptions.map((d) => (
                       <option key={d} value={d}>
@@ -892,14 +1231,29 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
               </div>
 
               <div className="md:col-span-3">
-                <Field label="ตำบล/แขวง" hint="ปลดล็อคเมื่อเลือกอำเภอแล้ว">
+                <Field
+                  label={isEN ? "Subdistrict" : "ตำบล/แขวง"}
+                  hint={
+                    isEN
+                      ? "Unlocked after district"
+                      : "ปลดล็อคเมื่อเลือกอำเภอแล้ว"
+                  }
+                >
                   <Select
                     value={form.subdistrict}
                     onChange={setSubdistrict}
                     disabled={subdistrictDisabled}
+                    onBlur={markTouched("subdistrict")}
+                    dataField="subdistrict"
                   >
                     <option value="">
-                      {subdistrictDisabled ? "เลือกอำเภอก่อน" : "เลือก..."}
+                      {subdistrictDisabled
+                        ? isEN
+                          ? "Select district first"
+                          : "เลือกอำเภอก่อน"
+                        : isEN
+                        ? "Select..."
+                        : "เลือก..."}
                     </option>
                     {subdistrictOptions.map((s) => (
                       <option key={s} value={s}>
@@ -911,12 +1265,20 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
               </div>
 
               <div className="md:col-span-3">
-                <Field label="รหัสไปรษณีย์" hint="Auto จากตำบล (แก้ไม่ได้)">
+                <Field
+                  label={isEN ? "Postcode" : "รหัสไปรษณีย์"}
+                  hint={
+                    isEN
+                      ? "Auto from subdistrict (read-only)"
+                      : "Auto จากตำบล (แก้ไม่ได้)"
+                  }
+                >
                   <Input
                     value={form.postcode}
                     onChange={() => {}}
                     readOnly
-                    placeholder="Auto"
+                    dataField="postcode"
+                    placeholder={isEN ? "Auto" : "Auto"}
                   />
                 </Field>
               </div>
@@ -937,7 +1299,9 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
             >
               <Textarea
                 value={form.note}
-                onChange={setField("note")}
+                onChange={clearErrorOnChange("note")}
+                onBlur={markTouched("note")}
+                dataField="note"
                 placeholder=""
               />
             </Field>

@@ -66,7 +66,7 @@ export default function AdminCoursesClient({ locale }) {
         </div>
 
         <Link
-          href={`/${locale}/admin/courses/new`}
+          href={`/${locale}/k8Pz7M2xYn5R0wLq/admin/courses/new`}
           className="rounded-xl bg-white px-4 py-2.5 text-sm font-extrabold text-slate-900 hover:bg-white/90"
         >
           + New Course
@@ -151,7 +151,7 @@ export default function AdminCoursesClient({ locale }) {
 
                     <td className="px-5 py-4 text-right">
                       <Link
-                        href={`/${locale}/admin/courses/${c._id}/edit`}
+                        href={`/${locale}/k8Pz7M2xYn5R0wLq/admin/courses/${c._id}/edit`}
                         className="rounded-lg bg-white px-3 py-2 text-xs font-extrabold text-slate-900 hover:bg-white/90"
                       >
                         Edit

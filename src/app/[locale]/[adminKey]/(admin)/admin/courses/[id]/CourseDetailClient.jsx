@@ -86,7 +86,7 @@ export default function CourseDetailClient({ locale = "th", id, ssrItem }) {
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) throw new Error(data?.message || "Delete failed");
-      location.href = `/${locale}/admin/courses`;
+      location.href = `/${locale}/k8Pz7M2xYn5R0wLq/admin/courses`;
     } catch (e) {
       setMsg(e?.message || "Error");
       setBusyDel(false);

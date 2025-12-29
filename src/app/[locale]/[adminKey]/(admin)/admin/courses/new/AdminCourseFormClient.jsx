@@ -147,7 +147,7 @@ export default function AdminCourseFormClient({
 
       // ไปหน้า edit ต่อ หรือกลับ list
       const item = data.item;
-      location.href = `/${locale}/admin/courses`;
+      location.href = `/${locale}/k8Pz7M2xYn5R0wLq/admin/courses`;
     } catch (e) {
       setErr(String(e?.message || e));
     } finally {
@@ -185,7 +185,7 @@ export default function AdminCourseFormClient({
 
         <div className="flex items-center gap-2">
           <Link
-            href={`/${locale}/admin/courses`}
+            href={`/${locale}/k8Pz7M2xYn5R0wLq/admin/courses`}
             className="rounded-xl bg-white/5 px-4 py-2 text-sm font-extrabold text-white ring-1 ring-white/10 hover:bg-white/10"
           >
             Back

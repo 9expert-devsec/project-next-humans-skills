@@ -3,6 +3,17 @@ import mongoose from "mongoose";
 
 const { Schema } = mongoose;
 
+/** helper: normalize session partners (รองรับข้อมูลเก่า partner:string) */
+function normalizePartners(s) {
+  const arr = Array.isArray(s?.partners)
+    ? s.partners.map((x) => String(x || "").trim()).filter(Boolean)
+    : [];
+  const legacy = String(s?.partner || "").trim();
+  if (arr.length) return arr;
+  if (legacy) return [legacy];
+  return [];
+}
+
 const SessionSchema = new Schema(
   {
     period: {
@@ -11,7 +22,19 @@ const SessionSchema = new Schema(
       default: "morning",
     },
     title: { type: String, default: "" },
-    partner: { type: String, default: "" }, // "bitkub" | "9expert" | "key" | custom
+
+    /**
+     * ✅ ใหม่: partners เลือกได้หลายอันต่อ session
+     * - ค่าใน array เป็น key เช่น "bitkub" | "9expert" | "key"
+     */
+    partners: [{ type: String, default: "" }],
+
+    /**
+     * ✅ ของเดิม (legacy) — เก็บไว้เพื่อ backward compatibility
+     * ถ้าคุณพร้อม migrate แล้วค่อยลบทิ้งได้
+     */
+    partner: { type: String, default: "" },
+
     topics: [{ type: String }],
     notes: { type: String, default: "" },
   },
@@ -88,5 +111,25 @@ const CourseSchema = new Schema(
   },
   { timestamps: true }
 );
+
+/**
+ * ✅ Auto-migrate-in-memory:
+ * เวลา save ถ้าเจอ session เก่าที่มี partner แต่ไม่มี partners
+ * จะเติม partners ให้เอง
+ */
+CourseSchema.pre("validate", function (next) {
+  try {
+    const cur = Array.isArray(this.curriculum) ? this.curriculum : [];
+    cur.forEach((day) => {
+      const sessions = Array.isArray(day?.sessions) ? day.sessions : [];
+      sessions.forEach((s) => {
+        const partners = normalizePartners(s);
+        s.partners = partners;
+        // ไม่บังคับลบ partner เพื่อ compatibility
+      });
+    });
+  } catch {}
+  next();
+});
 
 export default mongoose.models.Course || mongoose.model("Course", CourseSchema);

@@ -1,4 +1,3 @@
-// src/components/admin/courses/CurriculumBuilder.jsx
 "use client";
 
 import { useMemo } from "react";
@@ -7,13 +6,17 @@ function cx(...a) {
   return a.filter(Boolean).join(" ");
 }
 
+function safeArr(x) {
+  return Array.isArray(x) ? x : [];
+}
+
 function newDay(dayNum) {
   return {
     day: dayNum,
     title: "",
     sessions: [
-      { period: "morning", title: "", partner: "", topics: [], notes: "" },
-      { period: "afternoon", title: "", partner: "", topics: [], notes: "" },
+      { period: "morning", title: "", partners: [], topics: [], notes: "" },
+      { period: "afternoon", title: "", partners: [], topics: [], notes: "" },
     ],
   };
 }
@@ -24,36 +27,73 @@ function periodLabel(p) {
   return "Evening";
 }
 
+/**
+ * ✅ normalize รองรับข้อมูลเก่า:
+ * - session.partner (string) -> session.partners (array)
+ * - ถ้าไม่มี partners ให้ default เป็น []
+ */
+function normalizeDays(rawDays) {
+  const days = Array.isArray(rawDays) ? rawDays : [];
+  return days.map((d, di) => {
+    const sessions = Array.isArray(d?.sessions) ? d.sessions : [];
+    const normSessions = sessions.map((s) => {
+      const legacyPartner = String(s?.partner || "").trim();
+      const partners = Array.isArray(s?.partners)
+        ? s.partners.map((x) => String(x || "").trim()).filter(Boolean)
+        : legacyPartner
+        ? [legacyPartner]
+        : [];
+      const next = {
+        ...s,
+        partners,
+      };
+      // ไม่จำเป็นต้องลบ partner ทิ้ง แต่จะไม่ใช้งานแล้ว
+      return next;
+    });
+
+    return {
+      ...d,
+      day: Number(d?.day || di + 1),
+      title: String(d?.title || ""),
+      sessions: normSessions,
+    };
+  });
+}
+
 export default function CurriculumBuilder({
   value = [],
   onChange,
   partners = [],
 }) {
-  const days = Array.isArray(value) ? value : [];
+  // ✅ ใช้ normalized data เพื่อรองรับข้อมูลเก่า
+  const days = useMemo(() => normalizeDays(value), [value]);
 
   const nextDayNumber = useMemo(() => {
     const max = days.reduce((m, d) => Math.max(m, Number(d?.day || 0)), 0);
     return max + 1;
   }, [days]);
 
+  function commit(next) {
+    onChange?.(next);
+  }
+
   function setDay(idx, patch) {
     const next = days.map((d, i) => (i === idx ? { ...d, ...patch } : d));
-    onChange(next);
+    commit(next);
   }
 
   function addDay() {
-    onChange([...days, newDay(nextDayNumber)]);
+    commit([...days, newDay(nextDayNumber)]);
   }
 
   function removeDay(idx) {
     const next = days
       .filter((_, i) => i !== idx)
       .map((d, i) => ({ ...d, day: i + 1 }));
-    onChange(next);
+    commit(next);
   }
 
   function addSession(dayIdx) {
-    const d = days[dayIdx];
     const next = days.map((x, i) =>
       i === dayIdx
         ? {
@@ -63,7 +103,7 @@ export default function CurriculumBuilder({
               {
                 period: "evening",
                 title: "",
-                partner: "",
+                partners: [],
                 topics: [],
                 notes: "",
               },
@@ -71,7 +111,7 @@ export default function CurriculumBuilder({
           }
         : x
     );
-    onChange(next);
+    commit(next);
   }
 
   function removeSession(dayIdx, sessionIdx) {
@@ -80,7 +120,7 @@ export default function CurriculumBuilder({
       const sessions = (d.sessions || []).filter((_, si) => si !== sessionIdx);
       return { ...d, sessions };
     });
-    onChange(next);
+    commit(next);
   }
 
   function setSession(dayIdx, sessionIdx, patch) {
@@ -91,7 +131,7 @@ export default function CurriculumBuilder({
       );
       return { ...d, sessions };
     });
-    onChange(next);
+    commit(next);
   }
 
   function setTopicsFromText(dayIdx, sessionIdx, text) {
@@ -102,6 +142,14 @@ export default function CurriculumBuilder({
     setSession(dayIdx, sessionIdx, { topics });
   }
 
+  function toggleSessionPartner(dayIdx, sessionIdx, k) {
+    const s = days?.[dayIdx]?.sessions?.[sessionIdx];
+    const current = safeArr(s?.partners);
+    const has = current.includes(k);
+    const nextPartners = has ? current.filter((x) => x !== k) : [...current, k];
+    setSession(dayIdx, sessionIdx, { partners: nextPartners });
+  }
+
   return (
     <div className="grid gap-4">
       <div className="flex items-center justify-between gap-2">
@@ -110,7 +158,7 @@ export default function CurriculumBuilder({
             Curriculum Builder
           </div>
           <div className="mt-1 text-xs text-white/60">
-            เพิ่มวัน/ช่วง/หัวข้อ (รองรับหลาย Partner ต่อวัน)
+            เพิ่มวัน/ช่วง/หัวข้อ (รองรับหลาย Partner ต่อ session ✅)
           </div>
         </div>
 
@@ -225,28 +273,48 @@ export default function CurriculumBuilder({
                       />
                     </div>
 
+                    {/* ✅ Partner multi */}
                     <div>
                       <div className="mb-2 text-xs font-extrabold text-white/70">
-                        Partner
+                        Partner (เลือกได้หลายอัน)
                       </div>
-                      <select
-                        value={s.partner || ""}
-                        onChange={(e) =>
-                          setSession(dayIdx, sessionIdx, {
-                            partner: e.target.value,
-                          })
-                        }
-                        className="w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white outline-none focus:border-white/25"
-                      >
-                        <option value="" className="bg-slate-900">
-                          -
-                        </option>
-                        {partners.map((p) => (
-                          <option key={p} value={p} className="bg-slate-900">
-                            {p}
-                          </option>
-                        ))}
-                      </select>
+
+                      <div className="w-full rounded-2xl border border-white/10 bg-black/25 p-3">
+                        <div className="flex flex-wrap gap-2">
+                          {partners.length === 0 ? (
+                            <div className="text-xs text-white/50">-</div>
+                          ) : (
+                            partners.map((p) => {
+                              const active = safeArr(s.partners).includes(p);
+                              return (
+                                <button
+                                  key={p}
+                                  type="button"
+                                  onClick={() =>
+                                    toggleSessionPartner(dayIdx, sessionIdx, p)
+                                  }
+                                  className={cx(
+                                    "rounded-full px-3 py-2 text-xs font-extrabold ring-1",
+                                    active
+                                      ? "bg-emerald-500/15 text-emerald-200 ring-emerald-500/30"
+                                      : "bg-white/5 text-white/70 ring-white/10 hover:bg-white/10"
+                                  )}
+                                  title="คลิกเพื่อเลือก/ยกเลิก"
+                                >
+                                  {p}
+                                </button>
+                              );
+                            })
+                          )}
+                        </div>
+
+                        <div className="mt-2 text-[11px] text-white/45">
+                          เลือกแล้ว:{" "}
+                          {safeArr(s.partners).length
+                            ? safeArr(s.partners).join(", ")
+                            : "-"}
+                        </div>
+                      </div>
                     </div>
                   </div>
 

@@ -24,6 +24,15 @@ const RegistrationSchema = new mongoose.Schema(
 
     // section 3
     company: { type: String, default: "" },
+
+    // ✅ FIX: branch (required + default)
+    branch: {
+      type: String,
+      default: "สำนักงานใหญ่",
+      trim: true,
+      required: true,
+    },
+
     tax_id: { type: String, default: "" },
     company_phone: { type: String, default: "" }, // digits-only
     receipt_address: { type: String, default: "" },

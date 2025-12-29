@@ -1,3 +1,4 @@
+// api/admin/courses/[id]/route.js
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import dbConnect from "@/lib/dbConnect";
@@ -7,6 +8,7 @@ import slugify from "slugify";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+/* ---------------- helpers ---------------- */
 function makeSlug(s) {
   const base = String(s || "")
     .trim()
@@ -18,12 +20,7 @@ function makeSlug(s) {
 async function ensureUniqueSlugForUpdate(courseId, base) {
   let slug = base;
   let i = 1;
-  while (
-    await Course.exists({
-      slug,
-      _id: { $ne: courseId },
-    })
-  ) {
+  while (await Course.exists({ slug, _id: { $ne: courseId } })) {
     i += 1;
     slug = `${base}-${i}`;
   }
@@ -34,13 +31,79 @@ function arr(x) {
   return Array.isArray(x) ? x.filter(Boolean) : [];
 }
 
+function cleanStr(x) {
+  return String(x || "").trim();
+}
+
+function uniq(xs) {
+  const out = [];
+  const seen = new Set();
+  for (const v of xs) {
+    const s = cleanStr(v);
+    if (!s) continue;
+    if (seen.has(s)) continue;
+    seen.add(s);
+    out.push(s);
+  }
+  return out;
+}
+
+/**
+ * ✅ Normalize curriculum to support session.partners[]
+ * allowCustom=true: อนุญาต custom partner key ได้
+ * allowCustom=false: กรองเฉพาะ key ที่อยู่ใน course.partners
+ */
+function normalizeCurriculum(
+  curriculumInput,
+  coursePartners = [],
+  allowCustom = true
+) {
+  const allow = new Set(uniq(coursePartners));
+  const days = Array.isArray(curriculumInput) ? curriculumInput : [];
+
+  return days
+    .map((d, idx) => {
+      const dayNum = Math.max(1, Number(d?.day || idx + 1));
+      const sessions = Array.isArray(d?.sessions) ? d.sessions : [];
+
+      const normSessions = sessions.map((s) => {
+        const legacy = cleanStr(s?.partner);
+        const fromArr = Array.isArray(s?.partners) ? s.partners : [];
+        const merged = uniq([...(fromArr || []), ...(legacy ? [legacy] : [])]);
+
+        const partners = allowCustom
+          ? merged
+          : merged.filter((k) => allow.has(k));
+
+        return {
+          period: cleanStr(s?.period) || "morning",
+          title: cleanStr(s?.title),
+          partners, // ✅ ใหม่
+          partner: legacy, // legacy คงไว้ (optional)
+          topics: Array.isArray(s?.topics)
+            ? s.topics.map((x) => cleanStr(x)).filter(Boolean)
+            : [],
+          notes: cleanStr(s?.notes),
+        };
+      });
+
+      return { day: dayNum, title: cleanStr(d?.title), sessions: normSessions };
+    })
+    .filter((d) => d.day >= 1);
+}
+
 function normalizePatch(body = {}, existing = {}) {
-  return {
-    title_th: String(body?.title_th ?? existing.title_th ?? "").trim(),
-    title_en: String(body?.title_en ?? existing.title_en ?? "").trim(),
-    short_description: String(
+  // ใช้ partners ที่ส่งมา (ถ้ามี) ไม่งั้นใช้ของเดิม
+  const coursePartners = Array.isArray(body.partners)
+    ? arr(body.partners).map(cleanStr).filter(Boolean)
+    : arr(existing.partners).map(cleanStr).filter(Boolean);
+
+  const patch = {
+    title_th: cleanStr(body?.title_th ?? existing.title_th ?? ""),
+    title_en: cleanStr(body?.title_en ?? existing.title_en ?? ""),
+    short_description: cleanStr(
       body?.short_description ?? existing.short_description ?? ""
-    ).trim(),
+    ),
 
     level: ["executive", "middle", "workforce", "citizen", "general"].includes(
       body.level
@@ -60,43 +123,49 @@ function normalizePatch(body = {}, existing = {}) {
     isActive:
       typeof body.isActive === "boolean" ? body.isActive : !!existing.isActive,
 
-    cover_image: String(body?.cover_image ?? existing.cover_image ?? "").trim(),
+    cover_image: cleanStr(body?.cover_image ?? existing.cover_image ?? ""),
 
-    tags: Array.isArray(body.tags) ? arr(body.tags) : arr(existing.tags),
-    partners: Array.isArray(body.partners)
-      ? arr(body.partners)
-      : arr(existing.partners),
+    tags: Array.isArray(body.tags)
+      ? arr(body.tags).map(cleanStr).filter(Boolean)
+      : arr(existing.tags),
+    partners: coursePartners,
 
     content: body.content
       ? {
-          rationale: String(
+          rationale: cleanStr(
             body?.content?.rationale ?? existing?.content?.rationale ?? ""
-          ).trim(),
+          ),
           objectives: arr(
             body?.content?.objectives ?? existing?.content?.objectives
-          ),
+          )
+            .map(cleanStr)
+            .filter(Boolean),
           target_audience: arr(
             body?.content?.target_audience ?? existing?.content?.target_audience
-          ),
-          benefits: arr(body?.content?.benefits ?? existing?.content?.benefits),
+          )
+            .map(cleanStr)
+            .filter(Boolean),
+          benefits: arr(body?.content?.benefits ?? existing?.content?.benefits)
+            .map(cleanStr)
+            .filter(Boolean),
         }
       : existing.content || {},
 
+    // ✅ normalize curriculum ถ้าส่งมา
     curriculum: Array.isArray(body.curriculum)
-      ? arr(body.curriculum)
+      ? normalizeCurriculum(body.curriculum, coursePartners, true)
       : arr(existing.curriculum),
 
-    executive_summary: String(
+    executive_summary: cleanStr(
       body?.executive_summary ?? existing.executive_summary ?? ""
-    ).trim(),
+    ),
     highlight_modules: Array.isArray(body.highlight_modules)
-      ? arr(body.highlight_modules)
+      ? arr(body.highlight_modules).map(cleanStr).filter(Boolean)
       : arr(existing.highlight_modules),
     key_takeaways: Array.isArray(body.key_takeaways)
-      ? arr(body.key_takeaways)
+      ? arr(body.key_takeaways).map(cleanStr).filter(Boolean)
       : arr(existing.key_takeaways),
 
-    // เก็บ business เป็น object ก่อน แล้วค่อย flatten ตอน PUT
     business: body.business
       ? {
           price_amount: Number(
@@ -105,11 +174,11 @@ function normalizePatch(body = {}, existing = {}) {
               0
           ),
           price_currency:
-            String(
+            cleanStr(
               body?.business?.price_currency ??
                 existing?.business?.price_currency ??
                 "THB"
-            ).trim() || "THB",
+            ) || "THB",
           vat_type: ["include", "exclude", ""].includes(
             body?.business?.vat_type
           )
@@ -122,18 +191,21 @@ function normalizePatch(body = {}, existing = {}) {
         }
       : existing.business || {},
   };
+
+  return patch;
 }
 
 /** flatten object -> dot paths (ยกเว้น business เราจะจัดเอง) */
 function flattenForSet(patch = {}) {
   const set = {};
   for (const [k, v] of Object.entries(patch)) {
-    if (k === "business") continue; // จัดการแยกเอง
+    if (k === "business") continue;
     set[k] = v;
   }
   return set;
 }
 
+/* ---------------- route ---------------- */
 export async function GET(_req, ctx) {
   await dbConnect();
   const { id } = await ctx.params;
@@ -183,7 +255,7 @@ export async function PUT(req, ctx) {
   }
 
   // slug update (ส่งมาก็เปลี่ยน ไม่ส่งมาก็ใช้เดิม)
-  const rawSlug = String(body?.slug || "").trim();
+  const rawSlug = cleanStr(body?.slug);
   if (rawSlug) {
     const base = makeSlug(rawSlug);
     patch.slug = await ensureUniqueSlugForUpdate(existing._id, base);
@@ -195,12 +267,10 @@ export async function PUT(req, ctx) {
   // ✅ business.* set แบบ dot-path เพื่อไม่ชนกับ $unset
   const unset = {};
   if (patch.business && typeof patch.business === "object") {
-    // set fields อื่น ๆ
     $set["business.price_amount"] = patch.business.price_amount ?? 0;
     $set["business.price_currency"] = patch.business.price_currency ?? "THB";
     $set["business.vat_type"] = patch.business.vat_type ?? "";
 
-    // handle certificate_template
     const ct = patch.business.certificate_template;
 
     if (ct === "" || ct === null || (typeof ct === "string" && !ct.trim())) {
@@ -232,7 +302,6 @@ export async function PUT(req, ctx) {
   const updated = await Course.findByIdAndUpdate(id, update, {
     new: true,
   }).lean();
-
   return NextResponse.json({ ok: true, item: updated });
 }
 

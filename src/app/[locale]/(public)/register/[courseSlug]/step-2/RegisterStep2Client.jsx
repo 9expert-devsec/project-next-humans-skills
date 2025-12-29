@@ -435,6 +435,12 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
                   value={draft.company || "-"}
                 />
               </div>
+              <div className="md:col-span-3">
+                <Item
+                  label={isEN ? "Branch" : "สาขา"}
+                  value={draft.branch || "-"} 
+                />
+              </div>
               <div className="md:col-span-4">
                 <Item
                   label={isEN ? "Tax ID" : "เลขประจำตัวผู้เสียภาษี"}
