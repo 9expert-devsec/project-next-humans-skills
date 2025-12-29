@@ -1,4 +1,4 @@
-// src/app/[locale]/(public)/courses/[slug]/page.jsx
+// src/app/[local]/(public)/courses/[slug]/page.jsx
 import Link from "next/link";
 import { headers } from "next/headers";
 
@@ -6,9 +6,13 @@ import { headers } from "next/headers";
 
 async function getOrigin() {
   const h = await headers();
+
   const host = h.get("x-forwarded-host") || h.get("host");
   const proto = h.get("x-forwarded-proto") || "https";
+
   if (host) return `${proto}://${host}`;
+
+  // fallback เฉพาะตอน dev
   return process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 }
 
@@ -17,12 +21,10 @@ async function getCourse(slug) {
   const url = `${origin}/api/public/courses/${encodeURIComponent(slug)}`;
 
   const res = await fetch(url, { cache: "no-store" }).catch(() => null);
-  if (!res) return null;
+  if (!res || !res.ok) return null;
 
   const data = await res.json().catch(() => ({}));
-  // ✅ API ของคุณคืน { ok:true, item }
-  if (!res.ok || !data?.ok) return null;
-  return data.item || null;
+  return data?.ok ? data.item : null;
 }
 
 function Badge({ children }) {
@@ -60,23 +62,38 @@ function Section({ title, children }) {
   );
 }
 
-function PartnerBadges({ partners = [] }) {
-  const arr = Array.isArray(partners) ? partners.filter(Boolean) : [];
-  if (!arr.length) return null;
-  return (
-    <span className="inline-flex flex-wrap gap-2">
-      {arr.map((p) => (
-        <Badge key={p}>{p}</Badge>
-      ))}
-    </span>
-  );
+/* ---- partner label helpers (ทำให้แสดงสวยขึ้น) ---- */
+const PARTNER_LABEL = {
+  bitkub: "Bitkub",
+  "9expert": "9Expert",
+  key: "Key",
+};
+
+function partnerLabel(k) {
+  const key = String(k || "").trim();
+  return PARTNER_LABEL[key] || key;
+}
+
+function getSessionPartners(session) {
+  // รองรับทั้ง schema ใหม่ (partners[]) และเก่า (partner)
+  const list = Array.isArray(session?.partners)
+    ? session.partners
+    : session?.partner
+    ? [session.partner]
+    : [];
+
+  return list
+    .map((x) => String(x || "").trim())
+    .filter(Boolean)
+    .filter((v, i, a) => a.indexOf(v) === i);
 }
 
 /* ---------------- page ---------------- */
 
 export default async function Page({ params }) {
-  const { locale, slug } = params || {};
-  const safeLocale = locale === "en" ? "en" : "th";
+  // ✅ โฟลเดอร์คุณคือ [local]
+  const { local, slug } = await params;
+  const safeLocale = local === "en" ? "en" : "th";
 
   const safeSlug = decodeURIComponent(String(slug || "")).trim();
   const course = safeSlug ? await getCourse(safeSlug) : null;
@@ -131,7 +148,9 @@ export default async function Page({ params }) {
             <div className="flex flex-wrap gap-2">
               <Badge>{course.level}</Badge>
               <Badge>{course.duration_days || 1} วัน</Badge>
-              <PartnerBadges partners={course.partners || []} />
+              {(course.partners || []).map((p) => (
+                <Badge key={p}>{partnerLabel(p)}</Badge>
+              ))}
             </div>
 
             {course.short_description ? (
@@ -197,15 +216,10 @@ export default async function Page({ params }) {
 
                     <div className="mt-3 grid gap-3">
                       {(d.sessions || []).map((s, si) => {
-                        const partnersArr = Array.isArray(s.partners)
-                          ? s.partners.filter(Boolean)
-                          : [];
-                        const partnerLabel =
-                          partnersArr.length > 0
-                            ? partnersArr.join(", ")
-                            : s.partner
-                            ? s.partner
-                            : "";
+                        const ps = getSessionPartners(s);
+                        const partnerText = ps.length
+                          ? " • " + ps.map(partnerLabel).join(", ")
+                          : "";
 
                         return (
                           <div
@@ -214,7 +228,7 @@ export default async function Page({ params }) {
                           >
                             <div className="text-xs font-extrabold text-white/70">
                               {(s.period || "").toUpperCase()}
-                              {partnerLabel ? ` • ${partnerLabel}` : ""}
+                              {partnerText}
                             </div>
 
                             <div className="mt-2 text-sm font-bold text-white">
