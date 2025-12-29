@@ -11,8 +11,6 @@ async function getOrigin() {
   const proto = h.get("x-forwarded-proto") || "https";
 
   if (host) return `${proto}://${host}`;
-
-  // fallback เฉพาะตอน dev
   return process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 }
 
@@ -62,30 +60,29 @@ function Section({ title, children }) {
   );
 }
 
-/* ---- partner label helpers (ทำให้แสดงสวยขึ้น) ---- */
+/** ✅ map partner key -> label */
 const PARTNER_LABEL = {
   bitkub: "Bitkub",
   "9expert": "9Expert",
   key: "Key",
 };
 
-function partnerLabel(k) {
-  const key = String(k || "").trim();
-  return PARTNER_LABEL[key] || key;
+function getSessionPartnerKeys(s) {
+  // ✅ ใหม่: array
+  if (Array.isArray(s?.partners) && s.partners.length) {
+    return s.partners.map((x) => String(x || "").trim()).filter(Boolean);
+  }
+  // ✅ เก่า: single
+  const one = String(s?.partner || "").trim();
+  return one ? [one] : [];
 }
 
-function getSessionPartners(session) {
-  // รองรับทั้ง schema ใหม่ (partners[]) และเก่า (partner)
-  const list = Array.isArray(session?.partners)
-    ? session.partners
-    : session?.partner
-    ? [session.partner]
-    : [];
-
-  return list
-    .map((x) => String(x || "").trim())
+function renderPartnersLine(keys) {
+  if (!keys.length) return "";
+  return keys
+    .map((k) => PARTNER_LABEL[k] || k)
     .filter(Boolean)
-    .filter((v, i, a) => a.indexOf(v) === i);
+    .join(" • ");
 }
 
 /* ---------------- page ---------------- */
@@ -103,7 +100,7 @@ export default async function Page({ params }) {
       <div className="mx-auto max-w-4xl px-4 py-16 text-white">
         <h1 className="text-2xl font-extrabold">Course not found</h1>
         <p className="mt-2 text-white/60">
-          อาจยังไม่ published หรือปิดการใช้งาน หรือ API คืน ok:false
+          อาจยังไม่ published หรือปิดการใช้งาน
         </p>
         <Link
           href={`/${safeLocale}`}
@@ -149,7 +146,7 @@ export default async function Page({ params }) {
               <Badge>{course.level}</Badge>
               <Badge>{course.duration_days || 1} วัน</Badge>
               {(course.partners || []).map((p) => (
-                <Badge key={p}>{partnerLabel(p)}</Badge>
+                <Badge key={p}>{PARTNER_LABEL[p] || p}</Badge>
               ))}
             </div>
 
@@ -216,10 +213,8 @@ export default async function Page({ params }) {
 
                     <div className="mt-3 grid gap-3">
                       {(d.sessions || []).map((s, si) => {
-                        const ps = getSessionPartners(s);
-                        const partnerText = ps.length
-                          ? " • " + ps.map(partnerLabel).join(", ")
-                          : "";
+                        const pkeys = getSessionPartnerKeys(s);
+                        const partnerText = renderPartnersLine(pkeys);
 
                         return (
                           <div
@@ -228,7 +223,7 @@ export default async function Page({ params }) {
                           >
                             <div className="text-xs font-extrabold text-white/70">
                               {(s.period || "").toUpperCase()}
-                              {partnerText}
+                              {partnerText ? ` • ${partnerText}` : ""}
                             </div>
 
                             <div className="mt-2 text-sm font-bold text-white">
