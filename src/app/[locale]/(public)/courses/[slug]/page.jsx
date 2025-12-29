@@ -1,4 +1,4 @@
-// src/app/[local]/(public)/courses/[slug]/page.jsx
+// src/app/[locale]/(public)/courses/[slug]/page.jsx
 import Link from "next/link";
 import { headers } from "next/headers";
 
@@ -6,10 +6,8 @@ import { headers } from "next/headers";
 
 async function getOrigin() {
   const h = await headers();
-
   const host = h.get("x-forwarded-host") || h.get("host");
   const proto = h.get("x-forwarded-proto") || "https";
-
   if (host) return `${proto}://${host}`;
   return process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 }
@@ -19,10 +17,12 @@ async function getCourse(slug) {
   const url = `${origin}/api/public/courses/${encodeURIComponent(slug)}`;
 
   const res = await fetch(url, { cache: "no-store" }).catch(() => null);
-  if (!res || !res.ok) return null;
+  if (!res) return null;
 
   const data = await res.json().catch(() => ({}));
-  return data?.ok ? data.item : null;
+  // ✅ API ของคุณคืน { ok:true, item }
+  if (!res.ok || !data?.ok) return null;
+  return data.item || null;
 }
 
 function Badge({ children }) {
@@ -60,32 +60,23 @@ function Section({ title, children }) {
   );
 }
 
-/* ---------------- partner helpers ---------------- */
-
-const PARTNER_LABEL = {
-  bitkub: "Bitkub",
-  "9expert": "9Expert",
-  key: "Key",
-};
-
-function renderPartners(session) {
-  const arr = Array.isArray(session?.partners)
-    ? session.partners.map((x) => String(x || "").trim()).filter(Boolean)
-    : [];
-
-  const fallback = session?.partner ? [String(session.partner).trim()] : [];
-
-  const list = arr.length ? arr : fallback;
-  if (!list.length) return "";
-
-  return list.map((k) => PARTNER_LABEL[k] || k).join(" + ");
+function PartnerBadges({ partners = [] }) {
+  const arr = Array.isArray(partners) ? partners.filter(Boolean) : [];
+  if (!arr.length) return null;
+  return (
+    <span className="inline-flex flex-wrap gap-2">
+      {arr.map((p) => (
+        <Badge key={p}>{p}</Badge>
+      ))}
+    </span>
+  );
 }
 
 /* ---------------- page ---------------- */
 
 export default async function Page({ params }) {
-  const { local, slug } = await params;
-  const safeLocale = local === "en" ? "en" : "th";
+  const { locale, slug } = params || {};
+  const safeLocale = locale === "en" ? "en" : "th";
 
   const safeSlug = decodeURIComponent(String(slug || "")).trim();
   const course = safeSlug ? await getCourse(safeSlug) : null;
@@ -93,9 +84,9 @@ export default async function Page({ params }) {
   if (!course) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-16 text-white">
-        <h1 className="text-2xl font-extrabold">Loading Course</h1>
+        <h1 className="text-2xl font-extrabold">Course not found</h1>
         <p className="mt-2 text-white/60">
-          กำลังโหลดหลักสูตรที่คุณเลือกอยู่ กรุณารอสักครู่ หรือกลับไปหน้าแรก
+          อาจยังไม่ published หรือปิดการใช้งาน หรือ API คืน ok:false
         </p>
         <Link
           href={`/${safeLocale}`}
@@ -109,10 +100,11 @@ export default async function Page({ params }) {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12">
-      {/* HERO */}
+      {/* HERO / COVER */}
       <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur">
         <div className="relative">
           {course.cover_image ? (
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={course.cover_image}
               alt={course.title_th}
@@ -139,9 +131,7 @@ export default async function Page({ params }) {
             <div className="flex flex-wrap gap-2">
               <Badge>{course.level}</Badge>
               <Badge>{course.duration_days || 1} วัน</Badge>
-              {(course.partners || []).map((p) => (
-                <Badge key={p}>{PARTNER_LABEL[p] || p}</Badge>
-              ))}
+              <PartnerBadges partners={course.partners || []} />
             </div>
 
             {course.short_description ? (
@@ -207,7 +197,16 @@ export default async function Page({ params }) {
 
                     <div className="mt-3 grid gap-3">
                       {(d.sessions || []).map((s, si) => {
-                        const partnersText = renderPartners(s);
+                        const partnersArr = Array.isArray(s.partners)
+                          ? s.partners.filter(Boolean)
+                          : [];
+                        const partnerLabel =
+                          partnersArr.length > 0
+                            ? partnersArr.join(", ")
+                            : s.partner
+                            ? s.partner
+                            : "";
+
                         return (
                           <div
                             key={si}
@@ -215,7 +214,7 @@ export default async function Page({ params }) {
                           >
                             <div className="text-xs font-extrabold text-white/70">
                               {(s.period || "").toUpperCase()}
-                              {partnersText ? ` • ${partnersText}` : ""}
+                              {partnerLabel ? ` • ${partnerLabel}` : ""}
                             </div>
 
                             <div className="mt-2 text-sm font-bold text-white">
