@@ -89,8 +89,8 @@ function renderPartnersLine(keys) {
 
 export default async function Page({ params }) {
   // ✅ โฟลเดอร์คุณคือ [local]
-  const { local, slug } = await params;
-  const safeLocale = local === "en" ? "en" : "th";
+  const { locale, slug } = await params;
+  const safeLocale = locale === "en" ? "en" : "th";
 
   const safeSlug = decodeURIComponent(String(slug || "")).trim();
   const course = safeSlug ? await getCourse(safeSlug) : null;
