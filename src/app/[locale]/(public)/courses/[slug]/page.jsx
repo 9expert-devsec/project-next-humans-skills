@@ -1,4 +1,4 @@
-// src/app/[local]/(public)/courses/[slug]/page.jsx
+// src/app/[locale]/(public)/courses/[slug]/page.jsx
 import Link from "next/link";
 import { headers } from "next/headers";
 
@@ -6,10 +6,8 @@ import { headers } from "next/headers";
 
 async function getOrigin() {
   const h = await headers();
-
   const host = h.get("x-forwarded-host") || h.get("host");
   const proto = h.get("x-forwarded-proto") || "https";
-
   if (host) return `${proto}://${host}`;
   return process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 }
@@ -60,36 +58,25 @@ function Section({ title, children }) {
   );
 }
 
-/** ✅ map partner key -> label */
-const PARTNER_LABEL = {
-  bitkub: "Bitkub",
-  "9expert": "9Expert",
-  key: "Key",
-};
+const PARTNER_LABEL = { bitkub: "Bitkub", "9expert": "9Expert", key: "Key" };
 
 function getSessionPartnerKeys(s) {
-  // ✅ ใหม่: array
   if (Array.isArray(s?.partners) && s.partners.length) {
     return s.partners.map((x) => String(x || "").trim()).filter(Boolean);
   }
-  // ✅ เก่า: single
   const one = String(s?.partner || "").trim();
   return one ? [one] : [];
 }
 
 function renderPartnersLine(keys) {
   if (!keys.length) return "";
-  return keys
-    .map((k) => PARTNER_LABEL[k] || k)
-    .filter(Boolean)
-    .join(" • ");
+  return keys.map((k) => PARTNER_LABEL[k] || k).join(" • ");
 }
 
 /* ---------------- page ---------------- */
 
 export default async function Page({ params }) {
-  // ✅ โฟลเดอร์คุณคือ [local]
-  const { locale, slug } = await params;
+  const { locale, slug } = await params; // ✅ ใช้ locale ให้ตรงทั้งโปรเจกต์
   const safeLocale = locale === "en" ? "en" : "th";
 
   const safeSlug = decodeURIComponent(String(slug || "")).trim();
@@ -255,22 +242,6 @@ export default async function Page({ params }) {
             </div>
           </Section>
         ) : null}
-
-        <Section title="Executive Summary">
-          {course.executive_summary ? (
-            <p className="whitespace-pre-wrap text-sm leading-relaxed text-white/80">
-              {course.executive_summary}
-            </p>
-          ) : null}
-        </Section>
-
-        <Section title="Highlight Modules">
-          <Bullet items={course.highlight_modules} />
-        </Section>
-
-        <Section title="Key Takeaways">
-          <Bullet items={course.key_takeaways} />
-        </Section>
       </div>
     </div>
   );
