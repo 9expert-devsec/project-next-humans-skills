@@ -25,10 +25,11 @@
 html, body { height: 100%; }
 body {
   margin: 0;
-  background: radial-gradient(1200px 600px at 50% -10%, rgba(59,130,246,.18), transparent 60%),
+  background: var(--bg);
+  /* background: radial-gradient(1200px 600px at 50% -10%, rgba(59,130,246,.18), transparent 60%),
               radial-gradient(900px 500px at 10% 20%, rgba(0,179,89,.12), transparent 55%),
               radial-gradient(900px 500px at 90% 25%, rgba(246,214,45,.10), transparent 55%),
-              var(--bg);
+              var(--bg); */
   color: var(--text);
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans Thai", "Noto Sans", sans-serif;
 }
@@ -37,8 +38,8 @@ a { color: inherit; text-decoration: none; }
 img { max-width: 100%; display: block; }
 
 .ns-container {
-  width: min(1120px, calc(100% - 32px));
-  margin: 0 auto;
+  /* width: min(1280px, calc(100% - 32px)); */
+  /* margin: 0 auto; */
 }
 
 .hr {
@@ -137,13 +138,13 @@ img { max-width: 100%; display: block; }
   .heroInner{ grid-template-columns: 1fr; }
 }
 
-.h1{
+/* .h1{
   font-size: 44px;
   line-height: 1.05;
   font-weight: 1000;
   letter-spacing: .2px;
   margin: 0;
-}
+} */
 .sub{
   margin-top: 10px;
   color: var(--muted);
@@ -1111,4 +1112,118 @@ img { max-width: 100%; display: block; }
   white-space:pre-wrap;
   line-height:1.6;
   min-height:64px;
+}
+
+/* 3D helpers for flip card */
+.perspective-1000 { perspective: 1000px; }
+
+.preserve-3d {
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+
+/* ===== ConceptPill: Magic Bento style ===== */
+.concept-pill {
+  --glow-x: 50%;
+  --glow-y: 50%;
+  --glow-intensity: 0;
+  --glow-radius: 220px;
+  --glow-color: 132, 0, 255;
+}
+
+.concept-pill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 2px;                /* ความหนาขอบ glow */
+  border-radius: inherit;
+  pointer-events: none;
+
+  background: radial-gradient(
+    var(--glow-radius) circle at var(--glow-x) var(--glow-y),
+    rgba(var(--glow-color), calc(var(--glow-intensity) * 0.85)) 0%,
+    rgba(var(--glow-color), calc(var(--glow-intensity) * 0.35)) 30%,
+    transparent 62%
+  );
+
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+}
+
+.concept-star {
+  position: absolute;
+  border-radius: 999px;
+  background: rgba(var(--glow-color), 1);
+  box-shadow: 0 0 10px rgba(var(--glow-color), 0.55);
+  animation: concept-float var(--d, 3.2s) ease-in-out var(--delay, 0s) infinite alternate;
+}
+
+@keyframes concept-float {
+  from { transform: translate3d(0,0,0) scale(0.9); opacity: 0.25; }
+  to   { transform: translate3d(var(--tx, 18px), var(--ty, -14px), 0) scale(1.2); opacity: 0.9; }
+}
+
+/* ===== animated background orbs ===== */
+
+.orb-layer { 
+  position:absolute; 
+  inset:-100px;   /* เพิ่มพื้นที่รอบๆ ให้ blur ไม่โดนตัด */
+  pointer-events:none;
+  overflow:hidden;
+}
+
+ .bg-orb{
+  position:absolute;
+  left: var(--orb-x, 50%);
+  top: var(--orb-y, 50%);
+  width: var(--orb-size, 560px);
+  height: var(--orb-size, 560px);
+  transform: translate(-50%, -50%);
+  border-radius:9999px;
+  filter: blur(var(--orb-blur, 90px));
+  opacity: var(--orb-opacity, .7);
+  will-change: transform;
+}
+
+
+/* แล้วค่อยแยกแกนแต่ละสีจากกลาง */
+.orb-green{
+  background: radial-gradient(circle, rgba(0,179,88,.95), transparent 65%);
+  animation: orb-green-float 12s ease-in-out infinite;
+}
+
+.orb-blue{
+  background: radial-gradient(circle, rgba(59,130,246,.95), transparent 65%);
+  animation: orb-blue-float 14s ease-in-out infinite;
+}
+
+.orb-yellow{
+  background: radial-gradient(circle, rgba(246,214,45,.95), transparent 65%);
+  animation: orb-yellow-float 16s ease-in-out infinite;
+}
+
+@keyframes orb-green-float{
+  0%   { transform: translate3d(calc(-50% - 220px), calc(-50% - 40px), 0) scale(1); }
+  50%  { transform: translate3d(calc(-50% - 160px), calc(-50% + 10px), 0) scale(1.08); }
+  100% { transform: translate3d(calc(-50% - 220px), calc(-50% - 40px), 0) scale(1); }
+}
+
+@keyframes orb-blue-float{
+  0%   { transform: translate3d(calc(-50% + 0px), calc(-50% - 220px), 0) scale(1); }
+  50%  { transform: translate3d(calc(-50% + 40px), calc(-50% - 170px), 0) scale(1.08); }
+  100% { transform: translate3d(calc(-50% + 0px), calc(-50% - 220px), 0) scale(1); }
+}
+
+@keyframes orb-yellow-float{
+  0%   { transform: translate3d(calc(-50% + 180px), calc(-50% + 120px), 0) scale(1); }
+  50%  { transform: translate3d(calc(-50% + 130px), calc(-50% + 160px), 0) scale(1.08); }
+  100% { transform: translate3d(calc(-50% + 180px), calc(-50% + 120px), 0) scale(1); }
 }
