@@ -2,7 +2,7 @@
 import Link from "next/link";
 import dbConnect from "@/lib/dbConnect";
 import Course from "@/models/Course";
-import { ArrowLeft,Dot } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
