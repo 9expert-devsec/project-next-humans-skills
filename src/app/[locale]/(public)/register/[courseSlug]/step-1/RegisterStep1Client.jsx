@@ -4,6 +4,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import StepBar from "@/components/StepBar";
+import { ArrowLeft } from "lucide-react";
 
 function cx(...a) {
   return a.filter(Boolean).join(" ");
@@ -683,47 +684,75 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10">
+    <div className="mx-auto max-w-7xl mt-24 ">
       <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur md:p-7">
         {/* header */}
+        <div className="flex flex-wrap justify-between">
+            <button
+              onClick={onBack}
+              className=" rounded-2xl bg-white/10 px-5 py-2 text-sm font-extrabold text-white ring-1 ring-white/10 hover:bg-white/15"
+            >
+              <ArrowLeft />
+            </button>
+            <button
+              onClick={onResetDraft}
+              className=" rounded-2xl bg-rose-500/15 px-5 text-sm font-bold text-rose-100 ring-1 ring-rose-500/20 hover:bg-rose-500/20"
+            >
+              {isEN ? "Clear" : "ล้างข้อมูล"}
+            </button>
+          </div>
+        <div className="mt-4">
+          <div className="text-4xl font-extrabold text-white">
+            {isEN ? "Register" : "ลงทะเบียน"}
+          </div>
+          <div className="mt-2 text-sm text-white/60">
+            {isEN
+              ? "Fill in information for registration inquiry"
+              : "กรอกข้อมูลเพื่อส่งความสนใจลงทะเบียน"}
+          </div>
+          
+        </div>
+        <div className="mt-6">
+          <StepBar current={1} locale={locale} />
+        </div>
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="min-w-0">
-            <div className="text-2xl font-extrabold text-white">
-              {isEN ? "Register (Step 1)" : "ลงทะเบียน (ขั้นตอนที่ 1)"}
+            {/* <div className="text-2xl font-extrabold text-white">
+              {isEN ? "Register" : "ลงทะเบียน"}
             </div>
             <div className="mt-2 text-sm text-white/60">
               {isEN
                 ? "Fill in information for registration inquiry"
                 : "กรอกข้อมูลเพื่อส่งความสนใจลงทะเบียน"}
-            </div>
+            </div> */}
 
-            <div className="mt-4 flex items-center gap-3">
+            <div className="mt-4 flex items-center gap-5 flex-col md:flex-row">
               {coverUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={coverUrl}
                   alt={courseTitle}
-                  className="h-14 w-20 rounded-2xl object-cover ring-1 ring-white/10"
+                  className="  w-full md:w-60 rounded-2xl object-cover ring-1 ring-white/10"
                 />
               ) : (
-                <div className="h-14 w-20 rounded-2xl bg-white/10 ring-1 ring-white/10" />
+                <div className="w-40 rounded-2xl bg-white/10 ring-1 ring-white/10" />
               )}
 
               <div className="min-w-0">
-                <div className="text-sm font-bold text-white/70">
-                  {isEN ? "Course:" : "คอร์ส:"}{" "}
-                  <span className="text-white">{courseTitle}</span>
+                <div className="text-lg font-bold text-white/70">
+                  {isEN ? "Course" : "หลักสูตร"}{" "}
+                  <div className="text-white">{courseTitle}</div>
                 </div>
-                {course?.title_en && !isEN ? (
+                {/* {course?.title_en && !isEN ? (
                   <div className="mt-1 text-sm text-white/50">
                     {course.title_en}
                   </div>
-                ) : null}
+                ) : null} */}
               </div>
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          {/* <div className="flex flex-wrap gap-2">
             <button
               onClick={onBack}
               className="h-11 rounded-2xl bg-white/10 px-5 text-sm font-extrabold text-white ring-1 ring-white/10 hover:bg-white/15"
@@ -736,12 +765,12 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
             >
               {isEN ? "Clear" : "ล้างข้อมูล"}
             </button>
-          </div>
+          </div> */}
         </div>
 
-        <div className="mt-6">
+        {/* <div className="mt-6">
           <StepBar current={1} locale={locale} />
-        </div>
+        </div> */}
 
         {/* body */}
         <div className="mt-8 grid gap-6">
