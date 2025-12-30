@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import StepBar from "@/components/StepBar";
+import { ArrowLeft } from "lucide-react";
 
 function cx(...a) {
   return a.filter(Boolean).join(" ");
@@ -12,6 +13,40 @@ function cx(...a) {
 function DraftKey(courseSlug) {
   return `nx-register-draft:${String(courseSlug || "").trim()}`;
 }
+
+/* ---------------- source channel helper ---------------- */
+function sourceLabel(locale, channel) {
+  const isEN = locale === "en";
+  const c = String(channel || "").trim();
+
+  const mapTH = {
+    bitkub: "Bitkub Academy",
+    "9expert": "9Expert Training",
+    key: "Key Solutions Training",
+    other: "อื่นๆ (Other)",
+  };
+
+  const mapEN = {
+    bitkub: "Bitkub Academy",
+    "9expert": "9Expert Training",
+    key: "Key Solutions Training",
+    other: "Other",
+  };
+
+  return (isEN ? mapEN : mapTH)[c] || (isEN ? "-" : "-");
+}
+
+function formatSource(locale, channel, otherText) {
+  const c = String(channel || "").trim();
+  if (!c) return "-";
+
+  const base = sourceLabel(locale, c);
+  if (c !== "other") return base;
+
+  const t = String(otherText || "").trim();
+  return t ? `${base}: ${t}` : base;
+}
+/* ------------------------------------------------------- */
 
 function Section({ no, title, subtitle, children }) {
   return (
@@ -182,15 +217,20 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
     if (!draft) return "";
     const parts = [
       draft.training_location,
-      draft.province,
-      draft.district,
-      draft.subdistrict,
-      draft.postcode ? `(${draft.postcode})` : "",
+      // draft.province,
+      // draft.district,
+      // draft.subdistrict,
+      // draft.postcode ? `(${draft.postcode})` : "",
     ]
       .map((x) => String(x || "").trim())
       .filter(Boolean);
     return parts.join(" • ");
   }, [draft]);
+
+  const sourceLine = useMemo(() => {
+    if (!draft) return "-";
+    return formatSource(locale, draft.source_channel, draft.source_other);
+  }, [draft, locale]);
 
   function onBack() {
     // ✅ ไม่ใช้ router.back() ให้ push ไป step-1 ตรง ๆ
@@ -267,59 +307,82 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
     draft.company_phone || draft.company_phone_raw || "";
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10">
+    <div className="mx-auto max-w-7xl mt-24">
       <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur md:p-7">
         {/* header */}
-        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-          <div className="min-w-0">
-            <div className="text-2xl font-extrabold text-white">
-              {isEN ? "Register (Step 2)" : "ลงทะเบียน (ขั้นตอนที่ 2)"}
-            </div>
-            <div className="mt-2 text-sm text-white/60">
-              {isEN
-                ? "Review information before confirmation"
-                : "ตรวจสอบความถูกต้องของข้อมูลก่อนยืนยัน"}
-            </div>
-
-            <div className="mt-4 flex items-center gap-3">
-              {coverUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={coverUrl}
-                  alt={courseTitle}
-                  className="h-14 w-20 rounded-2xl object-cover ring-1 ring-white/10"
-                />
-              ) : (
-                <div className="h-14 w-20 rounded-2xl bg-white/10 ring-1 ring-white/10" />
-              )}
-
-              <div className="min-w-0">
-                <div className="text-sm font-bold text-white/70">
-                  {isEN ? "Course:" : "คอร์ส:"}{" "}
-                  <span className="text-white">{courseTitle}</span>
-                </div>
-                {course?.title_en && !isEN ? (
-                  <div className="mt-1 text-sm text-white/50">
-                    {course.title_en}
-                  </div>
-                ) : null}
-              </div>
-            </div>
+        {/* <div className="flex justify-start">
+          <button
+            onClick={onBack}
+            className=" rounded-2xl bg-white/10 px-5 py-2 text-sm font-extrabold text-white ring-1 ring-white/10 hover:bg-white/15"
+          >
+            <ArrowLeft />
+          </button>
+        </div> */}
+        <div className="mt-4">
+          <div className="text-4xl font-extrabold text-white text-center">
+            {isEN ? "Register" : "ลงทะเบียน"}
           </div>
-
-          <div className="flex gap-2">
-            <button
-              onClick={onBack}
-              className="h-11 rounded-2xl bg-white/10 px-5 text-sm font-extrabold text-white ring-1 ring-white/10 hover:bg-white/15"
-            >
-              Back
-            </button>
+          <div className="mt-2 text-sm text-white/60 text-center">
+            {isEN
+              ? "Review information before confirmation"
+              : "ตรวจสอบความถูกต้องของข้อมูลก่อนยืนยัน"}
           </div>
         </div>
 
         <div className="mt-6">
           <StepBar current={2} locale={locale} />
         </div>
+
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div className="min-w-0">
+            {/* <div className="text-4xl font-extrabold text-white">
+              {isEN ? "Register" : "ลงทะเบียน"}
+            </div>
+            <div className="mt-2 text-sm text-white/60">
+              {isEN
+                ? "Review information before confirmation"
+                : "ตรวจสอบความถูกต้องของข้อมูลก่อนยืนยัน"}
+            </div> */}
+
+            <div className="mt-4 flex items-center gap-5 flex-col md:flex-row">
+              {coverUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={coverUrl}
+                  alt={courseTitle}
+                  className="w-full md:w-60 rounded-2xl object-cover ring-1 ring-white/10"
+                />
+              ) : (
+                <div className="w-full md:w-60 rounded-2xl bg-white/10 ring-1 ring-white/10" />
+              )}
+
+              <div className="min-w-0">
+                <div className="text-lg font-bold text-white/70">
+                  {isEN ? "Course:" : "หลักสูตร"}{" "}
+                  <div className="text-white">{courseTitle}</div>
+                </div>
+                {/* {course?.title_en && !isEN ? (
+                  <div className="mt-1 text-sm text-white/50">
+                    {course.title_en}
+                  </div>
+                ) : null} */}
+              </div>
+            </div>
+          </div>
+
+          {/* <div className="flex gap-2">
+            <button
+              onClick={onBack}
+              className="h-11 rounded-2xl bg-white/10 px-5 text-sm font-extrabold text-white ring-1 ring-white/10 hover:bg-white/15"
+            >
+              Back
+            </button>
+          </div> */}
+        </div>
+
+        {/* <div className="mt-6">
+          <StepBar current={2} locale={locale} />
+        </div> */}
 
         {/* body */}
         <div className="mt-8 grid gap-6">
@@ -333,19 +396,19 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
             }
           >
             <div className="grid gap-4 md:grid-cols-12">
-              <div className="md:col-span-3">
+              <div className="md:col-span-4">
                 <Item
                   label={isEN ? "Trainees count" : "จำนวนผู้เข้าอบรม"}
                   value={String(draft.trainee_count || "-")}
                 />
               </div>
-              <div className="md:col-span-3">
+              <div className="md:col-span-4">
                 <Item
                   label={isEN ? "Interested month" : "เดือนที่สนใจอบรม"}
                   value={draft.month_interest || "-"}
                 />
               </div>
-              <div className="md:col-span-3">
+              <div className="md:col-span-4">
                 <Item
                   label={isEN ? "Interested year" : "ปีที่สนใจ"}
                   value={draft.year_interest || "-"}
@@ -435,13 +498,13 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
                   value={draft.company || "-"}
                 />
               </div>
-              <div className="md:col-span-3">
+              <div className="md:col-span-4">
                 <Item
                   label={isEN ? "Branch" : "สาขา"}
-                  value={draft.branch || "-"} 
+                  value={draft.branch || "-"}
                 />
               </div>
-              <div className="md:col-span-4">
+              <div className="md:col-span-6">
                 <Item
                   label={isEN ? "Tax ID" : "เลขประจำตัวผู้เสียภาษี"}
                   value={draft.tax_id || "-"}
@@ -490,16 +553,34 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
           <Section
             no={4}
             title={isEN ? "Note" : "หมายเหตุ"}
-            subtitle={isEN ? "Optional" : "ไม่บังคับ"}
+            subtitle={
+              isEN
+                ? "Source channel (required) + note (optional)"
+                : "ช่องทางรับข่าวสาร (บังคับ) + หมายเหตุ (ไม่บังคับ)"
+            }
           >
-            <Item
-              label={
-                isEN
-                  ? "Ask for more information"
-                  : "Note / Ask for more information"
-              }
-              value={String(draft.note || "").trim() || "-"}
-            />
+            <div className="grid gap-4 md:grid-cols-12">
+              <div className="md:col-span-12">
+                <Item
+                  label={
+                    isEN
+                      ? "How did you hear about us?"
+                      : "ท่านทราบข้อมูลข่าวสารจากช่องทางใด"
+                  }
+                  value={sourceLine}
+                />
+              </div>
+              <div className="md:col-span-12">
+                <Item
+                  label={
+                    isEN
+                      ? "Ask for more information"
+                      : "Note / Ask for more information"
+                  }
+                  value={String(draft.note || "").trim() || "-"}
+                />
+              </div>
+            </div>
           </Section>
 
           {/* footer actions */}

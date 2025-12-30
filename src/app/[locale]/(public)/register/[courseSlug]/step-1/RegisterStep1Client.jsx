@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import StepBar from "@/components/StepBar";
 import { ArrowLeft } from "lucide-react";
 
+
 function cx(...a) {
   return a.filter(Boolean).join(" ");
 }
@@ -161,8 +162,8 @@ function Select({
       onBlur={onBlur}
       disabled={disabled}
       className={cx(
-        "h-11 w-full rounded-2xl border bg-black/15 px-4 text-sm text-white outline-none",
-        "focus:ring-2",
+        "h-11 w-full rounded-2xl border bg-black/15 px-4 text-sm text-white outline-none themed-select ",
+        "focus:ring-2 ",
         error
           ? "border-rose-400/50 focus:border-rose-300/70 focus:ring-rose-400/15"
           : "border-white/10 focus:border-white/20 focus:ring-white/10",
@@ -185,14 +186,14 @@ function InfoTip({ text }) {
       </span>
 
       <span
-        className={cx(
-          "pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-72 -translate-x-1/2",
-          "rounded-2xl border border-white/10 bg-slate-950/95 px-3 py-2 text-xs text-white/85 shadow-xl",
-          "opacity-0 translate-y-1 transition group-hover:opacity-100 group-hover:translate-y-0"
-        )}
-      >
-        {text}
-      </span>
+  className={cx(
+    "pointer-events-none absolute left-full top-1/2 z-20 ml-2 w-[min(18rem,calc(100vw-2rem))] -translate-y-1/2",
+    "rounded-2xl border border-white/10 bg-slate-950/95 px-3 py-2 text-xs text-white/85 shadow-xl",
+    "opacity-0 translate-x-1 transition group-hover:opacity-100 group-hover:translate-x-0"
+  )}
+>
+  {text}
+</span>
     </span>
   );
 }
@@ -738,10 +739,10 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
             </button>
           </div>
         <div className="mt-4">
-          <div className="text-4xl font-extrabold text-white">
+          <div className="text-4xl font-extrabold text-white text-center">
             {isEN ? "Register" : "ลงทะเบียน"}
           </div>
-          <div className="mt-2 text-sm text-white/60">
+          <div className="mt-2 text-sm text-white/60 text-center">
             {isEN
               ? "Fill in information for registration inquiry"
               : "กรอกข้อมูลเพื่อส่งความสนใจลงทะเบียน"}
@@ -768,10 +769,10 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
                 <img
                   src={coverUrl}
                   alt={courseTitle}
-                  className="  w-full md:w-60 rounded-2xl object-cover ring-1 ring-white/10"
+                  className="w-full md:w-60 rounded-2xl object-cover ring-1 ring-white/10"
                 />
               ) : (
-                <div className="w-40 rounded-2xl bg-white/10 ring-1 ring-white/10" />
+                <div className="w-full md:w-60 rounded-2xl bg-white/10 ring-1 ring-white/10" />
               )}
 
               <div className="min-w-0">
@@ -1138,7 +1139,7 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
                 </Field>
               </div>
 
-              <div className="md:col-span-4">
+              <div className="md:col-span-6">
                 <Field
                   label={isEN ? "Tax ID" : "เลขประจำตัวผู้เสียภาษี"}
                   required

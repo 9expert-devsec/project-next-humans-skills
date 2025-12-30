@@ -126,7 +126,7 @@ export default async function Page({ params }) {
 
       <section id="banner" className="mx-auto max-w-7xl mt-24 ">
         <Image
-          src="/banner-landingpage-thenexthumansskills@3x.png"
+          src="/banner-landingpage-thenexthumansskills2.png"
           alt="The Next Humans Skills"
           width={1600}
           height={600}
@@ -137,7 +137,7 @@ export default async function Page({ params }) {
 
       {/* <section
         id="banner"
-        className="relative isolate min-h-140 overflow-hidden bg-[#0B1C2C]"
+        className="relative isolate min-h-140 overflow-hidden bg-[]#0B1C2C"
       >
         
         <svg
@@ -210,7 +210,7 @@ export default async function Page({ params }) {
 
       <section className="py-20">
         <div className="mx-auto w-full max-w-6xl px-6">
-          <div className="text-white text-4xl font-bold text-center">
+          <div className="text-white text-3xl font-bold text-center sm:text-4xl">
             ผนึกกำลัง 3 องค์กร
           </div>
           <div className="mt-12 grid gap-8 sm:grid-cols-1 lg:grid-cols-3 justify-items-center">
@@ -246,13 +246,13 @@ export default async function Page({ params }) {
       </section>
 
       <section className="bg-[#0B1C2C] flex items-center justify-center py-20 px-8 gap-10 flex-col ">
-        <div className="text-white text-4xl ">ออกแบบหลักสูตรที่เชื่อมโยง</div>
+        <div className="text-white text-2xl sm:text-4xl ">ออกแบบหลักสูตรที่เชื่อมโยง</div>
         <div className="mt-8 flex flex-wrap justify-center gap-6 px-4">
           {ITEMS.map((item) => (
             <ConceptPill key={item.label} label={item.label} icon={item.icon} />
           ))}
         </div>
-        <div className="text-white text-3xl ">เข้าด้วยกันอย่างเป็นระบบ</div>
+        <div className="text-white text-xl sm:text-3xl ">เข้าด้วยกันอย่างเป็นระบบ</div>
       </section>
 
       <section className="relative isolate overflow-hidden bg-[#0B1C2C] py-40">
@@ -292,24 +292,24 @@ export default async function Page({ params }) {
           />
         </div>
 
-        <div className="relative z-10 mx-auto w-full max-w-7xl px-6 md:px-12 flex flex-col items-center justify-center gap-14">
-          <div className="text-white font-bold self-start text-left">
-            <span className="text-3xl ">&quot; คนไม่เพียงแค่</span>
-            <span className="text-6xl pl-4">ใช้ AI</span>
+        <div className="relative z-10 mx-auto w-full max-w-7xl px-6 py-10 sm:py-0 sm:px-12 flex flex-col items-center justify-center gap-10 sm:gap-14">
+          <div className="text-white font-bold self-center text-center sm:self-start sm:text-left">
+            <span className="text-xl sm:text-3xl ">&quot; คนไม่เพียงแค่</span>
+            <span className="text-4xl sm:text-6xl pl-4">ใช้ AI</span>
           </div>
           <div className="text-white font-bold self-center text-center">
-            <span className="text-3xl ">แต่ต้อง</span>
-            <span className="text-6xl pl-4">กำหนดทิศทาง</span>
+            <span className="text-xl sm:text-3xl ">แต่ต้อง</span>
+            <span className="text-4xl sm:text-6xl pl-4">กำหนดทิศทาง</span>
           </div>
-          <div className="text-white font-bold self-end text-right">
-            <span className="text-3xl ">และใช้ AI</span>
-            <span className="text-6xl pl-4">อย่างมีกลยุทธ์ &quot;</span>
+          <div className="text-white font-bold self-center text-center sm:self-end sm:text-right">
+            <span className="text-xl sm:text-3xl ">และใช้ AI</span>
+            <span className="text-4xl sm:text-6xl pl-4">อย่างมีกลยุทธ์ &quot;</span>
           </div>
         </div>
       </section>
 
-      <section className="bg-[#0B1C2C] text-white text-2xl flex items-center justify-center py-16 px-8 gap-5 flex-col ">
-        <span>มุ่งเน้นการออกแบบหลักสูตรที่สามารถนำไปใช้งานได้จริงในองค์กร</span>
+      <section className="bg-[#0B1C2C] text-center text-white text-xl sm:text-2xl flex items-center justify-center py-16 px-8 gap-5 flex-col ">
+        <span >มุ่งเน้นการออกแบบหลักสูตรที่สามารถนำไปใช้งานได้จริงในองค์กร</span>
         <span>
           ไม่ว่าจะเป็นการพัฒนาผู้นำเชิงกลยุทธ์
           การยกระดับศักยภาพบุคลากรด้วยข้อมูล และ AI
@@ -320,7 +320,7 @@ export default async function Page({ params }) {
       </section>
 
       <section className="bg-[#0B1C2C] flex items-center justify-center py-15 px-8 gap-10 flex-col ">
-        <div className="text-white text-xl ">
+        <div className="text-white text-center text-lg sm:text-xl ">
           พัฒนาศักยภาพบุคลากรทุกระดับตั้งแต่
         </div>
         <div className="flex flex-col items-center gap-4 w-full">
@@ -332,7 +332,7 @@ export default async function Page({ params }) {
             />
           ))}
         </div>
-        <div className="text-white text-2xl ">
+        <div className="text-white text-center text-xl  sm:text-2xl ">
           เพื่อสร้างองค์กรที่มีความยืดหยุ่น พร้อมปรับตัว
           และเติบโตอย่างยั่งยืนในยุค AI
         </div>

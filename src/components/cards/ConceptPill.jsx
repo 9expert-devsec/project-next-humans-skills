@@ -192,7 +192,7 @@ export default function ConceptPill({
       {/* content */}
       <div className="relative z-30 text-center text-white">
         {Icon && <Icon className="mx-auto h-16 w-16" />}
-        <div className="mt-2 text-2xl font-semibold">{label}</div>
+        <div className="mt-2 text-xl sm:text-2xl font-semibold">{label}</div>
       </div>
 
       {/* ring */}

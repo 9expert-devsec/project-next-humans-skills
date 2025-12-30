@@ -9,7 +9,10 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@radix-ui/react-select": "^2.2.6",
+    "class-variance-authority": "^0.7.1",
     "cloudinary": "^2.8.0",
+    "clsx": "^2.1.1",
     "dotenv": "^17.2.3",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.562.0",
@@ -18,7 +21,9 @@
     "postmark": "^4.0.5",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "slugify": "^1.6.6"
+    "slugify": "^1.6.6",
+    "tailwind-merge": "^3.4.0",
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.18",

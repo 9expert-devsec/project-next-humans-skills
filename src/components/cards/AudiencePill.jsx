@@ -17,7 +17,7 @@ export default function AudiencePill({ label, icon: Icon }) {
         </span>
       </span>
 
-      <span className="text-white text-2xl font-semibold tracking-wide">
+      <span className="text-white text-xl sm:text-2xl font-semibold tracking-wide">
         {label}
       </span>
 
