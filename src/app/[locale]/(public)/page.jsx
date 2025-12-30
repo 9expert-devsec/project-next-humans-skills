@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import CourseGridClient from "@/components/ui/CourseGridClient";
@@ -28,56 +29,56 @@ export default async function Page({ params }) {
     newsDesc: isEN
       ? "Space for image/video slides (admin can manage later)"
       : "พื้นที่สำหรับสไลด์รูปภาพ/วิดีโอ (เพิ่มทีหลังได้)",
-    courseTitle: isEN ? "Recommended Courses" : "คอร์สแนะนำ",
+    courseTitle: isEN ? "Courses" : "หลักสูตร",
     courseDesc: isEN ? "Latest courses available" : "คอร์สที่เปิดใช้งานล่าสุด",
   };
 
   const ITEMS = [
-  { label: "People", icon: "users" },
-  { label: "Data", icon: "bar" },
-  { label: "Technology", icon: "cpu" },
-  { label: "Strategy", icon: "compass" },
-];
+    { label: "People", icon: "users" },
+    { label: "Data", icon: "bar" },
+    { label: "Technology", icon: "cpu" },
+    { label: "Strategy", icon: "compass" },
+  ];
 
-const Audience_ITEMS = [
-  { label: "ผู้บริหารระดับสูง", icon: Crown },
-  { label: "ผู้นำระดับกลาง", icon: Briefcase },
-  { label: "พนักงานยุคใหม่", icon: Leaf },
-];
+  const Audience_ITEMS = [
+    { label: "ผู้บริหารระดับสูง", icon: Crown },
+    { label: "ผู้นำระดับกลาง", icon: Briefcase },
+    { label: "พนักงานยุคใหม่", icon: Leaf },
+  ];
 
-const COURSES = [
-  {
-    title: "The Next-Gen Strategic Leadership in the Digital Era Economy",
-    coverSrc: "", // ใส่ path รูปทีหลังได้
-    tags: ["Tag", "Citizen"],
-    href: "#",
-  },
-  {
-    title: "The Next-Step Data-Driven Leadership & Strategic Communication",
-    coverSrc: "",
-    tags: ["Tag", "Citizen"],
-    href: "#",
-  },
-  {
-    title: "The Next-Gen Innovator : AI, Automation and Blockchain",
-    coverSrc: "",
-    tags: ["Tag", "Citizen"],
-    href: "#",
-  },
-  {
-    title: "The Next Accelerator : Workforce AI & Financial Empowerment",
-    coverSrc: "",
-    tags: ["Tag", "Citizen"],
-    href: "#",
-  },
-];
+  const COURSES = [
+    {
+      title: "The Next-Gen Strategic Leadership in the Digital Era Economy",
+      coverSrc: "", // ใส่ path รูปทีหลังได้
+      tags: ["Tag", "Citizen"],
+      href: "#",
+    },
+    {
+      title: "The Next-Step Data-Driven Leadership & Strategic Communication",
+      coverSrc: "",
+      tags: ["Tag", "Citizen"],
+      href: "#",
+    },
+    {
+      title: "The Next-Gen Innovator : AI, Automation and Blockchain",
+      coverSrc: "",
+      tags: ["Tag", "Citizen"],
+      href: "#",
+    },
+    {
+      title: "The Next Accelerator : Workforce AI & Financial Empowerment",
+      coverSrc: "",
+      tags: ["Tag", "Citizen"],
+      href: "#",
+    },
+  ];
 
   return (
     <>
       {/* <Header locale={locale} /> */}
 
       {/* <main className="container"> */}
-        {/* <section className="hero">
+      {/* <section className="hero">
           <div className="heroCard">
             <div className="heroInner">
               <div>
@@ -123,11 +124,22 @@ const COURSES = [
           </div>
         </section> */}
 
-        <section
+      <section id="banner" className="mx-auto max-w-7xl mt-24 ">
+        <Image
+          src="/banner-landingpage-thenexthumansskills@3x.png"
+          alt="The Next Humans Skills"
+          width={1600}
+          height={600}
+          className="w-full h-auto rounded-3xl border border-white/10"
+          priority
+        />
+      </section>
+
+      {/* <section
         id="banner"
         className="relative isolate min-h-140 overflow-hidden bg-[#0B1C2C]"
       >
-        {/* SVG อยู่ “บนพื้นหลัง” */}
+        
         <svg
           className="pointer-events-none absolute inset-0 z-0 h-full w-full opacity-90"
           viewBox="0 0 1440 600"
@@ -180,10 +192,10 @@ const COURSES = [
           </defs>
         </svg>
 
-        {/* Overlay อยู่เหนือ SVG แต่ใต้ content */}
+        
         <div className="pointer-events-none absolute inset-0 z-10 bg-[#0B1C2C]/15" />
 
-        {/* Content อยู่บนสุด */}
+      
         <div className="relative z-20 mx-auto max-w-7xl px-6 py-[120px]">
           <h1 className="text-white text-[80px] font-bold leading-[88px]">
             THE NEXT <br /> HUMANS SKILLS
@@ -194,9 +206,9 @@ const COURSES = [
             และใช้ AI อย่างมีกลยุทธ์”
           </p>
         </div>
-      </section>
+      </section> */}
 
-        <section className="py-20">
+      <section className="py-20">
         <div className="mx-auto w-full max-w-6xl px-6">
           <div className="text-white text-4xl font-bold text-center">
             ผนึกกำลัง 3 องค์กร
@@ -307,7 +319,7 @@ const COURSES = [
         </span>
       </section>
 
-      <section className="bg-[#0B1C2C] flex items-center justify-center py-20 px-8 gap-10 flex-col ">
+      <section className="bg-[#0B1C2C] flex items-center justify-center py-15 px-8 gap-10 flex-col ">
         <div className="text-white text-xl ">
           พัฒนาศักยภาพบุคลากรทุกระดับตั้งแต่
         </div>
@@ -326,7 +338,7 @@ const COURSES = [
         </div>
       </section>
 
-      <section id="courses" className="bg-[#0B1C2C] py-20">
+      {/* <section id="courses" className="bg-[#0B1C2C] py-20">
         <div className="mx-auto w-full max-w-7xl px-6">
           <h2 className="text-center text-white text-4xl font-semibold">
             หลักสูตร
@@ -338,9 +350,9 @@ const COURSES = [
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
-        {/* <section className="section">
+      {/* <section className="section">
           <h2 className="sectionTitle">{t.newsTitle}</h2>
           <div className="sectionDesc">{t.newsDesc}</div>
 
@@ -381,14 +393,17 @@ const COURSES = [
           </div>
         </section> */}
 
-        <section id="courses" className="section">
-          <h2 className="sectionTitle">{t.courseTitle}</h2>
-          <div className="sectionDesc">{t.courseDesc}</div>
+      <section id="courses" className="section">
+        {/* <h2 className="sectionTitle">{t.courseTitle}</h2> */}
+        <h2 className="text-center text-white text-4xl font-semibold">
+            {t.courseTitle}
+          </h2>
+        {/* <div className="sectionDesc">{t.courseDesc}</div> */}
 
-          <div className="panel">
-            <CourseGridClient locale={locale} limit={4} />
-          </div>
-        </section>
+        <div className="panel">
+          <CourseGridClient locale={locale} limit={4} />
+        </div>
+      </section>
       {/* </main> */}
 
       {/* <Footer /> */}
