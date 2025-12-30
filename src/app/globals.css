@@ -40,6 +40,7 @@ img { max-width: 100%; display: block; }
 .ns-container {
   /* width: min(1280px, calc(100% - 32px)); */
   /* margin: 0 auto; */
+  
 }
 
 .hr {
@@ -208,7 +209,9 @@ img { max-width: 100%; display: block; }
 }
 
 .section{
-  padding: 18px 0 0;
+  padding: 80px 0 ;
+  max-width: 1280px;
+  margin: 0 auto;
 }
 .sectionTitle{
   font-weight: 1000;
@@ -223,10 +226,11 @@ img { max-width: 100%; display: block; }
 
 .panel{
   margin-top: 12px;
-  border: 1px solid rgba(255,255,255,.10);
-  background: rgba(11,28,45,.28);
+  /* border: 1px solid rgba(255,255,255,.10); */
+  /* background: rgba(11,28,45,.28); */
   border-radius: 22px;
   padding: 16px;
+  
 }
 
 .newsGrid{
@@ -1197,17 +1201,17 @@ img { max-width: 100%; display: block; }
 /* แล้วค่อยแยกแกนแต่ละสีจากกลาง */
 .orb-green{
   background: radial-gradient(circle, rgba(0,179,88,.95), transparent 65%);
-  animation: orb-green-float 12s ease-in-out infinite;
+  animation: orb-green-float 5s ease-in-out infinite;
 }
 
 .orb-blue{
   background: radial-gradient(circle, rgba(59,130,246,.95), transparent 65%);
-  animation: orb-blue-float 14s ease-in-out infinite;
+  animation: orb-blue-float 6s ease-in-out infinite;
 }
 
 .orb-yellow{
   background: radial-gradient(circle, rgba(246,214,45,.95), transparent 65%);
-  animation: orb-yellow-float 16s ease-in-out infinite;
+  animation: orb-yellow-float 7s ease-in-out infinite;
 }
 
 @keyframes orb-green-float{
