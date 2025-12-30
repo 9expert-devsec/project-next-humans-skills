@@ -317,6 +317,30 @@ function sanitizeDraft(d = {}, locale = "th") {
   return out;
 }
 
+function SourceRadio({ value, selected, onSelect, label, dataField }) {
+  const active = selected === value;
+  return (
+    <button
+      type="button"
+      data-field={dataField}
+      onClick={() => onSelect(value)}
+      className={cx(
+        "flex w-full items-center gap-3 rounded-2xl border px-4 py-4 text-left",
+        "bg-black/10 hover:bg-black/15 transition",
+        active ? "border-white/35 ring-2 ring-white/15" : "border-white/10"
+      )}
+    >
+      <span
+        className={cx(
+          "h-4 w-4 rounded-full border flex-none",
+          active ? "border-white bg-white" : "border-white/40"
+        )}
+      />
+      <span className="text-sm font-extrabold text-white">{label}</span>
+    </button>
+  );
+}
+
 export default function RegisterStep1Client({ locale = "th", courseSlug }) {
   const router = useRouter();
   const isEN = locale === "en";
@@ -666,6 +690,18 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
     setErrors({});
     setTouched({});
     setSubmitted(false);
+  }
+
+  function setSourceChannel(v) {
+    setForm((prev) => ({
+      ...prev,
+      source_channel: v,
+      source_other: v === "other" ? prev.source_other : "",
+    }));
+    setErrors((prev) => {
+      const { source_channel, source_other, ...rest } = prev;
+      return rest;
+    });
   }
 
   if (!course) {
@@ -1314,7 +1350,7 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
             </div>
           </Section>
 
-          <Section
+          {/* <Section
             no={4}
             title={isEN ? "Note" : "หมายเหตุ"}
             subtitle={isEN ? "Optional" : "ไม่บังคับ"}
@@ -1334,6 +1370,101 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
                 placeholder=""
               />
             </Field>
+          </Section> */}
+
+          {/* ✅ SECTION 4 (เพิ่มคำถามช่องทางข่าวสาร + note) */}
+          <Section
+            no={4}
+            title={isEN ? "Additional info" : "ข้อมูลเพิ่มเติม"}
+            subtitle={
+              isEN
+                ? "Information source (required) + Note (optional)"
+                : "ช่องทางรับข่าวสาร (บังคับ) + หมายเหตุ (ไม่บังคับ)"
+            }
+          >
+            <Field
+              label={
+                isEN
+                  ? "Where did you hear about us?"
+                  : "ท่านทราบข้อมูลข่าวสารจากช่องทางใด"
+              }
+              required
+              error={showError("source_channel") ? errors.source_channel : ""}
+            >
+              <div className="grid gap-3 md:grid-cols-2">
+                <SourceRadio
+                  value="bitkub"
+                  selected={form.source_channel}
+                  onSelect={setSourceChannel}
+                  label="Bitkub Academy"
+                  dataField="source_channel"
+                />
+                <SourceRadio
+                  value="9expert"
+                  selected={form.source_channel}
+                  onSelect={setSourceChannel}
+                  label="9Expert Training"
+                  dataField="source_channel"
+                />
+                <SourceRadio
+                  value="key"
+                  selected={form.source_channel}
+                  onSelect={setSourceChannel}
+                  label="Key Solutions Training"
+                  dataField="source_channel"
+                />
+                <SourceRadio
+                  value="other"
+                  selected={form.source_channel}
+                  onSelect={setSourceChannel}
+                  label="Other"
+                  dataField="source_channel"
+                />
+              </div>
+
+              {form.source_channel === "other" ? (
+                <div className="mt-3">
+                  <Field
+                    label={isEN ? "Please specify" : "โปรดระบุ"}
+                    required
+                    error={showError("source_other") ? errors.source_other : ""}
+                  >
+                    <Input
+                      value={form.source_other}
+                      onChange={clearErrorOnChange("source_other")}
+                      onBlur={markTouched("source_other")}
+                      error={
+                        showError("source_other") ? errors.source_other : ""
+                      }
+                      dataField="source_other"
+                      placeholder={
+                        isEN
+                          ? "e.g., Facebook, Friend, TikTok..."
+                          : "เช่น Facebook, เพื่อนแนะนำ, TikTok..."
+                      }
+                    />
+                  </Field>
+                </div>
+              ) : null}
+            </Field>
+
+            <div className="mt-6">
+              <Field
+                label={
+                  isEN
+                    ? "Note / Ask for more information"
+                    : "Note / Ask for more information"
+                }
+              >
+                <Textarea
+                  value={form.note}
+                  onChange={clearErrorOnChange("note")}
+                  onBlur={markTouched("note")}
+                  dataField="note"
+                  placeholder=""
+                />
+              </Field>
+            </div>
           </Section>
 
           {/* footer actions */}

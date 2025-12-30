@@ -33,6 +33,15 @@ const RegistrationSchema = new mongoose.Schema(
       required: true,
     },
 
+        // ✅ marketing/source
+    source_channel: {
+      type: String,
+      enum: ["bitkub", "9expert", "key", "other", ""],
+      default: "",
+      index: true,
+    },
+    source_other: { type: String, default: "", trim: true },
+
     tax_id: { type: String, default: "" },
     company_phone: { type: String, default: "" }, // digits-only
     receipt_address: { type: String, default: "" },
