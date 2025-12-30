@@ -23,17 +23,17 @@ export default async function PublicLayout({ children, params }) {
     <>
       {/* Header เต็มจอ แต่ข้างในกลาง */}
       <header className="w-full">
-        <div className="ns-container">
+        <div className={`${lineSeedSansTH.className}`}>
           <Header locale={safeLocale} />
         </div>
       </header>
 
       {/* เนื้อหาหน้ากลาง */}
-      <main className={`${lineSeedSansTH.className} bg-[#0B1C2C] ns-container`}>{children}</main>
+      <main className={`${lineSeedSansTH.className} bg-[#0B1C2C]`}>{children}</main>
 
       {/* Footer เต็มจอ แต่ข้างในกลาง */}
       <footer className="w-full">
-        <div className="ns-container">
+        <div className="max-w-7xl mx-auto">
           <Footer locale={safeLocale} />
         </div>
       </footer>
