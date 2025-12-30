@@ -128,11 +128,29 @@ export default function CourseGridClient({ locale = "th", limit = 4 }) {
           <Link
             key={c?._id || slug || title}
             href={href}
-            className={cx(
-              "group overflow-hidden rounded-3xl border border-white/10 bg-white/5",
-              "transition hover:bg-white/7 hover:border-white/15"
-            )}
+            className="
+        group relative block w-full overflow-hidden rounded-3xl
+        bg-white/10 backdrop-blur-xl
+        border border-white/15
+        shadow-[0_14px_40px_rgba(0,0,0,0.35)]
+        transition-transform duration-200 hover:-translate-y-1
+      "
+            // className={cx(
+            //   "group overflow-hidden rounded-3xl border border-white/10 bg-white/5",
+            //   "transition hover:bg-white/7 hover:border-white/15"
+            // )}
           >
+            <div
+              className="pointer-events-none absolute inset-0 rounded-3xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+              style={{
+                boxShadow: `
+            inset 0 0 0 3px rgba(59, 130, 246, 0.95),
+            0 0 0 3px rgba(59, 130, 246, 0.6),
+            0 0 60px rgba(59, 130, 246, 0.55),
+          `,
+              }}
+            />
+
             <div className="relative aspect-[16/9] w-full bg-black/20">
               {cover ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -150,8 +168,8 @@ export default function CourseGridClient({ locale = "th", limit = 4 }) {
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-black/0" />
             </div>
 
-            <div className="p-4">
-              <div className="text-base font-extrabold text-white line-clamp-none">
+            <div className="relative p-5">
+              <div className="text-white text-lg font-semibold leading-snug">
                 {title}
               </div>
 
@@ -163,38 +181,40 @@ export default function CourseGridClient({ locale = "th", limit = 4 }) {
                   : "ดูรายละเอียด"}
               </div> */}
 
-              <div className="mt-4 flex flex-wrap gap-2">
-                <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-extrabold text-white/80 ring-1 ring-white/10">
-                  <span
-                    className="h-2 w-2 rounded-full"
-                    style={{ background: "var(--acc-blue)" }}
-                  />
-                  {isEN ? "Register" : "ลงทะเบียน"}
-                </span>
-
-                <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-extrabold text-white/80 ring-1 ring-white/10">
-                  <span
-                    className="h-2 w-2 rounded-full"
-                    style={{
-                      background: c?.isActive
-                        ? "var(--acc-green)"
-                        : "rgba(255,255,255,.35)",
-                    }}
-                  />
-                  {c?.isActive
-                    ? isEN
-                      ? "Active"
-                      : "เปิดรับ"
-                    : isEN
-                    ? "Draft"
-                    : "ร่าง"}
-                </span>
-
+              <div className="mt-4 flex flex-col gap-2">
                 {c?.level ? (
-                  <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-extrabold text-white/70 ring-1 ring-white/10">
+                  <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-sm  text-white/70 ring-1 ring-white/10 w-fit border border-white/10 font-semibold">
                     {c.level}
                   </span>
                 ) : null}
+
+                <div className="flex flex-wrap gap-2">
+                  <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs  text-white/80 ring-1 ring-white/10">
+                    <span
+                      className="h-2 w-2 rounded-full"
+                      style={{ background: "var(--acc-blue)" }}
+                    />
+                    {isEN ? "Register" : "ลงทะเบียน"}
+                  </span>
+
+                  <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs  text-white/80 ring-1 ring-white/10 ">
+                    <span
+                      className="h-2 w-2 rounded-full"
+                      style={{
+                        background: c?.isActive
+                          ? "var(--acc-green)"
+                          : "rgba(255,255,255,.35)",
+                      }}
+                    />
+                    {c?.isActive
+                      ? isEN
+                        ? "Active"
+                        : "เปิดรับ"
+                      : isEN
+                      ? "Draft"
+                      : "ร่าง"}
+                  </span>
+                </div>
               </div>
             </div>
           </Link>

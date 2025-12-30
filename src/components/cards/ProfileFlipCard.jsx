@@ -33,9 +33,7 @@ export default function ProfileFlipCard({
           {/* ================= FRONT ================= */}
           <div className="backface-hidden absolute inset-0">
             <div
-              className="
-                relative h-full w-full overflow-hidden rounded-[28px]
-                bg-white shadow-[0_18px_50px_rgba(0,0,0,0.25)]
+              className="relative h-full w-full overflow-hidden rounded-[28px] bg-white shadow-[0_18px_50px_rgba(0,0,0,0.25)]
               "
             >
               {/* Top: logo */}
@@ -67,13 +65,7 @@ export default function ProfileFlipCard({
               {/* Info pill (glass) */}
               <div className="absolute bottom-5 left-4 right-4 z-30">
                 <div
-                  className="
-                    relative overflow-hidden
-                    rounded-2xl bg-[#1a1f23]/40 px-4 py-3
-              text-center text-white
-              backdrop-blur-xs
-              shadow-[0_10px_30px_rgba(0,0,0,0.25)]
-                  "
+                  className="relative overflow-hidden rounded-2xl bg-[#1a1f23]/40 px-4 py-3 text-center text-white backdrop-blur-xs shadow-[0_10px_30px_rgba(0,0,0,0.25)]"
                 >
                   {/* shine */}
                   <div className="pointer-events-none absolute -top-10 left-1/2 h-24 w-72 -translate-x-1/2 rounded-full bg-white/25 blur-2xl" />
@@ -100,10 +92,7 @@ export default function ProfileFlipCard({
           {/* ================= BACK ================= */}
           <div className="backface-hidden absolute inset-0 [transform:rotateY(180deg)]">
             <div
-              className="
-                relative h-full w-full overflow-hidden rounded-[28px]
-                bg-[#121a22] shadow-[0_18px_50px_rgba(0,0,0,0.35)] border-[#2d2d2d] border-2
-              "
+              className="relative h-full w-full overflow-hidden rounded-[28px] bg-[#121a22] shadow-[0_18px_50px_rgba(0,0,0,0.35)] border-[#2d2d2d] border-2"
             >
               <div className="flex h-full flex-col items-center justify-center px-8 text-center text-white">
                 <div className="relative h-14 w-[200px] opacity-95">
