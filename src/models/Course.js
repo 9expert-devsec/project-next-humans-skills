@@ -44,8 +44,8 @@ const CourseSchema = new Schema(
 
     level: {
       type: String,
-      enum: ["executive", "middle", "workforce", "citizen", "general"],
-      default: "general",
+      enum: ["Executive", "Middle Management", "Workforce", "Citizen Developer", "General"],
+      default: "General",
       index: true,
     },
 

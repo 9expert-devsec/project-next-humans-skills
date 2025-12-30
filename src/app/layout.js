@@ -22,3 +22,13 @@ export default function RootLayout({ children }) {
     </html>
   );
 }
+
+export const metadata = {
+  title: 'The Next Humans Skills - Empowering Future-Ready Workforce',
+  description: 'the next humans skills platform for training registration and admin-ready management system.',
+  icons: {
+    icon: '/icon.png', // ไฟล์ต้องอยู่ในโฟลเดอร์ public
+    shortcut: '/icon.png',
+    apple: '/icon.png',
+  },
+};

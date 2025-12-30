@@ -24,7 +24,18 @@ function clean(s) {
   return String(s || "").trim();
 }
 
+const SOURCE_ALLOWED = new Set(["bitkub", "9expert", "key", "other", ""]);
+
+function normalizeSourceChannel(x) {
+  const v = clean(x);
+  return SOURCE_ALLOWED.has(v) ? v : "";
+}
+
 function pickDraft(draft = {}) {
+  const source_channel = normalizeSourceChannel(draft.source_channel);
+  const source_other =
+    source_channel === "other" ? clean(draft.source_other) : "";
+
   return {
     courseSlug: clean(draft.courseSlug),
     locale: clean(draft.locale || "th"),
@@ -45,8 +56,11 @@ function pickDraft(draft = {}) {
 
     company: clean(draft.company),
 
-    // ✅ NEW: branch (default ให้ปลอดภัย เผื่อ draft เก่า)
     branch: clean(draft.branch) || "สำนักงานใหญ่",
+
+    // ✅ NEW: marketing/source
+    source_channel,
+    source_other,
 
     tax_id: normalizeDigits(draft.tax_id),
     company_phone: normalizeDigits(
@@ -64,6 +78,7 @@ function pickDraft(draft = {}) {
 
 function validatePayload(p) {
   const errs = [];
+
   if (!p.courseSlug) errs.push("courseSlug is required");
 
   if (!p.month_interest) errs.push("month_interest is required");
@@ -77,14 +92,17 @@ function validatePayload(p) {
   if (p.email && !isValidEmail(p.email)) errs.push("email is invalid");
 
   if (!p.company) errs.push("company is required");
-
-  // ✅ NEW: branch required
   if (!p.branch) errs.push("branch is required");
 
   if (!p.tax_id) errs.push("tax_id is required");
   if (p.tax_id && p.tax_id.length > 13)
     errs.push("tax_id must be <= 13 digits");
   if (!p.receipt_address) errs.push("receipt_address is required");
+
+  // ✅ NEW: ต้องเลือกช่องทาง
+  if (!p.source_channel) errs.push("source_channel is required");
+  if (p.source_channel === "other" && !p.source_other)
+    errs.push("source_other is required");
 
   return errs;
 }
@@ -101,14 +119,12 @@ function adminBccList() {
 export async function POST(req) {
   await dbConnect();
 
-  // IP / UA
   const ip =
     req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
     req.headers.get("x-real-ip") ||
     "unknown";
   const userAgent = req.headers.get("user-agent") || "";
 
-  // ✅ rate limit (5 ครั้ง/นาที/IP)
   const rl = rateLimitHit(`nxreg:${ip}`, { limit: 5, windowMs: 60_000 });
   if (!rl.ok) {
     return Response.json(
@@ -121,7 +137,6 @@ export async function POST(req) {
   const draft = body?.draft || body || {};
   const payload = pickDraft(draft);
 
-  // ✅ verify reCAPTCHA v3 (server-side)
   const recaptchaToken = clean(body?.recaptchaToken);
   const vr = await verifyRecaptchaV3(recaptchaToken, "nx_register_submit");
   if (!vr.ok) {
@@ -136,20 +151,17 @@ export async function POST(req) {
     return Response.json({ ok: false, errors: errs }, { status: 400 });
   }
 
-  // หา courseCode จาก courseSlug (ถ้าไม่มี fallback เป็น slug)
   const course = await Course.findOne({ slug: payload.courseSlug })
     .select("course_code slug title_th title_en")
     .lean();
 
   const courseCode = course?.course_code || payload.courseSlug || "COURSE";
 
-  // ✅ refNo แยกตามคอร์ส
   const refNo = await generateRefNoByCourse({
     prefix: "NX",
     courseCode,
   });
 
-  // ✅ create registration
   const doc = await Registration.create({
     ref_no: refNo,
     course_code: clean(courseCode).toUpperCase(),
@@ -160,17 +172,15 @@ export async function POST(req) {
     source: "web",
   });
 
-  // ✅ BCC admin หลายคน
   const adminBcc = adminBccList();
 
-  // ✅ title สำหรับ email (เอาชื่อคอร์สจริง ถ้ามี)
   const courseTitle =
     (payload.locale === "en" ? course?.title_en : course?.title_th) ||
     course?.title_th ||
     course?.title_en ||
     payload.courseSlug;
 
-  // ✅ Template Model (ต้องตรงกับตัวแปรใน Postmark Template)
+  // ⚠️ ไม่ต้องส่ง source_channel เข้าเมล (ตามที่คุณบอก) -> ไม่ใส่ใน templateModel ก็ได้
   const templateModel = {
     ref_no: doc.ref_no,
     submitted_at: new Date(doc.createdAt).toLocaleString("th-TH", {
@@ -188,10 +198,7 @@ export async function POST(req) {
     coordinator_phone: payload.contact_phone,
 
     company_name: payload.company,
-
-    // ✅ NEW: map ไปให้ template ที่คุณใส่ {{company_branch}}
     company_branch: payload.branch,
-
     company_tax_id: payload.tax_id,
     company_address: payload.receipt_address,
 
@@ -199,7 +206,6 @@ export async function POST(req) {
     note: payload.note || "",
   };
 
-  // ✅ ส่งด้วย Postmark Template (template เดียว ส่งให้ user + BCC admin)
   try {
     const tplId =
       payload.locale === "en"
@@ -214,12 +220,9 @@ export async function POST(req) {
         model: templateModel,
         tag: "nx-registration",
       });
-    } else {
-      console.warn("Missing Postmark template env for locale:", payload.locale);
     }
   } catch (e) {
     console.error("Send template email failed:", e);
-    // ไม่ throw เพื่อไม่ให้การลงทะเบียนพัง
   }
 
   return Response.json({

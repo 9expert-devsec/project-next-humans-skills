@@ -107,12 +107,11 @@ function normalizeBody(body = {}) {
     title_en: cleanStr(body.title_en),
     short_description: cleanStr(body.short_description),
 
-    level: ["executive", "middle", "workforce", "citizen", "general"].includes(
+    level: ["Executive", "Middle Management", "Workforce", "Citizen Developer", "General"].includes(
       body.level
     )
       ? body.level
-      : "general",
-
+      : "General",
     duration_days: Math.max(1, Number(body.duration_days || 1)),
 
     status: ["draft", "published", "archived"].includes(body.status)

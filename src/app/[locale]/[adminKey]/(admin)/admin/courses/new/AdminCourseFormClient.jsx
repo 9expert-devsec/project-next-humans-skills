@@ -20,9 +20,9 @@ function linesToText(arr) {
 }
 
 const PARTNERS = [
-  { key: "bitkub", label: "Bitkub" },
-  { key: "9expert", label: "9Expert" },
-  { key: "key", label: "Key" },
+  { key: "bitkub", label: "Bitkub Academy" },
+  { key: "9expert", label: "9Expert Training" },
+  { key: "key", label: "Key Solutions Training" },
 ];
 
 const LEVELS = [

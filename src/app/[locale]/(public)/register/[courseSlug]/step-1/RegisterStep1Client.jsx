@@ -269,7 +269,7 @@ function getDefaultForm(locale = "th") {
 
     // section 3
     company: "",
-    branch: defaultBranchByLocale(locale), // ✅ required + editable
+    branch: defaultBranchByLocale(locale),
     tax_id: "",
     company_phone_raw: "",
     company_phone: "",
@@ -279,14 +279,16 @@ function getDefaultForm(locale = "th") {
     subdistrict: "",
     postcode: "",
 
-    // section 4
+    // section 4 (NEW)
+    source_channel: "", // bitkub | 9expert | key | other
+    source_other: "",
+
     note: "",
   };
 }
 
 function sanitizeDraft(d = {}, locale = "th") {
   const base = getDefaultForm(locale);
-
   const out = { ...base, ...(d && typeof d === "object" ? d : {}) };
 
   // numbers
@@ -298,7 +300,7 @@ function sanitizeDraft(d = {}, locale = "th") {
     String(out.year_interest || "") ||
     String(YEARS[0] || new Date().getFullYear());
 
-  out.branch = String(out.branch || defaultBranchByLocale(locale)); // ✅ ensure default
+  out.branch = String(out.branch || defaultBranchByLocale(locale));
 
   out.contact_phone_raw = String(out.contact_phone_raw || "").replace(
     /\D/g,
@@ -313,7 +315,36 @@ function sanitizeDraft(d = {}, locale = "th") {
     .replace(/\D/g, "")
     .slice(0, 13);
 
+  // NEW
+  out.source_channel = String(out.source_channel || "").trim();
+  out.source_other = String(out.source_other || "").trim();
+  if (out.source_channel !== "other") out.source_other = "";
+
   return out;
+}
+
+function SourceRadio({ value, selected, onSelect, label, dataField }) {
+  const active = selected === value;
+  return (
+    <button
+      type="button"
+      data-field={dataField}
+      onClick={() => onSelect(value)}
+      className={cx(
+        "flex w-full items-center gap-3 rounded-2xl border px-4 py-4 text-left",
+        "bg-black/10 hover:bg-black/15 transition",
+        active ? "border-white/35 ring-2 ring-white/15" : "border-white/10"
+      )}
+    >
+      <span
+        className={cx(
+          "h-4 w-4 rounded-full border flex-none",
+          active ? "border-white bg-white" : "border-white/40"
+        )}
+      />
+      <span className="text-sm font-extrabold text-white">{label}</span>
+    </button>
+  );
 }
 
 export default function RegisterStep1Client({ locale = "th", courseSlug }) {
@@ -349,7 +380,6 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
   const [submitted, setSubmitted] = useState(false);
 
   const showError = (name) => submitted || touched[name];
-
   const markTouched = (name) => () =>
     setTouched((prev) => ({ ...prev, [name]: true }));
 
@@ -383,7 +413,7 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contactPhone.digits, companyPhone.digits]);
 
-  // ✅ load draft again when courseSlug changes (กรณีผู้ใช้เปลี่ยนคอร์ส/เปลี่ยน locale)
+  // ✅ load draft again when courseSlug changes
   useEffect(() => {
     try {
       const raw = sessionStorage.getItem(DraftKey(courseSlug));
@@ -395,7 +425,6 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
               ...prev,
               courseSlug,
               locale,
-              // ensure default branch if empty
               branch: prev.branch || defaultBranchByLocale(locale),
             },
             locale
@@ -435,7 +464,7 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseSlug, locale]);
 
-  // ✅ persist draft (กลาง)
+  // ✅ persist draft
   useEffect(() => {
     try {
       const payloadToSave = {
@@ -514,7 +543,6 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
   const districtDisabled = !thDb || !form.province;
   const subdistrictDisabled = !thDb || !form.province || !form.district;
 
-  // handlers
   const setProvince = (e) => {
     const province = e.target.value;
     setForm((prev) => ({
@@ -524,7 +552,6 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
       subdistrict: "",
       postcode: "",
     }));
-    // clear related errors when change chain
     setErrors((prev) => {
       const {
         province: _p,
@@ -584,7 +611,7 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
     const e = {};
     const t = (x) => String(x || "").trim();
 
-    // section 1 (required)
+    // section 1
     if (!t(form.trainee_count))
       e.trainee_count = isEN ? "Required" : "กรุณาระบุจำนวนผู้เข้าอบรม";
     if (!t(form.month_interest))
@@ -594,7 +621,7 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
     if (!t(form.training_location))
       e.training_location = isEN ? "Required" : "กรุณาระบุสถานที่อบรม";
 
-    // section 2 (required)
+    // section 2
     if (!t(form.first_name)) e.first_name = isEN ? "Required" : "กรุณากรอกชื่อ";
     if (!t(form.last_name))
       e.last_name = isEN ? "Required" : "กรุณากรอกนามสกุล";
@@ -610,7 +637,7 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
     else if (!isValidEmail(form.email))
       e.email = isEN ? "Invalid email format" : "รูปแบบอีเมลไม่ถูกต้อง";
 
-    // section 3 (required)
+    // section 3
     if (!t(form.company)) e.company = isEN ? "Required" : "กรุณากรอกบริษัท";
     if (!t(form.branch)) e.branch = isEN ? "Required" : "กรุณาระบุสาขา";
 
@@ -624,10 +651,11 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
     if (!t(form.receipt_address))
       e.receipt_address = isEN ? "Required" : "กรุณากรอกที่อยู่ออกใบเสร็จ";
 
-    // ✅ ถ้าคุณต้องการ “บังคับ” จังหวัด/อำเภอ/ตำบลด้วย ให้ปลดคอมเมนต์ 3 บรรทัดนี้
-    // if (!t(form.province)) e.province = isEN ? "Required" : "กรุณาเลือกจังหวัด";
-    // if (!t(form.district)) e.district = isEN ? "Required" : "กรุณาเลือกอำเภอ/เขต";
-    // if (!t(form.subdistrict)) e.subdistrict = isEN ? "Required" : "กรุณาเลือกตำบล/แขวง";
+    // section 4 (NEW)
+    if (!t(form.source_channel))
+      e.source_channel = isEN ? "Required" : "กรุณาเลือกช่องทางรับข่าวสาร";
+    if (t(form.source_channel) === "other" && !t(form.source_other))
+      e.source_other = isEN ? "Please specify" : "กรุณาระบุช่องทางอื่น";
 
     return e;
   }
@@ -667,11 +695,23 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
     setSubmitted(false);
   }
 
+  function setSourceChannel(v) {
+    setForm((prev) => ({
+      ...prev,
+      source_channel: v,
+      source_other: v === "other" ? prev.source_other : "",
+    }));
+    setErrors((prev) => {
+      const { source_channel, source_other, ...rest } = prev;
+      return rest;
+    });
+  }
+
   if (!course) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-10 text-white">
-        <div className="text-2xl font-extrabold">Course not found</div>
-        <div className="mt-2 text-white/60">ไม่พบคอร์สสำหรับการลงทะเบียน</div>
+        <div className="text-2xl font-extrabold">Loading Course ..</div>
+        <div className="mt-2 text-white/60">กำลังโหลด…</div>
         <button
           onClick={() => router.push(`/${locale}`)}
           className="mt-5 inline-flex rounded-xl bg-white px-4 py-2 text-sm font-extrabold text-slate-900"
@@ -745,6 +785,7 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
 
         {/* body */}
         <div className="mt-8 grid gap-6">
+          {/* ✅ SECTION 1 (กลับมาแล้ว) */}
           <Section
             no={1}
             title={isEN ? "Training request" : "ข้อมูลการอบรมที่ต้องการ"}
@@ -868,6 +909,7 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
             </div>
           </Section>
 
+          {/* ✅ SECTION 2 (กลับมาแล้ว) */}
           <Section
             no={2}
             title={
@@ -1014,6 +1056,7 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
             </div>
           </Section>
 
+          {/* ✅ SECTION 3 (กลับมาแล้ว) */}
           <Section
             no={3}
             title={
@@ -1278,33 +1321,106 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
                     onChange={() => {}}
                     readOnly
                     dataField="postcode"
-                    placeholder={isEN ? "Auto" : "Auto"}
+                    placeholder="Auto"
                   />
                 </Field>
               </div>
             </div>
           </Section>
 
+          {/* ✅ SECTION 4 (เพิ่มคำถามช่องทางข่าวสาร + note) */}
           <Section
             no={4}
-            title={isEN ? "Note" : "หมายเหตุ"}
-            subtitle={isEN ? "Optional" : "ไม่บังคับ"}
+            title={isEN ? "Additional info" : "ข้อมูลเพิ่มเติม"}
+            subtitle={
+              isEN
+                ? "Information source (required) + Note (optional)"
+                : "ช่องทางรับข่าวสาร (บังคับ) + หมายเหตุ (ไม่บังคับ)"
+            }
           >
             <Field
               label={
                 isEN
-                  ? "Ask for more information"
-                  : "Note / Ask for more information"
+                  ? "Where did you hear about us?"
+                  : "ท่านทราบข้อมูลข่าวสารจากช่องทางใด"
               }
+              required
+              error={showError("source_channel") ? errors.source_channel : ""}
             >
-              <Textarea
-                value={form.note}
-                onChange={clearErrorOnChange("note")}
-                onBlur={markTouched("note")}
-                dataField="note"
-                placeholder=""
-              />
+              <div className="grid gap-3 md:grid-cols-2">
+                <SourceRadio
+                  value="bitkub"
+                  selected={form.source_channel}
+                  onSelect={setSourceChannel}
+                  label="Bitkub Academy"
+                  dataField="source_channel"
+                />
+                <SourceRadio
+                  value="9expert"
+                  selected={form.source_channel}
+                  onSelect={setSourceChannel}
+                  label="9Expert Training"
+                  dataField="source_channel"
+                />
+                <SourceRadio
+                  value="key"
+                  selected={form.source_channel}
+                  onSelect={setSourceChannel}
+                  label="Key Solutions Training"
+                  dataField="source_channel"
+                />
+                <SourceRadio
+                  value="other"
+                  selected={form.source_channel}
+                  onSelect={setSourceChannel}
+                  label="Other"
+                  dataField="source_channel"
+                />
+              </div>
+
+              {form.source_channel === "other" ? (
+                <div className="mt-3">
+                  <Field
+                    label={isEN ? "Please specify" : "โปรดระบุ"}
+                    required
+                    error={showError("source_other") ? errors.source_other : ""}
+                  >
+                    <Input
+                      value={form.source_other}
+                      onChange={clearErrorOnChange("source_other")}
+                      onBlur={markTouched("source_other")}
+                      error={
+                        showError("source_other") ? errors.source_other : ""
+                      }
+                      dataField="source_other"
+                      placeholder={
+                        isEN
+                          ? "e.g., Facebook, Friend, TikTok..."
+                          : "เช่น Facebook, เพื่อนแนะนำ, TikTok..."
+                      }
+                    />
+                  </Field>
+                </div>
+              ) : null}
             </Field>
+
+            <div className="mt-6">
+              <Field
+                label={
+                  isEN
+                    ? "Note / Ask for more information"
+                    : "Note / Ask for more information"
+                }
+              >
+                <Textarea
+                  value={form.note}
+                  onChange={clearErrorOnChange("note")}
+                  onBlur={markTouched("note")}
+                  dataField="note"
+                  placeholder=""
+                />
+              </Field>
+            </div>
           </Section>
 
           {/* footer actions */}
