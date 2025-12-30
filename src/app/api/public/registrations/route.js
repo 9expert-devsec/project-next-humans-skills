@@ -31,47 +31,56 @@ function normalizeSourceChannel(x) {
   return SOURCE_ALLOWED.has(v) ? v : "";
 }
 
+function sourceLabel(channel, other, locale = "th") {
+  const isEN = locale === "en";
+  if (channel === "bitkub") return isEN ? "Bitkub Academy" : "Bitkub Academy";
+  if (channel === "9expert") return isEN ? "9Expert Training" : "9Expert Training";
+  if (channel === "key") return isEN ? "Key Solutions Training" : "Key Solutions Training";
+  if (channel === "other") return clean(other) || (isEN ? "Other" : "อื่นๆ");
+  return "";
+}
+
 function pickDraft(draft = {}) {
   const source_channel = normalizeSourceChannel(draft.source_channel);
-  const source_other =
-    source_channel === "other" ? clean(draft.source_other) : "";
+  const source_other = source_channel === "other" ? clean(draft.source_other) : "";
 
   return {
     courseSlug: clean(draft.courseSlug),
     locale: clean(draft.locale || "th"),
 
+    // section 1
     trainee_count: Math.max(1, Number(draft.trainee_count || 1)),
     training_location: clean(draft.training_location),
     month_interest: clean(draft.month_interest),
     year_interest: clean(draft.year_interest),
 
+    // section 2
     first_name: clean(draft.first_name),
     last_name: clean(draft.last_name),
     position: clean(draft.position),
     department: clean(draft.department),
-    contact_phone: normalizeDigits(
-      draft.contact_phone || draft.contact_phone_raw
-    ),
+    contact_phone: normalizeDigits(draft.contact_phone || draft.contact_phone_raw),
     email: clean(draft.email),
 
+    // section 3
     company: clean(draft.company),
 
+    // branch
     branch: clean(draft.branch) || "สำนักงานใหญ่",
 
-    // ✅ NEW: marketing/source
+    // ✅ marketing/source (normalize แล้วเท่านั้น)
     source_channel,
     source_other,
 
     tax_id: normalizeDigits(draft.tax_id),
-    company_phone: normalizeDigits(
-      draft.company_phone || draft.company_phone_raw
-    ),
+    company_phone: normalizeDigits(draft.company_phone || draft.company_phone_raw),
     receipt_address: clean(draft.receipt_address),
     province: clean(draft.province),
     district: clean(draft.district),
     subdistrict: clean(draft.subdistrict),
     postcode: clean(draft.postcode),
 
+    // section 4
     note: clean(draft.note),
   };
 }
@@ -95,8 +104,7 @@ function validatePayload(p) {
   if (!p.branch) errs.push("branch is required");
 
   if (!p.tax_id) errs.push("tax_id is required");
-  if (p.tax_id && p.tax_id.length > 13)
-    errs.push("tax_id must be <= 13 digits");
+  if (p.tax_id && p.tax_id.length > 13) errs.push("tax_id must be <= 13 digits");
   if (!p.receipt_address) errs.push("receipt_address is required");
 
   // ✅ NEW: ต้องเลือกช่องทาง
@@ -180,7 +188,7 @@ export async function POST(req) {
     course?.title_en ||
     payload.courseSlug;
 
-  // ⚠️ ไม่ต้องส่ง source_channel เข้าเมล (ตามที่คุณบอก) -> ไม่ใส่ใน templateModel ก็ได้
+  // ✅ ส่ง source_channel เข้าเมลด้วย เพื่อให้ template แสดงได้
   const templateModel = {
     ref_no: doc.ref_no,
     submitted_at: new Date(doc.createdAt).toLocaleString("th-TH", {
@@ -202,7 +210,18 @@ export async function POST(req) {
     company_tax_id: payload.tax_id,
     company_address: payload.receipt_address,
 
+    // ✅ NEW: สำหรับ section “ข้อมูลเพิ่มเติม”
+    source_channel: payload.source_channel || "",
+    source_other: payload.source_other || "",
+    source_channel_label: sourceLabel(
+      payload.source_channel,
+      payload.source_other,
+      payload.locale
+    ),
+
     current_status: doc.status,
+
+    // note จะเข้า template ได้แน่นอน (คุณใช้ {{#note}} ... {{/note}} อยู่แล้ว)
     note: payload.note || "",
   };
 

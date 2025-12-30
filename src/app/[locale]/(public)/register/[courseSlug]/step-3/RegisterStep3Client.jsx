@@ -16,6 +16,36 @@ function ResultKey(courseSlug) {
   return `nx-register-result:${String(courseSlug || "").trim()}`;
 }
 
+function sourceLabel(locale, channel) {
+  const isEN = locale === "en";
+  const c = String(channel || "").trim();
+
+  const mapTH = {
+    bitkub: "Bitkub Academy",
+    "9expert": "9Expert Training",
+    key: "Key Solutions Training",
+    other: "อื่นๆ (Other)",
+  };
+
+  const mapEN = {
+    bitkub: "Bitkub Academy",
+    "9expert": "9Expert Training",
+    key: "Key Solutions Training",
+    other: "Other",
+  };
+
+  return (isEN ? mapEN : mapTH)[c] || "-";
+}
+
+function formatSource(locale, channel, otherText) {
+  const c = String(channel || "").trim();
+  if (!c) return "-";
+  const base = sourceLabel(locale, c);
+  if (c !== "other") return base;
+  const t = String(otherText || "").trim();
+  return t ? `${base}: ${t}` : base;
+}
+
 function Section({ title, subtitle, children }) {
   return (
     <div className="rounded-3xl border border-white/10 bg-black/10 p-5 md:p-6">
@@ -420,6 +450,21 @@ export default function RegisterStep3Client({ locale = "th", courseSlug }) {
                   <Item
                     label={isEN ? "Branch" : "สาขา"} // ✅ เพิ่ม
                     value={String(data?.branch || "").trim() || "-"}
+                  />
+                </div>
+
+                <div className="md:col-span-12">
+                  <Item
+                    label={
+                      isEN
+                        ? "How did you hear about us?"
+                        : "ท่านทราบข้อมูลข่าวสารจากช่องทางใด"
+                    }
+                    value={formatSource(
+                      locale,
+                      data?.source_channel,
+                      data?.source_other
+                    )}
                   />
                 </div>
 

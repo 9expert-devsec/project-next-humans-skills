@@ -13,6 +13,40 @@ function DraftKey(courseSlug) {
   return `nx-register-draft:${String(courseSlug || "").trim()}`;
 }
 
+/* ---------------- source channel helper ---------------- */
+function sourceLabel(locale, channel) {
+  const isEN = locale === "en";
+  const c = String(channel || "").trim();
+
+  const mapTH = {
+    bitkub: "Bitkub Academy",
+    "9expert": "9Expert Training",
+    key: "Key Solutions Training",
+    other: "อื่นๆ (Other)",
+  };
+
+  const mapEN = {
+    bitkub: "Bitkub Academy",
+    "9expert": "9Expert Training",
+    key: "Key Solutions Training",
+    other: "Other",
+  };
+
+  return (isEN ? mapEN : mapTH)[c] || (isEN ? "-" : "-");
+}
+
+function formatSource(locale, channel, otherText) {
+  const c = String(channel || "").trim();
+  if (!c) return "-";
+
+  const base = sourceLabel(locale, c);
+  if (c !== "other") return base;
+
+  const t = String(otherText || "").trim();
+  return t ? `${base}: ${t}` : base;
+}
+/* ------------------------------------------------------- */
+
 function Section({ no, title, subtitle, children }) {
   return (
     <div className="rounded-3xl border border-white/10 bg-black/10 p-5 md:p-6">
@@ -49,14 +83,12 @@ function formatThaiPhoneFromDigits(rawDigits) {
 
   const prefix2 = digits.slice(0, 2);
 
-  // mobile 10 digits: 0xx-xxx-xxxx
   if (["06", "08", "09"].includes(prefix2)) {
     const d = digits.slice(0, 10);
     if (d.length < 10) return d;
     return d.replace(/(\d{3})(\d{3})(\d{4})/, "$1-$2-$3");
   }
 
-  // landline 9 digits + ext
   if (["01", "02", "03", "04", "05", "07"].includes(prefix2)) {
     const main = digits.slice(0, 9);
     const ext = digits.length > 9 ? digits.slice(9, 14) : "";
@@ -111,16 +143,13 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
   const [course, setCourse] = useState(null);
   const [draft, setDraft] = useState(null);
 
-  // popup confirm + loading
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // guard: ถ้า slug หาย ให้กลับ home
   useEffect(() => {
     if (!courseSlug) router.replace(`/${locale}`);
   }, [courseSlug, locale, router]);
 
-  // fetch course by slug (เพื่อ header)
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -140,7 +169,6 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
     return () => (alive = false);
   }, [courseSlug]);
 
-  // ✅ load draft from sessionStorage (key กลาง)
   useEffect(() => {
     try {
       const raw = sessionStorage.getItem(DraftKey(courseSlug));
@@ -158,7 +186,6 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
         return;
       }
 
-      // บังคับ meta ให้ตรง
       setDraft({
         ...parsed,
         courseSlug,
@@ -192,8 +219,12 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
     return parts.join(" • ");
   }, [draft]);
 
+  const sourceLine = useMemo(() => {
+    if (!draft) return "-";
+    return formatSource(locale, draft.source_channel, draft.source_other);
+  }, [draft, locale]);
+
   function onBack() {
-    // ✅ ไม่ใช้ router.back() ให้ push ไป step-1 ตรง ๆ
     router.push(`/${locale}/register/${encodeURIComponent(courseSlug)}/step-1`);
   }
 
@@ -202,7 +233,7 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
     setSubmitting(true);
 
     try {
-      const raw = sessionStorage.getItem(`nx-register-draft:${courseSlug}`);
+      const raw = sessionStorage.getItem(DraftKey(courseSlug)); // ✅ ใช้ DraftKey
       const draft = raw ? JSON.parse(raw) : null;
       if (!draft) throw new Error("Draft not found");
 
@@ -231,7 +262,7 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
         `nx-register-result:${courseSlug}`,
         JSON.stringify({
           registrationId: data.registrationId,
-          refNo: data.refNo, // ✅ เก็บ refNo ไว้โชว์ step-3
+          refNo: data.refNo,
         })
       );
 
@@ -435,10 +466,10 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
                   value={draft.company || "-"}
                 />
               </div>
-              <div className="md:col-span-3">
+              <div className="md:col-span-4">
                 <Item
                   label={isEN ? "Branch" : "สาขา"}
-                  value={draft.branch || "-"} 
+                  value={draft.branch || "-"}
                 />
               </div>
               <div className="md:col-span-4">
@@ -448,8 +479,7 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
                   mono
                 />
               </div>
-
-              <div className="md:col-span-6">
+              <div className="md:col-span-8">
                 <Item
                   label={isEN ? "Company phone" : "เบอร์โทรบริษัท"}
                   value={formatThaiPhoneFromDigits(companyPhoneDigits) || "-"}
@@ -487,22 +517,41 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
             </div>
           </Section>
 
+          {/* ✅ UPDATED: Section 4 includes source + note */}
           <Section
             no={4}
-            title={isEN ? "Note" : "หมายเหตุ"}
-            subtitle={isEN ? "Optional" : "ไม่บังคับ"}
+            title={isEN ? "Additional info" : "ข้อมูลเพิ่มเติม"}
+            subtitle={
+              isEN
+                ? "Source channel (required) + note (optional)"
+                : "ช่องทางรับข่าวสาร (บังคับ) + หมายเหตุ (ไม่บังคับ)"
+            }
           >
-            <Item
-              label={
-                isEN
-                  ? "Ask for more information"
-                  : "Note / Ask for more information"
-              }
-              value={String(draft.note || "").trim() || "-"}
-            />
+            <div className="grid gap-4 md:grid-cols-12">
+              <div className="md:col-span-12">
+                <Item
+                  label={
+                    isEN
+                      ? "How did you hear about us?"
+                      : "ท่านทราบข้อมูลข่าวสารจากช่องทางใด"
+                  }
+                  value={sourceLine}
+                />
+              </div>
+
+              <div className="md:col-span-12">
+                <Item
+                  label={
+                    isEN
+                      ? "Note / Ask for more information"
+                      : "หมายเหตุ / ขอข้อมูลเพิ่มเติม"
+                  }
+                  value={String(draft.note || "").trim() || "-"}
+                />
+              </div>
+            </div>
           </Section>
 
-          {/* footer actions */}
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-end">
             <button
               onClick={onBack}
@@ -521,7 +570,6 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
         </div>
       </div>
 
-      {/* Confirm Popup */}
       {confirmOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
           <div className="w-full max-w-md rounded-3xl border border-white/10 bg-slate-900/90 p-6 text-white shadow-2xl">

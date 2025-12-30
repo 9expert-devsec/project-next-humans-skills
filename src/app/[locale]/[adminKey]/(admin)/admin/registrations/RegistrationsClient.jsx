@@ -511,7 +511,7 @@ export default function RegistrationsClient({ locale = "th" }) {
                   <th className="px-4 py-3">Phone</th>
                   <th className="px-4 py-3">Company</th>
                   <th className="px-4 py-3">Course</th>
-                  <th className="px-4 py-3">Source</th> {/* ✅ NEW */}
+                  <th className="px-4 py-3">Source</th> 
                   <th className="px-4 py-3">Status</th>
                 </tr>
               </thead>
