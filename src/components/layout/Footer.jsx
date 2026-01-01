@@ -1,4 +1,3 @@
-// src/components/layout/Footer.jsx
 "use client";
 
 function cx(...a) {
@@ -111,8 +110,8 @@ export default function Footer() {
   const LINE_URL = "https://line.me/R/ti/p/%409expert";
 
   return (
-    <footer className="relative mt-16 border-t border-white/10 bg-[#061528] text-white">
-      <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+    <footer className="relative mt-16 border-t border-white/10 bg-[#0b1c2c] text-white">
+      <div className="mx-auto max-w-7xl px-4 py-10 ">
         <div className="grid gap-8 lg:grid-cols-[1.2fr_1fr]">
           {/* Brand */}
           <div>
@@ -128,7 +127,7 @@ export default function Footer() {
             </div>
 
             <p className="mt-3 max-w-xl text-sm leading-relaxed text-white/65">
-              ศูนย์กลางการเรียนรู้ &amp; ระบบลงทะเบียนอบรมของพาร์ทเนอร์
+              ศูนย์กลางการเรียนรู้ &amp; ระบบลงทะเบียนอบรม
             </p>
           </div>
 

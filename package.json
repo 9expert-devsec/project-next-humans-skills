@@ -12,12 +12,14 @@
     "cloudinary": "^2.8.0",
     "dotenv": "^17.2.3",
     "jsonwebtoken": "^9.0.3",
+    "lucide-react": "^0.562.0",
     "mongoose": "^8.20.4",
     "next": "16.1.1",
     "postmark": "^4.0.5",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "slugify": "^1.6.6"
+    "slugify": "^1.6.6",
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.18",

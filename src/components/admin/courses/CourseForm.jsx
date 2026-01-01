@@ -121,7 +121,7 @@ export default function CourseForm({
     });
   }
 
-  const partnersOptions = useMemo(() => ["Bitkub Academy", "9Expert Training", "Key Solutions Training"], []);
+  const partnersOptions = useMemo(() => ["bitkub", "9expert", "key"], []);
 
   function buildPayload() {
     const payload = {
@@ -301,7 +301,7 @@ export default function CourseForm({
               onChange={(e) => setField("level", e.target.value)}
               className="w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white outline-none focus:border-white/25"
             >
-              {["General", "Executive", "Middle Management", "Workforce", "Citizen Developer"].map(
+              {["general", "executive", "middle", "workforce", "citizen"].map(
                 (v) => (
                   <option key={v} value={v} className="bg-slate-900">
                     {v}

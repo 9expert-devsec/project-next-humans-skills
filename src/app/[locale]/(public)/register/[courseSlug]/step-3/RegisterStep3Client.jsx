@@ -46,6 +46,7 @@ function formatSource(locale, channel, otherText) {
   return t ? `${base}: ${t}` : base;
 }
 
+
 function Section({ title, subtitle, children }) {
   return (
     <div className="rounded-3xl border border-white/10 bg-black/10 p-5 md:p-6">
@@ -216,10 +217,10 @@ export default function RegisterStep3Client({ locale = "th", courseSlug }) {
     if (!data) return "";
     const parts = [
       data.training_location,
-      data.province,
-      data.district,
-      data.subdistrict,
-      data.postcode ? `(${data.postcode})` : "",
+      // data.province,
+      // data.district,
+      // data.subdistrict,
+      // data.postcode ? `(${data.postcode})` : "",
     ]
       .map((x) => String(x || "").trim())
       .filter(Boolean);
@@ -240,7 +241,7 @@ export default function RegisterStep3Client({ locale = "th", courseSlug }) {
 
   if (!course) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-10 text-white">
+      <div className="mx-auto max-w-4xl mt-32 px-4 py-10 text-white">
         <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur md:p-7">
           <div className="text-2xl font-extrabold">
             {isEN ? "Loading..." : "กำลังโหลด..."}
@@ -254,58 +255,60 @@ export default function RegisterStep3Client({ locale = "th", courseSlug }) {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10">
+    <div className="mx-auto max-w-7xl mt-24">
       <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur md:p-7">
         {/* header */}
-        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-          <div className="min-w-0">
-            <div className="text-2xl font-extrabold text-white">
-              {isEN ? "Register (Step 3)" : "ลงทะเบียน (ขั้นตอนที่ 3)"}
-            </div>
-            <div className="mt-2 text-sm text-white/60">
-              {isEN
-                ? "Your information has been submitted successfully"
-                : "ส่งข้อมูลเรียบร้อยแล้ว ทีมงานจะติดต่อกลับโดยเร็ว"}
-            </div>
-
-            <div className="mt-4 flex items-center gap-3">
-              {coverUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={coverUrl}
-                  alt={courseTitle}
-                  className="h-14 w-20 rounded-2xl object-cover ring-1 ring-white/10"
-                />
-              ) : (
-                <div className="h-14 w-20 rounded-2xl bg-white/10 ring-1 ring-white/10" />
-              )}
-
-              <div className="min-w-0">
-                <div className="text-sm font-bold text-white/70">
-                  {isEN ? "Course:" : "คอร์ส:"}{" "}
-                  <span className="text-white">{courseTitle}</span>
-                </div>
-                {course?.title_en && !isEN ? (
-                  <div className="mt-1 text-sm text-white/50">
-                    {course.title_en}
-                  </div>
-                ) : null}
-              </div>
-            </div>
-          </div>
-
-          <div className="flex gap-2">
+        {/* <div className="flex gap-2">
             <button
               onClick={goCourse}
               className="h-11 rounded-2xl bg-white/10 px-5 text-sm font-extrabold text-white ring-1 ring-white/10 hover:bg-white/15"
             >
               {isEN ? "Back to course" : "กลับหน้าคอร์ส"}
             </button>
+          </div> */}
+
+        <div className="mt-7">
+          <div className="text-4xl font-extrabold text-white text-center">
+            {isEN ? "Register Completed" : "ลงทะเบียนเสร็จสิ้น"}
+          </div>
+          <div className="mt-2 text-sm text-white/60 text-center">
+            {isEN
+              ? "Your information has been submitted successfully"
+              : "ส่งข้อมูลเรียบร้อยแล้ว ทีมงานจะติดต่อกลับโดยเร็ว"}
           </div>
         </div>
 
         <div className="mt-6">
-          <StepBar current={3} locale={locale} />
+          <StepBar current={3} completed locale={locale} />
+        </div>
+
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div className="min-w-0">
+            <div className="mt-4 flex items-center gap-5 flex-col md:flex-row">
+              {coverUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={coverUrl}
+                  alt={courseTitle}
+                  className="w-full md:w-60 rounded-2xl object-cover ring-1 ring-white/10"
+                />
+              ) : (
+                <div className="w-full md:w-60 rounded-2xl bg-white/10 ring-1 ring-white/10" />
+              )}
+
+              <div className="min-w-0">
+                <div className="text-lg font-bold text-white/70">
+                  {isEN ? "Course:" : "หลักสูตร"}{" "}
+                  <div className="text-white">{courseTitle}</div>
+                </div>
+                {/* {course?.title_en && !isEN ? (
+                  <div className="mt-1 text-sm text-white/50">
+                    {course.title_en}
+                  </div>
+                ) : null} */}
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="mt-8 grid gap-6">
@@ -319,8 +322,27 @@ export default function RegisterStep3Client({ locale = "th", courseSlug }) {
             }
           >
             <div className="grid gap-4 md:grid-cols-12">
-              <div className="md:col-span-7">
-                <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-4">
+              <div className="md:col-span-8">
+                <Item
+                  label={isEN ? "Reference No." : "เลขอ้างอิง"}
+                  value={
+                    refNo || (isEN ? "(not available)" : "(ยังไม่มีเลขอ้างอิง)")
+                  }
+                  mono
+                />
+                <div className="mt-3 grid gap-3">
+                  <Item
+                    label={isEN ? "Contact name" : "ผู้ติดต่อ"}
+                    value={contactName || "-"}
+                  />
+                  <Item
+                    label={isEN ? "Email" : "อีเมล"}
+                    value={String(data?.email || "").trim() || "-"}
+                  />
+                </div>
+              </div>
+              <div className="md:col-span-4 ">
+                <div className="h-full rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-4">
                   <div className="text-sm font-extrabold text-emerald-200">
                     {isEN ? "What’s next?" : "ขั้นตอนถัดไป"}
                   </div>
@@ -359,25 +381,6 @@ export default function RegisterStep3Client({ locale = "th", courseSlug }) {
                 ) : null}
               </div>
 
-              <div className="md:col-span-5">
-                <Item
-                  label={isEN ? "Reference No." : "เลขอ้างอิง"}
-                  value={
-                    refNo || (isEN ? "(not available)" : "(ยังไม่มีเลขอ้างอิง)")
-                  }
-                  mono
-                />
-                <div className="mt-3 grid gap-3">
-                  <Item
-                    label={isEN ? "Contact name" : "ผู้ติดต่อ"}
-                    value={contactName || "-"}
-                  />
-                  <Item
-                    label={isEN ? "Email" : "อีเมล"}
-                    value={String(data?.email || "").trim() || "-"}
-                  />
-                </div>
-              </div>
             </div>
           </Section>
 
@@ -455,21 +458,6 @@ export default function RegisterStep3Client({ locale = "th", courseSlug }) {
 
                 <div className="md:col-span-12">
                   <Item
-                    label={
-                      isEN
-                        ? "How did you hear about us?"
-                        : "ท่านทราบข้อมูลข่าวสารจากช่องทางใด"
-                    }
-                    value={formatSource(
-                      locale,
-                      data?.source_channel,
-                      data?.source_other
-                    )}
-                  />
-                </div>
-
-                <div className="md:col-span-12">
-                  <Item
                     label={isEN ? "Tax ID" : "เลขประจำตัวผู้เสียภาษี"}
                     value={String(data?.tax_id || "").trim() || "-"}
                     mono
@@ -504,6 +492,21 @@ export default function RegisterStep3Client({ locale = "th", courseSlug }) {
                   />
                 </div>
 
+                <div className="md:col-span-12">
+                  <Item
+                    label={
+                      isEN
+                        ? "How did you hear about us?"
+                        : "ท่านทราบข้อมูลข่าวสารจากช่องทางใด"
+                    }
+                    value={formatSource(
+                      locale,
+                      data?.source_channel,
+                      data?.source_other
+                    )}
+                  />
+                </div>
+
                 {String(data?.note || "").trim() ? (
                   <div className="md:col-span-12">
                     <Item
@@ -533,11 +536,11 @@ export default function RegisterStep3Client({ locale = "th", courseSlug }) {
             </button>
           </div>
 
-          <div className="text-xs text-white/40">
+          {/* <div className="text-xs text-white/40">
             {isEN
               ? "This page uses database data when available; otherwise it falls back to local draft."
               : "หน้านี้จะใช้ข้อมูลจากฐานข้อมูลเมื่อดึงได้ หากดึงไม่ได้จะ fallback ไปใช้ draft ในเครื่อง"}
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

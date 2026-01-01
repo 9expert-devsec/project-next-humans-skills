@@ -1,4 +1,3 @@
-// src/components/layout/Header.jsx
 "use client";
 
 import Link from "next/link";

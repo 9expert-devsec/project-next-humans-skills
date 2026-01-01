@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import StepBar from "@/components/StepBar";
+import { ArrowLeft } from "lucide-react";
 
 function cx(...a) {
   return a.filter(Boolean).join(" ");
@@ -83,12 +84,14 @@ function formatThaiPhoneFromDigits(rawDigits) {
 
   const prefix2 = digits.slice(0, 2);
 
+  // mobile 10 digits: 0xx-xxx-xxxx
   if (["06", "08", "09"].includes(prefix2)) {
     const d = digits.slice(0, 10);
     if (d.length < 10) return d;
     return d.replace(/(\d{3})(\d{3})(\d{4})/, "$1-$2-$3");
   }
 
+  // landline 9 digits + ext
   if (["01", "02", "03", "04", "05", "07"].includes(prefix2)) {
     const main = digits.slice(0, 9);
     const ext = digits.length > 9 ? digits.slice(9, 14) : "";
@@ -143,13 +146,16 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
   const [course, setCourse] = useState(null);
   const [draft, setDraft] = useState(null);
 
+  // popup confirm + loading
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  // guard: ถ้า slug หาย ให้กลับ home
   useEffect(() => {
     if (!courseSlug) router.replace(`/${locale}`);
   }, [courseSlug, locale, router]);
 
+  // fetch course by slug (เพื่อ header)
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -169,6 +175,7 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
     return () => (alive = false);
   }, [courseSlug]);
 
+  // ✅ load draft from sessionStorage (key กลาง)
   useEffect(() => {
     try {
       const raw = sessionStorage.getItem(DraftKey(courseSlug));
@@ -186,6 +193,7 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
         return;
       }
 
+      // บังคับ meta ให้ตรง
       setDraft({
         ...parsed,
         courseSlug,
@@ -209,10 +217,10 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
     if (!draft) return "";
     const parts = [
       draft.training_location,
-      draft.province,
-      draft.district,
-      draft.subdistrict,
-      draft.postcode ? `(${draft.postcode})` : "",
+      // draft.province,
+      // draft.district,
+      // draft.subdistrict,
+      // draft.postcode ? `(${draft.postcode})` : "",
     ]
       .map((x) => String(x || "").trim())
       .filter(Boolean);
@@ -225,6 +233,7 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
   }, [draft, locale]);
 
   function onBack() {
+    // ✅ ไม่ใช้ router.back() ให้ push ไป step-1 ตรง ๆ
     router.push(`/${locale}/register/${encodeURIComponent(courseSlug)}/step-1`);
   }
 
@@ -233,7 +242,7 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
     setSubmitting(true);
 
     try {
-      const raw = sessionStorage.getItem(DraftKey(courseSlug)); // ✅ ใช้ DraftKey
+      const raw = sessionStorage.getItem(`nx-register-draft:${courseSlug}`);
       const draft = raw ? JSON.parse(raw) : null;
       if (!draft) throw new Error("Draft not found");
 
@@ -262,7 +271,7 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
         `nx-register-result:${courseSlug}`,
         JSON.stringify({
           registrationId: data.registrationId,
-          refNo: data.refNo,
+          refNo: data.refNo, // ✅ เก็บ refNo ไว้โชว์ step-3
         })
       );
 
@@ -279,7 +288,7 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
 
   if (!course || !draft) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-10 text-white">
+      <div className="mx-auto max-w-4xl mt-32 px-4 py-10 text-white">
         <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur md:p-7">
           <div className="text-2xl font-extrabold">
             {isEN ? "Loading..." : "กำลังโหลดข้อมูล..."}
@@ -298,59 +307,82 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
     draft.company_phone || draft.company_phone_raw || "";
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10">
+    <div className="mx-auto max-w-7xl mt-24">
       <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur md:p-7">
         {/* header */}
-        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-          <div className="min-w-0">
-            <div className="text-2xl font-extrabold text-white">
-              {isEN ? "Register (Step 2)" : "ลงทะเบียน (ขั้นตอนที่ 2)"}
-            </div>
-            <div className="mt-2 text-sm text-white/60">
-              {isEN
-                ? "Review information before confirmation"
-                : "ตรวจสอบความถูกต้องของข้อมูลก่อนยืนยัน"}
-            </div>
-
-            <div className="mt-4 flex items-center gap-3">
-              {coverUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={coverUrl}
-                  alt={courseTitle}
-                  className="h-14 w-20 rounded-2xl object-cover ring-1 ring-white/10"
-                />
-              ) : (
-                <div className="h-14 w-20 rounded-2xl bg-white/10 ring-1 ring-white/10" />
-              )}
-
-              <div className="min-w-0">
-                <div className="text-sm font-bold text-white/70">
-                  {isEN ? "Course:" : "คอร์ส:"}{" "}
-                  <span className="text-white">{courseTitle}</span>
-                </div>
-                {course?.title_en && !isEN ? (
-                  <div className="mt-1 text-sm text-white/50">
-                    {course.title_en}
-                  </div>
-                ) : null}
-              </div>
-            </div>
+        {/* <div className="flex justify-start">
+          <button
+            onClick={onBack}
+            className=" rounded-2xl bg-white/10 px-5 py-2 text-sm font-extrabold text-white ring-1 ring-white/10 hover:bg-white/15"
+          >
+            <ArrowLeft />
+          </button>
+        </div> */}
+        <div className="mt-4">
+          <div className="text-4xl font-extrabold text-white text-center">
+            {isEN ? "Register" : "ลงทะเบียน"}
           </div>
-
-          <div className="flex gap-2">
-            <button
-              onClick={onBack}
-              className="h-11 rounded-2xl bg-white/10 px-5 text-sm font-extrabold text-white ring-1 ring-white/10 hover:bg-white/15"
-            >
-              Back
-            </button>
+          <div className="mt-2 text-sm text-white/60 text-center">
+            {isEN
+              ? "Review information before confirmation"
+              : "ตรวจสอบความถูกต้องของข้อมูลก่อนยืนยัน"}
           </div>
         </div>
 
         <div className="mt-6">
           <StepBar current={2} locale={locale} />
         </div>
+
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div className="min-w-0">
+            {/* <div className="text-4xl font-extrabold text-white">
+              {isEN ? "Register" : "ลงทะเบียน"}
+            </div>
+            <div className="mt-2 text-sm text-white/60">
+              {isEN
+                ? "Review information before confirmation"
+                : "ตรวจสอบความถูกต้องของข้อมูลก่อนยืนยัน"}
+            </div> */}
+
+            <div className="mt-4 flex items-center gap-5 flex-col md:flex-row">
+              {coverUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={coverUrl}
+                  alt={courseTitle}
+                  className="w-full md:w-60 rounded-2xl object-cover ring-1 ring-white/10"
+                />
+              ) : (
+                <div className="w-full md:w-60 rounded-2xl bg-white/10 ring-1 ring-white/10" />
+              )}
+
+              <div className="min-w-0">
+                <div className="text-lg font-bold text-white/70">
+                  {isEN ? "Course:" : "หลักสูตร"}{" "}
+                  <div className="text-white">{courseTitle}</div>
+                </div>
+                {/* {course?.title_en && !isEN ? (
+                  <div className="mt-1 text-sm text-white/50">
+                    {course.title_en}
+                  </div>
+                ) : null} */}
+              </div>
+            </div>
+          </div>
+
+          {/* <div className="flex gap-2">
+            <button
+              onClick={onBack}
+              className="h-11 rounded-2xl bg-white/10 px-5 text-sm font-extrabold text-white ring-1 ring-white/10 hover:bg-white/15"
+            >
+              Back
+            </button>
+          </div> */}
+        </div>
+
+        {/* <div className="mt-6">
+          <StepBar current={2} locale={locale} />
+        </div> */}
 
         {/* body */}
         <div className="mt-8 grid gap-6">
@@ -364,19 +396,19 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
             }
           >
             <div className="grid gap-4 md:grid-cols-12">
-              <div className="md:col-span-3">
+              <div className="md:col-span-4">
                 <Item
                   label={isEN ? "Trainees count" : "จำนวนผู้เข้าอบรม"}
                   value={String(draft.trainee_count || "-")}
                 />
               </div>
-              <div className="md:col-span-3">
+              <div className="md:col-span-4">
                 <Item
                   label={isEN ? "Interested month" : "เดือนที่สนใจอบรม"}
                   value={draft.month_interest || "-"}
                 />
               </div>
-              <div className="md:col-span-3">
+              <div className="md:col-span-4">
                 <Item
                   label={isEN ? "Interested year" : "ปีที่สนใจ"}
                   value={draft.year_interest || "-"}
@@ -472,14 +504,15 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
                   value={draft.branch || "-"}
                 />
               </div>
-              <div className="md:col-span-4">
+              <div className="md:col-span-6">
                 <Item
                   label={isEN ? "Tax ID" : "เลขประจำตัวผู้เสียภาษี"}
                   value={draft.tax_id || "-"}
                   mono
                 />
               </div>
-              <div className="md:col-span-8">
+
+              <div className="md:col-span-6">
                 <Item
                   label={isEN ? "Company phone" : "เบอร์โทรบริษัท"}
                   value={formatThaiPhoneFromDigits(companyPhoneDigits) || "-"}
@@ -517,10 +550,9 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
             </div>
           </Section>
 
-          {/* ✅ UPDATED: Section 4 includes source + note */}
           <Section
             no={4}
-            title={isEN ? "Additional info" : "ข้อมูลเพิ่มเติม"}
+            title={isEN ? "Note" : "หมายเหตุ"}
             subtitle={
               isEN
                 ? "Source channel (required) + note (optional)"
@@ -538,13 +570,12 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
                   value={sourceLine}
                 />
               </div>
-
               <div className="md:col-span-12">
                 <Item
                   label={
                     isEN
-                      ? "Note / Ask for more information"
-                      : "หมายเหตุ / ขอข้อมูลเพิ่มเติม"
+                      ? "Ask for more information"
+                      : "Note / Ask for more information"
                   }
                   value={String(draft.note || "").trim() || "-"}
                 />
@@ -552,6 +583,7 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
             </div>
           </Section>
 
+          {/* footer actions */}
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-end">
             <button
               onClick={onBack}
@@ -570,6 +602,7 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
         </div>
       </div>
 
+      {/* Confirm Popup */}
       {confirmOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
           <div className="w-full max-w-md rounded-3xl border border-white/10 bg-slate-900/90 p-6 text-white shadow-2xl">

@@ -4,6 +4,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import StepBar from "@/components/StepBar";
+import { ArrowLeft } from "lucide-react";
 
 function cx(...a) {
   return a.filter(Boolean).join(" ");
@@ -160,8 +161,8 @@ function Select({
       onBlur={onBlur}
       disabled={disabled}
       className={cx(
-        "h-11 w-full rounded-2xl border bg-black/15 px-4 text-sm text-white outline-none",
-        "focus:ring-2",
+        "h-11 w-full rounded-2xl border bg-black/15 px-4 text-sm text-white outline-none themed-select ",
+        "focus:ring-2 ",
         error
           ? "border-rose-400/50 focus:border-rose-300/70 focus:ring-rose-400/15"
           : "border-white/10 focus:border-white/20 focus:ring-white/10",
@@ -185,9 +186,9 @@ function InfoTip({ text }) {
 
       <span
         className={cx(
-          "pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-72 -translate-x-1/2",
+          "pointer-events-none absolute left-full top-1/2 z-20 ml-2 w-[min(18rem,calc(100vw-2rem))] -translate-y-1/2",
           "rounded-2xl border border-white/10 bg-slate-950/95 px-3 py-2 text-xs text-white/85 shadow-xl",
-          "opacity-0 translate-y-1 transition group-hover:opacity-100 group-hover:translate-y-0"
+          "opacity-0 translate-x-1 transition group-hover:opacity-100 group-hover:translate-x-0"
         )}
       >
         {text}
@@ -269,7 +270,7 @@ function getDefaultForm(locale = "th") {
 
     // section 3
     company: "",
-    branch: defaultBranchByLocale(locale),
+    branch: defaultBranchByLocale(locale), // ✅ required + editable
     tax_id: "",
     company_phone_raw: "",
     company_phone: "",
@@ -279,16 +280,16 @@ function getDefaultForm(locale = "th") {
     subdistrict: "",
     postcode: "",
 
-    // section 4 (NEW)
-    source_channel: "", // bitkub | 9expert | key | other
+    // section 4
+    source_channel: "",
     source_other: "",
-
     note: "",
   };
 }
 
 function sanitizeDraft(d = {}, locale = "th") {
   const base = getDefaultForm(locale);
+
   const out = { ...base, ...(d && typeof d === "object" ? d : {}) };
 
   // numbers
@@ -300,7 +301,7 @@ function sanitizeDraft(d = {}, locale = "th") {
     String(out.year_interest || "") ||
     String(YEARS[0] || new Date().getFullYear());
 
-  out.branch = String(out.branch || defaultBranchByLocale(locale));
+  out.branch = String(out.branch || defaultBranchByLocale(locale)); // ✅ ensure default
 
   out.contact_phone_raw = String(out.contact_phone_raw || "").replace(
     /\D/g,
@@ -315,10 +316,8 @@ function sanitizeDraft(d = {}, locale = "th") {
     .replace(/\D/g, "")
     .slice(0, 13);
 
-  // NEW
   out.source_channel = String(out.source_channel || "").trim();
   out.source_other = String(out.source_other || "").trim();
-  if (out.source_channel !== "other") out.source_other = "";
 
   return out;
 }
@@ -380,6 +379,7 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
   const [submitted, setSubmitted] = useState(false);
 
   const showError = (name) => submitted || touched[name];
+
   const markTouched = (name) => () =>
     setTouched((prev) => ({ ...prev, [name]: true }));
 
@@ -413,7 +413,7 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contactPhone.digits, companyPhone.digits]);
 
-  // ✅ load draft again when courseSlug changes
+  // ✅ load draft again when courseSlug changes (กรณีผู้ใช้เปลี่ยนคอร์ส/เปลี่ยน locale)
   useEffect(() => {
     try {
       const raw = sessionStorage.getItem(DraftKey(courseSlug));
@@ -425,6 +425,7 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
               ...prev,
               courseSlug,
               locale,
+              // ensure default branch if empty
               branch: prev.branch || defaultBranchByLocale(locale),
             },
             locale
@@ -464,7 +465,7 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseSlug, locale]);
 
-  // ✅ persist draft
+  // ✅ persist draft (กลาง)
   useEffect(() => {
     try {
       const payloadToSave = {
@@ -543,6 +544,7 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
   const districtDisabled = !thDb || !form.province;
   const subdistrictDisabled = !thDb || !form.province || !form.district;
 
+  // handlers
   const setProvince = (e) => {
     const province = e.target.value;
     setForm((prev) => ({
@@ -552,6 +554,7 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
       subdistrict: "",
       postcode: "",
     }));
+    // clear related errors when change chain
     setErrors((prev) => {
       const {
         province: _p,
@@ -611,7 +614,7 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
     const e = {};
     const t = (x) => String(x || "").trim();
 
-    // section 1
+    // section 1 (required)
     if (!t(form.trainee_count))
       e.trainee_count = isEN ? "Required" : "กรุณาระบุจำนวนผู้เข้าอบรม";
     if (!t(form.month_interest))
@@ -621,7 +624,7 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
     if (!t(form.training_location))
       e.training_location = isEN ? "Required" : "กรุณาระบุสถานที่อบรม";
 
-    // section 2
+    // section 2 (required)
     if (!t(form.first_name)) e.first_name = isEN ? "Required" : "กรุณากรอกชื่อ";
     if (!t(form.last_name))
       e.last_name = isEN ? "Required" : "กรุณากรอกนามสกุล";
@@ -637,7 +640,7 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
     else if (!isValidEmail(form.email))
       e.email = isEN ? "Invalid email format" : "รูปแบบอีเมลไม่ถูกต้อง";
 
-    // section 3
+    // section 3 (required)
     if (!t(form.company)) e.company = isEN ? "Required" : "กรุณากรอกบริษัท";
     if (!t(form.branch)) e.branch = isEN ? "Required" : "กรุณาระบุสาขา";
 
@@ -651,11 +654,18 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
     if (!t(form.receipt_address))
       e.receipt_address = isEN ? "Required" : "กรุณากรอกที่อยู่ออกใบเสร็จ";
 
-    // section 4 (NEW)
     if (!t(form.source_channel))
-      e.source_channel = isEN ? "Required" : "กรุณาเลือกช่องทางรับข่าวสาร";
+      e.source_channel = isEN
+        ? "Please select a channel"
+        : "กรุณาเลือกช่องทางรับข่าวสาร";
+
     if (t(form.source_channel) === "other" && !t(form.source_other))
-      e.source_other = isEN ? "Please specify" : "กรุณาระบุช่องทางอื่น";
+      e.source_other = isEN ? "Please specify" : "กรุณาระบุช่องทางอื่นๆ";
+
+    // ✅ ถ้าคุณต้องการ “บังคับ” จังหวัด/อำเภอ/ตำบลด้วย ให้ปลดคอมเมนต์ 3 บรรทัดนี้
+    // if (!t(form.province)) e.province = isEN ? "Required" : "กรุณาเลือกจังหวัด";
+    // if (!t(form.district)) e.district = isEN ? "Required" : "กรุณาเลือกอำเภอ/เขต";
+    // if (!t(form.subdistrict)) e.subdistrict = isEN ? "Required" : "กรุณาเลือกตำบล/แขวง";
 
     return e;
   }
@@ -709,9 +719,9 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
 
   if (!course) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-10 text-white">
-        <div className="text-2xl font-extrabold">Loading Course ..</div>
-        <div className="mt-2 text-white/60">กำลังโหลด…</div>
+      <div className="mx-auto max-w-4xl mt-32 px-4 py-10 text-white">
+        <div className="text-2xl font-extrabold">Loading...</div>
+        <div className="mt-2 text-white/60">กำลังพาท่านไปยังหน้าลงทะเบียน</div>
         <button
           onClick={() => router.push(`/${locale}`)}
           className="mt-5 inline-flex rounded-xl bg-white px-4 py-2 text-sm font-extrabold text-slate-900"
@@ -723,47 +733,74 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10">
+    <div className="mx-auto max-w-7xl mt-24 ">
       <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur md:p-7">
         {/* header */}
+        <div className="flex flex-wrap justify-between">
+          <button
+            onClick={onBack}
+            className=" rounded-2xl bg-white/10 px-5 py-2 text-sm font-extrabold text-white ring-1 ring-white/10 hover:bg-white/15"
+          >
+            <ArrowLeft />
+          </button>
+          <button
+            onClick={onResetDraft}
+            className=" rounded-2xl bg-rose-500/15 px-5 text-sm font-bold text-rose-100 ring-1 ring-rose-500/20 hover:bg-rose-500/20"
+          >
+            {isEN ? "Clear" : "ล้างข้อมูล"}
+          </button>
+        </div>
+        <div className="mt-4">
+          <div className="text-4xl font-extrabold text-white text-center">
+            {isEN ? "Register" : "ลงทะเบียน"}
+          </div>
+          <div className="mt-2 text-sm text-white/60 text-center">
+            {isEN
+              ? "Fill in information for registration inquiry"
+              : "กรอกข้อมูลเพื่อส่งความสนใจลงทะเบียน"}
+          </div>
+        </div>
+        <div className="mt-6">
+          <StepBar current={1} locale={locale} />
+        </div>
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="min-w-0">
-            <div className="text-2xl font-extrabold text-white">
-              {isEN ? "Register (Step 1)" : "ลงทะเบียน (ขั้นตอนที่ 1)"}
+            {/* <div className="text-2xl font-extrabold text-white">
+              {isEN ? "Register" : "ลงทะเบียน"}
             </div>
             <div className="mt-2 text-sm text-white/60">
               {isEN
                 ? "Fill in information for registration inquiry"
                 : "กรอกข้อมูลเพื่อส่งความสนใจลงทะเบียน"}
-            </div>
+            </div> */}
 
-            <div className="mt-4 flex items-center gap-3">
+            <div className="mt-4 flex items-center gap-5 flex-col md:flex-row">
               {coverUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={coverUrl}
                   alt={courseTitle}
-                  className="h-14 w-20 rounded-2xl object-cover ring-1 ring-white/10"
+                  className="w-full md:w-60 rounded-2xl object-cover ring-1 ring-white/10"
                 />
               ) : (
-                <div className="h-14 w-20 rounded-2xl bg-white/10 ring-1 ring-white/10" />
+                <div className="w-full md:w-60 rounded-2xl bg-white/10 ring-1 ring-white/10" />
               )}
 
               <div className="min-w-0">
-                <div className="text-sm font-bold text-white/70">
-                  {isEN ? "Course:" : "คอร์ส:"}{" "}
-                  <span className="text-white">{courseTitle}</span>
+                <div className="text-lg font-bold text-white/70">
+                  {isEN ? "Course" : "หลักสูตร"}{" "}
+                  <div className="text-white">{courseTitle}</div>
                 </div>
-                {course?.title_en && !isEN ? (
+                {/* {course?.title_en && !isEN ? (
                   <div className="mt-1 text-sm text-white/50">
                     {course.title_en}
                   </div>
-                ) : null}
+                ) : null} */}
               </div>
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          {/* <div className="flex flex-wrap gap-2">
             <button
               onClick={onBack}
               className="h-11 rounded-2xl bg-white/10 px-5 text-sm font-extrabold text-white ring-1 ring-white/10 hover:bg-white/15"
@@ -776,16 +813,15 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
             >
               {isEN ? "Clear" : "ล้างข้อมูล"}
             </button>
-          </div>
+          </div> */}
         </div>
 
-        <div className="mt-6">
+        {/* <div className="mt-6">
           <StepBar current={1} locale={locale} />
-        </div>
+        </div> */}
 
         {/* body */}
         <div className="mt-8 grid gap-6">
-          {/* ✅ SECTION 1 (กลับมาแล้ว) */}
           <Section
             no={1}
             title={isEN ? "Training request" : "ข้อมูลการอบรมที่ต้องการ"}
@@ -909,7 +945,6 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
             </div>
           </Section>
 
-          {/* ✅ SECTION 2 (กลับมาแล้ว) */}
           <Section
             no={2}
             title={
@@ -1056,7 +1091,6 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
             </div>
           </Section>
 
-          {/* ✅ SECTION 3 (กลับมาแล้ว) */}
           <Section
             no={3}
             title={
@@ -1116,7 +1150,7 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
                 </Field>
               </div>
 
-              <div className="md:col-span-4">
+              <div className="md:col-span-6">
                 <Field
                   label={isEN ? "Tax ID" : "เลขประจำตัวผู้เสียภาษี"}
                   required
@@ -1321,12 +1355,34 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
                     onChange={() => {}}
                     readOnly
                     dataField="postcode"
-                    placeholder="Auto"
+                    placeholder={isEN ? "Auto" : "Auto"}
                   />
                 </Field>
               </div>
             </div>
           </Section>
+
+          {/* <Section
+            no={4}
+            title={isEN ? "Note" : "หมายเหตุ"}
+            subtitle={isEN ? "Optional" : "ไม่บังคับ"}
+          >
+            <Field
+              label={
+                isEN
+                  ? "Ask for more information"
+                  : "Note / Ask for more information"
+              }
+            >
+              <Textarea
+                value={form.note}
+                onChange={clearErrorOnChange("note")}
+                onBlur={markTouched("note")}
+                dataField="note"
+                placeholder=""
+              />
+            </Field>
+          </Section> */}
 
           {/* ✅ SECTION 4 (เพิ่มคำถามช่องทางข่าวสาร + note) */}
           <Section
