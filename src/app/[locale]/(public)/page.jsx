@@ -224,8 +224,8 @@ export default async function Page({ params }) {
               intro="ผู้เชี่ยวชาญด้านสินทรัพย์ดิจิทัล เทคโนโลยีบล็อกเชน และ Web3 ที่มุ่งสร้างความเข้าใจเชิงลึกเกี่ยวกับ Digital Assets และโครงสร้างเศรษฐกิจดิจิทัลยุคใหม่"
             />
             <ProfileFlipCard
-              logoSrc="/logo/9expert.svg"
-              logoB="/logo/9expert.svg"
+              logoSrc="/logo/9Expert.svg"
+              logoB="/logo/9Expert.svg"
               personSrc="/people/k-chalaivate.png"
               name="คุณชไลเวท พิพัฒพรรณวงศ์"
               title="ประธานเจ้าหน้าที่บริหาร"
