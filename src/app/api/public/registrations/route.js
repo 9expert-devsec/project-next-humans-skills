@@ -24,6 +24,31 @@ function clean(s) {
   return String(s || "").trim();
 }
 
+// ✅ NEW: ช่วยต่อสตริงแบบไม่เอาค่าว่าง
+function joinParts(parts, sep = " ") {
+  return parts.map(clean).filter(Boolean).join(sep);
+}
+
+// ✅ NEW: ประกอบที่อยู่เต็ม (กันบรรทัดว่าง + ฟอร์แมตให้สวย)
+function buildCompanyAddressFull(p) {
+  const base = clean(p.receipt_address);
+
+  const subdistrict = clean(p.subdistrict);
+  const district = clean(p.district);
+  const province = clean(p.province);
+  const postcode = clean(p.postcode);
+
+  // ปรับคำหน้าได้ตามใจ (บางคนใช้ “ตำบล/อำเภอ”)
+  const tail = joinParts([
+    subdistrict ? `แขวง/ตำบล ${subdistrict}` : "",
+    district ? `เขต/อำเภอ ${district}` : "",
+    province ? `จังหวัด ${province}` : "",
+    postcode ? `${postcode}` : "",
+  ]);
+
+  return joinParts([base, tail]);
+}
+
 const SOURCE_ALLOWED = new Set(["bitkub", "9expert", "key", "other", ""]);
 
 function normalizeSourceChannel(x) {
@@ -34,15 +59,18 @@ function normalizeSourceChannel(x) {
 function sourceLabel(channel, other, locale = "th") {
   const isEN = locale === "en";
   if (channel === "bitkub") return isEN ? "Bitkub Academy" : "Bitkub Academy";
-  if (channel === "9expert") return isEN ? "9Expert Training" : "9Expert Training";
-  if (channel === "key") return isEN ? "Key Solutions Training" : "Key Solutions Training";
+  if (channel === "9expert")
+    return isEN ? "9Expert Training" : "9Expert Training";
+  if (channel === "key")
+    return isEN ? "Key Solutions Training" : "Key Solutions Training";
   if (channel === "other") return clean(other) || (isEN ? "Other" : "อื่นๆ");
   return "";
 }
 
 function pickDraft(draft = {}) {
   const source_channel = normalizeSourceChannel(draft.source_channel);
-  const source_other = source_channel === "other" ? clean(draft.source_other) : "";
+  const source_other =
+    source_channel === "other" ? clean(draft.source_other) : "";
 
   return {
     courseSlug: clean(draft.courseSlug),
@@ -59,7 +87,9 @@ function pickDraft(draft = {}) {
     last_name: clean(draft.last_name),
     position: clean(draft.position),
     department: clean(draft.department),
-    contact_phone: normalizeDigits(draft.contact_phone || draft.contact_phone_raw),
+    contact_phone: normalizeDigits(
+      draft.contact_phone || draft.contact_phone_raw
+    ),
     email: clean(draft.email),
 
     // section 3
@@ -73,8 +103,12 @@ function pickDraft(draft = {}) {
     source_other,
 
     tax_id: normalizeDigits(draft.tax_id),
-    company_phone: normalizeDigits(draft.company_phone || draft.company_phone_raw),
+    company_phone: normalizeDigits(
+      draft.company_phone || draft.company_phone_raw
+    ),
     receipt_address: clean(draft.receipt_address),
+
+    // ✅ address pieces
     province: clean(draft.province),
     district: clean(draft.district),
     subdistrict: clean(draft.subdistrict),
@@ -104,13 +138,20 @@ function validatePayload(p) {
   if (!p.branch) errs.push("branch is required");
 
   if (!p.tax_id) errs.push("tax_id is required");
-  if (p.tax_id && p.tax_id.length > 13) errs.push("tax_id must be <= 13 digits");
+  if (p.tax_id && p.tax_id.length > 13)
+    errs.push("tax_id must be <= 13 digits");
   if (!p.receipt_address) errs.push("receipt_address is required");
 
   // ✅ NEW: ต้องเลือกช่องทาง
   if (!p.source_channel) errs.push("source_channel is required");
   if (p.source_channel === "other" && !p.source_other)
     errs.push("source_other is required");
+
+  // (optional) ถ้าคุณอยาก “บังคับ” ที่อยู่ให้ครบชุดด้วย ค่อยเปิดใช้
+  // if (!p.province) errs.push("province is required");
+  // if (!p.district) errs.push("district is required");
+  // if (!p.subdistrict) errs.push("subdistrict is required");
+  // if (!p.postcode) errs.push("postcode is required");
 
   return errs;
 }
@@ -188,7 +229,10 @@ export async function POST(req) {
     course?.title_en ||
     payload.courseSlug;
 
-  // ✅ ส่ง source_channel เข้าเมลด้วย เพื่อให้ template แสดงได้
+  // ✅ NEW: ที่อยู่เต็มสำหรับแสดงบนเมล (รวม จังหวัด/อำเภอ/ตำบล/รหัสไปรษณีย์)
+  const companyAddressFull = buildCompanyAddressFull(payload);
+
+  // ✅ ส่งเข้าเมลด้วย
   const templateModel = {
     ref_no: doc.ref_no,
     submitted_at: new Date(doc.createdAt).toLocaleString("th-TH", {
@@ -208,7 +252,17 @@ export async function POST(req) {
     company_name: payload.company,
     company_branch: payload.branch,
     company_tax_id: payload.tax_id,
-    company_address: payload.receipt_address,
+
+    // ✅ UPDATED: เดิมส่ง receipt_address อย่างเดียว
+    // company_address: payload.receipt_address,
+    // ✅ เปลี่ยนเป็น “ที่อยู่เต็ม”
+    company_address: companyAddressFull,
+
+    // ✅ (optional) ถ้าคุณอยากแสดงแยกบรรทัดในเมลด้วย ก็ส่งเพิ่มไว้ได้
+    company_province: payload.province || "",
+    company_district: payload.district || "",
+    company_subdistrict: payload.subdistrict || "",
+    company_postcode: payload.postcode || "",
 
     // ✅ NEW: สำหรับ section “ข้อมูลเพิ่มเติม”
     source_channel: payload.source_channel || "",
@@ -220,8 +274,6 @@ export async function POST(req) {
     ),
 
     current_status: doc.status,
-
-    // note จะเข้า template ได้แน่นอน (คุณใช้ {{#note}} ... {{/note}} อยู่แล้ว)
     note: payload.note || "",
   };
 
