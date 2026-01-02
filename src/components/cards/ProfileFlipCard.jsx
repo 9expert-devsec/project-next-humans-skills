@@ -25,13 +25,14 @@ export default function ProfileFlipCard({
         {/* ROTATOR: ตัวที่หมุนจริง */}
         <div
           className={[
-            "relative h-full w-full preserve-3d transition-transform duration-500 ease-out",
+            "relative h-full w-full preserve-3d will-change-transform [transform:translateZ(0)]",
+            "transition-transform duration-500 ease-out",
             "group-hover:[transform:rotateY(180deg)]",
             flipped ? "[transform:rotateY(180deg)]" : "",
           ].join(" ")}
         >
           {/* ================= FRONT ================= */}
-          <div className="backface-hidden absolute inset-0">
+          <div className="absolute inset-0 backface-hidden [transform:rotateY(0deg)_translateZ(1px)]">
             <div
               className="relative h-full w-full overflow-hidden rounded-[28px] bg-white shadow-[0_18px_50px_rgba(0,0,0,0.25)]
               "
@@ -64,9 +65,7 @@ export default function ProfileFlipCard({
 
               {/* Info pill (glass) */}
               <div className="absolute bottom-5 left-4 right-4 z-30">
-                <div
-                  className="relative overflow-hidden rounded-2xl bg-[#1a1f23]/40 px-4 py-3 text-center text-white backdrop-blur-xs shadow-[0_10px_30px_rgba(0,0,0,0.25)]"
-                >
+                <div className="relative overflow-hidden rounded-2xl bg-[#1a1f23]/40 px-4 py-3 text-center text-white backdrop-blur-xs shadow-[0_10px_30px_rgba(0,0,0,0.25)]">
                   {/* shine */}
                   <div className="pointer-events-none absolute -top-10 left-1/2 h-24 w-72 -translate-x-1/2 rounded-full bg-white/25 blur-2xl" />
 
@@ -90,10 +89,8 @@ export default function ProfileFlipCard({
           </div>
 
           {/* ================= BACK ================= */}
-          <div className="backface-hidden absolute inset-0 [transform:rotateY(180deg)]">
-            <div
-              className="relative h-full w-full overflow-hidden rounded-[28px] bg-[#121a22] shadow-[0_18px_50px_rgba(0,0,0,0.35)] border-[#2d2d2d] border-2"
-            >
+          <div className="absolute inset-0 backface-hidden [transform:rotateY(180deg)_translateZ(1px)]">
+            <div className="relative h-full w-full overflow-hidden rounded-[28px] bg-[#121a22] shadow-[0_18px_50px_rgba(0,0,0,0.35)] border-[#2d2d2d] border-2">
               <div className="flex h-full flex-col items-center justify-center px-8 text-center text-white">
                 <div className="relative h-14 w-[200px] opacity-95">
                   <Image
