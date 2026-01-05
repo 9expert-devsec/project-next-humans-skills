@@ -126,7 +126,7 @@ export default async function Page({ params }) {
 
       <section id="banner" className="mx-auto max-w-7xl mt-24 ">
         <Image
-          src="/banner-landingpage-thenexthumansskills2.png"
+          src="/banner-landingpage-thenexthumansskills3.png"
           alt="The Next Humans Skills"
           width={1600}
           height={600}
@@ -211,18 +211,12 @@ export default async function Page({ params }) {
       <section className="py-20">
         <div className="mx-auto w-full max-w-6xl px-6">
           <div className="text-white text-3xl font-bold text-center sm:text-4xl">
-            ผนึกกำลัง 3 องค์กร
+            โดย 3 องค์กร
+          </div>
+          <div className="text-white text-2xl font-semibold text-center sm:text-3xl mt-3">
+            ที่มีความเชี่ยวชาญ
           </div>
           <div className="mt-12 grid gap-8 sm:grid-cols-1 lg:grid-cols-3 justify-items-center">
-            <ProfileFlipCard
-              logoSrc="/logo/bitkub-black.png"
-              logoB="/logo/bitkub-white.png"
-              personSrc="/people/k-sarp.png"
-              name="คุณสุกฤษฎิ์ พุทธริยะ"
-              title="ประธานเจ้าหน้าที่บริหาร"
-              company="บริษัท บิทคับ แล็บส์ (Bitkub Labs) จำกัด"
-              intro="ผู้เชี่ยวชาญด้านสินทรัพย์ดิจิทัล เทคโนโลยีบล็อกเชน และ Web3 ที่มุ่งสร้างความเข้าใจเชิงลึกเกี่ยวกับ Digital Assets และโครงสร้างเศรษฐกิจดิจิทัลยุคใหม่"
-            />
             <ProfileFlipCard
               logoSrc="/logo/9Expert.svg"
               logoB="/logo/9Expert.svg"
@@ -241,11 +235,20 @@ export default async function Page({ params }) {
               company="บริษัท คีย์โซลูชั่นเทรนนิ่ง จำกัด"
               intro="ผู้เชี่ยวชาญด้านการพัฒนาซอฟต์สกิล การพัฒนาศักยภาพบุคลากร และการยกระดับองค์กร เพื่อเสริมสร้างทักษะด้านความคิด การสื่อสารและภาวะผู้นำ"
             />
+            <ProfileFlipCard
+              logoSrc="/logo/bitkub-black.png"
+              logoB="/logo/bitkub-white.png"
+              personSrc="/people/k-stamp.png"
+              name="คุณนตณัฐ วุฒิธร"
+              title="ผู้ช่วยผู้จัดการฝ่ายวิเคราะห์สินทรัพย์ดิจิทัล"
+              company="บริษัท บิทคับ แล็บส์ จำกัด"
+              intro="ผู้เชี่ยวชาญด้านสินทรัพย์ดิจิทัล เทคโนโลยีบล็อกเชน และ Web3 ที่มุ่งสร้างความเข้าใจเชิงลึกเกี่ยวกับ Digital Assets และโครงสร้างเศรษฐกิจดิจิทัลยุคใหม่"
+            />
           </div>
         </div>
       </section>
 
-      <section className="bg-[#0B1C2C] flex items-center justify-center py-20 px-8 gap-10 flex-col ">
+      {/* <section className="bg-[#0B1C2C] flex items-center justify-center py-20 px-8 gap-10 flex-col ">
         <div className="text-white text-2xl sm:text-4xl ">ออกแบบหลักสูตรที่เชื่อมโยง</div>
         <div className="mt-8 flex flex-wrap justify-center gap-6 px-4">
           {ITEMS.map((item) => (
@@ -253,15 +256,10 @@ export default async function Page({ params }) {
           ))}
         </div>
         <div className="text-white text-xl sm:text-3xl ">เข้าด้วยกันอย่างเป็นระบบ</div>
-      </section>
+      </section> */}
 
-      <section className="relative isolate overflow-hidden bg-[#0B1C2C] py-40">
-        {/* animated 3-color lights */}
-        {/* <div aria-hidden className="orb-layer">
-          <span className="bg-orb orb-green" />
-          <span className="bg-orb orb-blue" />
-          <span className="bg-orb orb-yellow" />
-        </div> */}
+      {/* <section className="relative isolate overflow-hidden bg-[#0B1C2C] py-40">
+        
         <div aria-hidden className="orb-layer">
           <span
             className="bg-orb orb-green"
@@ -306,13 +304,76 @@ export default async function Page({ params }) {
             <span className="text-4xl sm:text-6xl pl-4">อย่างมีกลยุทธ์ &quot;</span>
           </div>
         </div>
+      </section> */}
+
+      <section className="relative isolate overflow-hidden bg-[#0B1C2C] py-40">
+        {/* animated 3-color lights */}
+        {/* <div aria-hidden className="orb-layer">
+          <span className="bg-orb orb-green" />
+          <span className="bg-orb orb-blue" />
+          <span className="bg-orb orb-yellow" />
+        </div> */}
+        <div aria-hidden className="orb-layer">
+          <span
+            className="bg-orb orb-green"
+            style={{
+              "--orb-size": "350px",
+              "--orb-blur": "50px",
+              "--orb-x": "55%",
+              "--orb-y": "45%",
+            }}
+          />
+          <span
+            className="bg-orb orb-blue"
+            style={{
+              "--orb-size": "350px",
+              "--orb-blur": "50px",
+              "--orb-x": "55%",
+              "--orb-y": "65%",
+            }}
+          />
+          <span
+            className="bg-orb orb-yellow"
+            style={{
+              "--orb-size": "350px",
+              "--orb-blur": "50px",
+              "--orb-x": "43%",
+              "--orb-y": "40%",
+            }}
+          />
+        </div>
+
+        <div className="relative z-10 mx-auto w-full max-w-7xl px-6 py-10 sm:py-0 sm:px-4 flex flex-col  gap-10 sm:gap-14">
+          <div className="text-white font-bold self-center text-center lg:self-start lg:text-left">
+            <span className="text-4xl sm:text-6xl">People </span>
+            <span className="text-xl sm:text-3xl ">ไม่ได้มีบทบาทเพื่อใช้เครื่องมือ</span>
+            
+          </div>
+          <div className="text-white font-bold self-center text-center lg:self-start lg:text-left ml-0 lg:ml-56">
+            <span className="text-xl sm:text-3xl ">แต่ต้องกำหนด</span>
+            <span className="text-4xl sm:text-6xl pl-4">Data</span>
+            {/* <span className="text-xl sm:text-3xl ">และขับเคลื่อน</span>
+            <span className="text-4xl sm:text-6xl pl-4">Technology</span> */}
+          </div>
+          <div className="text-white font-bold self-center text-center ">
+            {/* <span className="text-xl sm:text-3xl ">แต่ต้องกำหนด</span>
+            <span className="text-4xl sm:text-6xl pl-4">Data </span> */}
+            <span className="text-xl sm:text-3xl ">และขับเคลื่อน</span>
+            <span className="text-4xl sm:text-6xl pl-4">Technology</span>
+          </div>
+          <div className="text-white font-bold self-center text-center lg:self-end lg:text-right">
+            <span className="text-xl sm:text-3xl ">เพื่อสร้าง</span>
+            <span className="text-4xl sm:text-6xl pl-4">Strategy </span>
+            <span className="text-xl sm:text-3xl ">ให้องค์กร</span>
+          </div>
+        </div>
       </section>
 
       <section className="bg-[#0B1C2C] text-center text-white text-xl sm:text-2xl flex items-center justify-center py-16 px-8 gap-5 flex-col ">
         <span >มุ่งเน้นการออกแบบหลักสูตรที่สามารถนำไปใช้งานได้จริงในองค์กร</span>
         <span>
           ไม่ว่าจะเป็นการพัฒนาผู้นำเชิงกลยุทธ์
-          การยกระดับศักยภาพบุคลากรด้วยข้อมูล และ AI
+          การยกระดับศักยภาพบุคลากร
         </span>
         <span>
           รวมถึงการสร้างวัฒนธรรมการทำงานที่พร้อมรับการเปลี่ยนแปลงอย่างต่อเนื่อง
@@ -334,7 +395,7 @@ export default async function Page({ params }) {
         </div>
         <div className="text-white text-center text-xl  sm:text-2xl ">
           เพื่อสร้างองค์กรที่มีความยืดหยุ่น พร้อมปรับตัว
-          และเติบโตอย่างยั่งยืนในยุค AI
+          และเติบโตอย่างยั่งยืนในยุค Digital
         </div>
       </section>
 
