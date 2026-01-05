@@ -68,11 +68,15 @@ function Field({ label, required, children, hint, error }) {
 
       {children}
 
-      {error ? (
+      {/* {error ? (
         <div className="mt-2 text-xs font-semibold text-rose-300">{error}</div>
       ) : hint ? (
         <div className="mt-2 text-xs text-white/50">{hint}</div>
-      ) : null}
+      ) : null} */}
+
+       {error ? (
+        <div className="mt-2 text-xs font-semibold text-rose-300">{error}</div>
+      ) :  null}
     </div>
   );
 }
@@ -1388,11 +1392,11 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
           <Section
             no={4}
             title={isEN ? "Additional info" : "ข้อมูลเพิ่มเติม"}
-            subtitle={
-              isEN
-                ? "Information source (required) + Note (optional)"
-                : "ช่องทางรับข่าวสาร (บังคับ) + หมายเหตุ (ไม่บังคับ)"
-            }
+            // subtitle={
+            //   isEN
+            //     ? "Information source (required) + Note (optional)"
+            //     : "ช่องทางรับข่าวสาร (บังคับ) + หมายเหตุ (ไม่บังคับ)"
+            // }
           >
             <Field
               label={

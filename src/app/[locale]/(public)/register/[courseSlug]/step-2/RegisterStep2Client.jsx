@@ -553,11 +553,11 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
           <Section
             no={4}
             title={isEN ? "Note" : "หมายเหตุ"}
-            subtitle={
-              isEN
-                ? "Source channel (required) + note (optional)"
-                : "ช่องทางรับข่าวสาร (บังคับ) + หมายเหตุ (ไม่บังคับ)"
-            }
+            // subtitle={
+            //   isEN
+            //     ? "Source channel (required) + note (optional)"
+            //     : "ช่องทางรับข่าวสาร (บังคับ) + หมายเหตุ (ไม่บังคับ)"
+            // }
           >
             <div className="grid gap-4 md:grid-cols-12">
               <div className="md:col-span-12">
