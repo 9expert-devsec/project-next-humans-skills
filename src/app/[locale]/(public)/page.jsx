@@ -307,12 +307,6 @@ export default async function Page({ params }) {
       </section> */}
 
       <section className="relative isolate overflow-hidden bg-[#0B1C2C] py-40">
-        {/* animated 3-color lights */}
-        {/* <div aria-hidden className="orb-layer">
-          <span className="bg-orb orb-green" />
-          <span className="bg-orb orb-blue" />
-          <span className="bg-orb orb-yellow" />
-        </div> */}
         <div aria-hidden className="orb-layer">
           <span
             className="bg-orb orb-green"
@@ -352,12 +346,8 @@ export default async function Page({ params }) {
           <div className="text-white font-bold self-center text-center lg:self-start lg:text-left ml-0 lg:ml-56">
             <span className="text-xl sm:text-3xl ">แต่ต้องกำหนด</span>
             <span className="text-4xl sm:text-6xl pl-4">Data</span>
-            {/* <span className="text-xl sm:text-3xl ">และขับเคลื่อน</span>
-            <span className="text-4xl sm:text-6xl pl-4">Technology</span> */}
           </div>
           <div className="text-white font-bold self-center text-center ">
-            {/* <span className="text-xl sm:text-3xl ">แต่ต้องกำหนด</span>
-            <span className="text-4xl sm:text-6xl pl-4">Data </span> */}
             <span className="text-xl sm:text-3xl ">และขับเคลื่อน</span>
             <span className="text-4xl sm:text-6xl pl-4">Technology</span>
           </div>
@@ -368,6 +358,7 @@ export default async function Page({ params }) {
           </div>
         </div>
       </section>
+      
 
       <section className="bg-[#0B1C2C] text-center text-white text-xl sm:text-2xl flex items-center justify-center py-16 px-8 gap-5 flex-col ">
         <span >มุ่งเน้นการออกแบบหลักสูตรที่สามารถนำไปใช้งานได้จริงในองค์กร</span>
