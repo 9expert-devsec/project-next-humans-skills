@@ -4,7 +4,6 @@ import Footer from "@/components/layout/Footer";
 import CourseGridClient from "@/components/ui/CourseGridClient";
 import HeroIllustration from "@/components/public/HeroIllustration";
 import ProfileFlipCard from "@/components/cards/ProfileFlipCard";
-import ConceptPill from "@/components/cards/ConceptPill";
 import AudiencePill from "@/components/cards/AudiencePill";
 import CourseCard from "@/components/cards/CourseCard";
 
@@ -359,7 +358,6 @@ export default async function Page({ params }) {
         </div>
       </section>
       
-
       <section className="bg-[#0B1C2C] text-center text-white text-xl sm:text-2xl flex items-center justify-center py-16 px-8 gap-5 flex-col ">
         <span >มุ่งเน้นการออกแบบหลักสูตรที่สามารถนำไปใช้งานได้จริงในองค์กร</span>
         <span>
@@ -446,7 +444,6 @@ export default async function Page({ params }) {
         </section> */}
 
       <section id="courses" className="section">
-        {/* <h2 className="sectionTitle">{t.courseTitle}</h2> */}
         <h2 className="text-center text-white text-4xl font-semibold">
             {t.courseTitle}
           </h2>
