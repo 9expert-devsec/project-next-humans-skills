@@ -33,7 +33,7 @@ export default async function PublicLayout({ children, params }) {
 
       {/* Footer เต็มจอ แต่ข้างในกลาง */}
       <footer className="w-full">
-        <div className="max-w-7xl mx-auto">
+        <div className={`${lineSeedSansTH.className} max-w-7xl mx-auto`}>
           <Footer locale={safeLocale} />
         </div>
       </footer>
