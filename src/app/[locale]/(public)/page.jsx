@@ -238,7 +238,7 @@ export default async function Page({ params }) {
               logoSrc="/logo/bitkub-black.png"
               logoB="/logo/bitkub-white.png"
               personSrc="/people/k-stamp.png"
-              name="คุณนตณัฐ วุฒิธร"
+              name="คุณกันตณัฐ วุฒิธร"
               title="ผู้ช่วยผู้จัดการฝ่ายวิเคราะห์สินทรัพย์ดิจิทัล"
               company="บริษัท บิทคับ แล็บส์ จำกัด"
               intro="ผู้เชี่ยวชาญด้านสินทรัพย์ดิจิทัล เทคโนโลยีบล็อกเชน และ Web3 ที่มุ่งสร้างความเข้าใจเชิงลึกเกี่ยวกับ Digital Assets และโครงสร้างเศรษฐกิจดิจิทัลยุคใหม่"
