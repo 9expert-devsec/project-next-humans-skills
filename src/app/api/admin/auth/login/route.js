@@ -6,7 +6,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const TOKEN_NAME = process.env.ADMIN_TOKEN_NAME || "admin_token";
-const SECRET = process.env.ADMIN_JWT_SECRET || process.env.JWT_SECRET || "dev-secret";
+const SECRET =
+  process.env.ADMIN_JWT_SECRET || process.env.JWT_SECRET || "dev-secret";
 
 export async function POST(req) {
   const body = await req.json().catch(() => ({}));
@@ -14,19 +15,23 @@ export async function POST(req) {
   const password = String(body.password || "").trim();
 
   // TODO: เปลี่ยนตรงนี้เป็นเช็คจริงของคุณ
+  const allowed = String(process.env.ADMIN_EMAIL || "admin@local")
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+
   const ok =
-    email === (process.env.ADMIN_EMAIL || "admin@local") &&
+    allowed.includes(email.toLowerCase()) &&
     password === (process.env.ADMIN_PASSWORD || "1234");
 
   if (!ok) {
-    return NextResponse.json({ ok: false, message: "Invalid credentials" }, { status: 401 });
+    return NextResponse.json(
+      { ok: false, message: "Invalid credentials" },
+      { status: 401 }
+    );
   }
 
-  const token = jwt.sign(
-    { role: "admin", email },
-    SECRET,
-    { expiresIn: "7d" }
-  );
+  const token = jwt.sign({ role: "admin", email }, SECRET, { expiresIn: "7d" });
 
   const res = NextResponse.json({ ok: true });
 
@@ -36,7 +41,7 @@ export async function POST(req) {
     value: token,
     httpOnly: true,
     sameSite: "lax",
-    secure: false,          // localhost ต้อง false
+    secure: false, // localhost ต้อง false
     path: "/",
     maxAge: 60 * 60 * 24 * 7,
   });

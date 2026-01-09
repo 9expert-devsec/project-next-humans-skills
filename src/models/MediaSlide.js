@@ -2,20 +2,63 @@ import mongoose from "mongoose";
 
 const MediaSlideSchema = new mongoose.Schema(
   {
-    locale: { type: String, enum: ["th", "en"], default: "th", index: true },
+    /* -------- state / control -------- */
+    locale: {
+      type: String,
+      enum: ["th", "en"],
+      default: "th",
+      index: true,
+    },
 
-    title: { type: String, default: "" },
-    caption: { type: String, default: "" },
-    linkUrl: { type: String, default: "" },
+    order: {
+      type: Number,
+      default: 0,
+      index: true,
+    },
 
-    imageUrl: { type: String, required: true },
-    imagePublicId: { type: String, default: "" }, // สำหรับลบจาก Cloudinary ถ้าต้องการ
+    isActive: {
+      type: Boolean,
+      default: true,
+      index: true,
+    },
 
-    order: { type: Number, default: 0, index: true },
-    isActive: { type: Boolean, default: true, index: true },
+    publishedAt: {
+      type: Date,
+      default: Date.now,
+      index: true,
+    },
 
-    publishedAt: { type: Date, default: Date.now, index: true },
-    readMins: { type: Number, default: 3 },
+    /* -------- content -------- */
+    title: {
+      type: String,
+      default: "",
+    },
+
+    caption: {
+      type: String,
+      default: "",
+    },
+
+    linkUrl: {
+      type: String,
+      default: "",
+    },
+
+    readMins: {
+      type: Number,
+      default: 3,
+    },
+
+    /* -------- media -------- */
+    imageUrl: {
+      type: String,
+      required: true,
+    },
+
+    imagePublicId: {
+      type: String,
+      default: "",
+    },
   },
   { timestamps: true }
 );

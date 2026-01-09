@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 
 function cx(...a) {
@@ -19,9 +19,7 @@ export default function NewsMediaSliderClient({ locale = "th" }) {
     (async () => {
       const res = await fetch(
         `/api/public/media?locale=${encodeURIComponent(locale)}`,
-        {
-          cache: "no-store",
-        }
+        { cache: "no-store" }
       ).catch(() => null);
 
       const data = await res?.json().catch(() => ({}));
@@ -31,18 +29,20 @@ export default function NewsMediaSliderClient({ locale = "th" }) {
   }, [locale]);
 
   const has = items.length > 0;
-  const current = items[active];
+  const current = items[active] || items[0];
 
   // auto slide
   useEffect(() => {
-    if (!has) return;
-    if (hover) return;
+    if (!has || hover) return;
 
     timerRef.current = setInterval(() => {
       setActive((x) => (x + 1) % items.length);
     }, 4500);
 
-    return () => clearInterval(timerRef.current);
+    return () => {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    };
   }, [has, hover, items.length]);
 
   function prev() {
@@ -95,7 +95,9 @@ export default function NewsMediaSliderClient({ locale = "th" }) {
             </div>
             <div className="text-white/70 text-sm line-clamp-2 mt-1">
               {current.caption ||
-                (locale === "en" ? "Click to view larger" : "กดเพื่อดูภาพใหญ่")}
+                (locale === "en"
+                  ? "Click to view larger"
+                  : "กดเพื่อดูภาพใหญ่")}
             </div>
           </div>
         </button>
@@ -105,6 +107,7 @@ export default function NewsMediaSliderClient({ locale = "th" }) {
           <button
             type="button"
             onClick={prev}
+            aria-label="Previous slide"
             className="rounded-xl bg-black/40 px-3 py-2 text-white hover:bg-black/60"
           >
             ‹
@@ -112,6 +115,7 @@ export default function NewsMediaSliderClient({ locale = "th" }) {
           <button
             type="button"
             onClick={next}
+            aria-label="Next slide"
             className="rounded-xl bg-black/40 px-3 py-2 text-white hover:bg-black/60"
           >
             ›
@@ -164,10 +168,14 @@ export default function NewsMediaSliderClient({ locale = "th" }) {
                     {current.title ||
                       (locale === "en" ? "Untitled" : "ไม่มีชื่อ")}
                   </div>
-                  {current.caption ? (
-                    <div className="text-white/75 mt-2">{current.caption}</div>
-                  ) : null}
-                  {current.linkUrl ? (
+
+                  {current.caption && (
+                    <div className="text-white/75 mt-2">
+                      {current.caption}
+                    </div>
+                  )}
+
+                  {current.linkUrl && (
                     <a
                       href={current.linkUrl}
                       target="_blank"
@@ -176,12 +184,13 @@ export default function NewsMediaSliderClient({ locale = "th" }) {
                     >
                       {locale === "en" ? "Open link" : "เปิดลิงก์"}
                     </a>
-                  ) : null}
+                  )}
                 </div>
 
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
+                  aria-label="Close"
                   className="rounded-xl bg-white/10 px-3 py-2 text-white hover:bg-white/15"
                 >
                   ✕

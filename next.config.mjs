@@ -1,15 +1,23 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+      },
+    ],
+  },
+
   async redirects() {
     return [
       {
-        source: '/',           // เมื่อเข้าหน้า Home
-        destination: '/th',    // ให้ส่งไปที่ /th
-        permanent: true,       // ใช้ 301 Redirect (ดีต่อ SEO)
+        source: "/",
+        destination: "/th",
+        permanent: true,
       },
     ];
   },
 };
 
-// ใช้ export default แทน module.exports
 export default nextConfig;

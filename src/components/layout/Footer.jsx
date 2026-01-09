@@ -51,7 +51,6 @@ function ClickableCard({ icon, title, subtitle, href, newTab = false }) {
       window.open(href, "_blank", "noreferrer");
       return;
     }
-    // tel:, mailto: ให้เปลี่ยน location ได้เลย
     window.location.href = href;
   }
 
@@ -70,9 +69,7 @@ function ClickableCard({ icon, title, subtitle, href, newTab = false }) {
       onKeyDown={onKeyDown}
       className={cx(
         "relative isolate overflow-hidden rounded-2xl p-4",
-        // กัน global pseudo elements บางที่
         "before:content-none after:content-none before:hidden after:hidden",
-        // style
         "bg-white/5 ring-1 ring-white/10",
         "cursor-pointer select-none",
         "transition-all duration-200",
@@ -94,8 +91,6 @@ function ClickableCard({ icon, title, subtitle, href, newTab = false }) {
             <div className="mt-1 text-xs text-white/55">{subtitle}</div>
           ) : null}
         </div>
-
-        {/* <div className="shrink-0 text-[11px] text-white/45">กด</div> */}
       </div>
     </div>
   );
@@ -117,9 +112,10 @@ export default function Footer() {
   const PHONE_TEL3 = "0824812442";
   const EMAIL3 = "nongnuch@keysolutionstraining.com";
 
+  // ✅ เปลี่ยนจาก <footer> -> <div> เพื่อไม่ให้ซ้อน footer กับ layout
   return (
-    <footer className="relative mt-16 border-t border-white/10 bg-[#0b1c2c] text-white">
-      <div className="mx-auto max-w-7xl px-4 py-10 ">
+    <div className="relative mt-16 border-t border-white/10 text-white">
+      <div className="mx-auto max-w-7xl px-4 py-10">
         <div className="grid gap-5 lg:grid-cols-4">
           {/* Brand */}
           <div>
@@ -137,121 +133,95 @@ export default function Footer() {
             <p className="mt-3 max-w-xl text-sm leading-relaxed text-white/65">
               ศูนย์กลางการเรียนรู้ &amp; ระบบลงทะเบียนอบรม
             </p>
-          </div>
 
-          {/* Contact (click whole block) */}
-          <div className="p-4 border-2 rounded-lg border-[#66ccff]/40" >
-            <div>
-              <div className="mb-3 text-sm font-semibold text-white/90">
-                ติดต่อ 9Expert Training
-              </div>
-
-              <div className="flex flex-col gap-3">
-                  <ClickableCard
-                    icon={<IconPhone />}
-                    title={PHONE_TEXT}
-                    subtitle="คุณน้ำฝน"
-                    href={`tel:${PHONE_TEL}`}
-                  />
-
-                  <ClickableCard
-                    icon={<IconMail />}
-                    title={EMAIL}
-                    subtitle="อีเมลติดต่อ"
-                    href={`mailto:${EMAIL}`}
-                  />
-                </div>
-
-              {/* <div className="flex gap-5">
-                
-                <ClickableCard
+            {/* เผื่ออยากเปิด LINE ไว้ */}
+            {/* <div className="mt-4">
+              <ClickableCard
                 icon={<IconChat />}
                 title="LINE@ : 9expert"
                 subtitle="แชทผ่าน LINE"
                 href={LINE_URL}
                 newTab
               />
-              </div> */}
-            </div>
-
-             {/* <div>
-              <div className="mb-3 text-sm font-semibold text-white/90">
-                ติดต่อ Bitkub Academy
-              </div>
-
-              <div className="flex flex-col gap-3">
-                  <ClickableCard
-                    icon={<IconPhone />}
-                    title={PHONE_TEXT2}
-                    subtitle="คุณโบวี่"
-                    href={`tel:${PHONE_TEL2}`}
-                  />
-
-                  <ClickableCard
-                    icon={<IconMail />}
-                    title={EMAIL2}
-                    subtitle="ส่งอีเมลติดต่อ"
-                    href={`mailto:${EMAIL2}`}
-                  />
-                </div>
-
             </div> */}
           </div>
 
+          {/* 9Expert */}
+          <div className="p-4 border-2 rounded-lg border-[#66ccff]/40">
+            <div className="mb-3 text-sm font-semibold text-white/90">
+              ติดต่อ 9Expert Training
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <ClickableCard
+                icon={<IconPhone />}
+                title={PHONE_TEXT}
+                subtitle="คุณน้ำฝน"
+                href={`tel:${PHONE_TEL}`}
+              />
+
+              <ClickableCard
+                icon={<IconMail />}
+                title={EMAIL}
+                subtitle="อีเมลติดต่อ"
+                href={`mailto:${EMAIL}`}
+              />
+            </div>
+          </div>
+
+          {/* Bitkub */}
           <div className="p-4 border-2 rounded-lg border-[#00B358]/40">
-              <div className="mb-3 text-sm font-semibold text-white/90">
-                ติดต่อ Bitkub Academy
-              </div>
-
-              <div className="flex flex-col gap-3">
-                  <ClickableCard
-                    icon={<IconPhone />}
-                    title={PHONE_TEXT2}
-                    subtitle="คุณโบวี่"
-                    href={`tel:${PHONE_TEL2}`}
-                  />
-
-                  <ClickableCard
-                    icon={<IconMail />}
-                    title={EMAIL2}
-                    subtitle="อีเมลติดต่อ"
-                    href={`mailto:${EMAIL2}`}
-                  />
-                </div>
-
+            <div className="mb-3 text-sm font-semibold text-white/90">
+              ติดต่อ Bitkub Academy
             </div>
 
-            <div className="p-4 border-2 rounded-lg border-[#F6D62D]/40">
-              <div className="mb-3 text-sm font-semibold text-white/90">
-                ติดต่อ Key Solutions Training
-              </div>
+            <div className="flex flex-col gap-3">
+              <ClickableCard
+                icon={<IconPhone />}
+                title={PHONE_TEXT2}
+                subtitle="คุณโบวี่"
+                href={`tel:${PHONE_TEL2}`}
+              />
 
-              <div className="flex flex-col gap-3">
-                  <ClickableCard
-                    icon={<IconPhone />}
-                    title={PHONE_TEXT3}
-                    subtitle="คุณนุช"
-                    href={`tel:${PHONE_TEL3}`}
-                  />
-
-                  <ClickableCard
-                    icon={<IconMail />}
-                    title={EMAIL3}
-                    subtitle="อีเมลติดต่อ"
-                    href={`mailto:${EMAIL3}`}
-                  />
-                </div>
-
+              <ClickableCard
+                icon={<IconMail />}
+                title={EMAIL2}
+                subtitle="อีเมลติดต่อ"
+                href={`mailto:${EMAIL2}`}
+              />
             </div>
+          </div>
+
+          {/* Key Solutions */}
+          <div className="p-4 border-2 rounded-lg border-[#F6D62D]/40">
+            <div className="mb-3 text-sm font-semibold text-white/90">
+              ติดต่อ Key Solutions Training
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <ClickableCard
+                icon={<IconPhone />}
+                title={PHONE_TEXT3}
+                subtitle="คุณนุช"
+                href={`tel:${PHONE_TEL3}`}
+              />
+
+              <ClickableCard
+                icon={<IconMail />}
+                title={EMAIL3}
+                subtitle="อีเมลติดต่อ"
+                href={`mailto:${EMAIL3}`}
+              />
+            </div>
+          </div>
         </div>
 
         {/* Bottom */}
         <div className="mt-10 flex flex-col gap-3 border-t border-white/10 pt-6 text-xs text-white/45 sm:flex-row sm:items-center sm:justify-between">
           <div>© {year} The Next Humans Skills</div>
-
-          <div className="flex items-center gap-3"></div>
+          <div className="flex items-center gap-3" />
         </div>
       </div>
-    </footer>
+    </div>
   );
 }

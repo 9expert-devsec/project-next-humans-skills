@@ -1,13 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export default function AdminTopbar({
   title = "Admin",
   subtitle,
   locale = "th",
-  adminKey = "", // 🔐 key ลับสำหรับ admin
+  adminKey = "",
 }) {
+  const pathname = usePathname();
+
+  // ซ่อน topbar บนหน้า login (กันรก + กันสับสน)
+  if (pathname?.includes("/admin/login")) return null;
+
   const base = `/${locale}/${adminKey}/admin`;
 
   async function logout() {
@@ -47,6 +53,13 @@ export default function AdminTopbar({
             className="rounded-lg px-3 py-2 text-xs font-extrabold text-white/80 hover:bg-white/10"
           >
             Registrations
+          </Link>
+
+          <Link
+            href={`${base}/media`}
+            className="rounded-lg px-3 py-2 text-xs font-extrabold text-white/80 hover:bg-white/10"
+          >
+            Media
           </Link>
 
           <button

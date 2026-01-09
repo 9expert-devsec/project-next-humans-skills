@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-
 import { useEffect, useMemo, useState } from "react";
 
 import { DndContext, closestCenter } from "@dnd-kit/core";
@@ -24,7 +23,7 @@ async function jsonFetch(url, opts) {
   const res = await fetch(url, opts).catch(() => null);
   const data = await res?.json().catch(() => ({}));
   if (!res || !res.ok || data?.ok === false) {
-    throw new Error(data?.error || "Request failed");
+    throw new Error(data?.message || data?.error || "Request failed");
   }
   return data;
 }
@@ -161,7 +160,6 @@ export default function MediaAdminClient({ locale = "th" }) {
       return;
     }
 
-    // hard limit กัน browser ค้าง
     const HARD_LIMIT_MB = 30;
     if (file.size > HARD_LIMIT_MB * 1024 * 1024) {
       alert(
@@ -212,12 +210,11 @@ export default function MediaAdminClient({ locale = "th" }) {
           isActive,
           imageUrl: up.imageUrl,
           imagePublicId: up.imagePublicId,
-          publishedAt,
+          publishedAt, // server ควร parse ให้เป็น Date
           readMins: Math.max(1, Number(readMins || 3)),
         }),
       });
 
-      // reset
       setFile(null);
       setTitle("");
       setCaption("");
@@ -374,7 +371,6 @@ export default function MediaAdminClient({ locale = "th" }) {
             />
           </label>
 
-          {/* ✅ New fields */}
           <div className="grid gap-4 md:grid-cols-2 md:col-span-2">
             <label className="block">
               <div className="text-white/80 text-sm mb-1">
@@ -511,7 +507,6 @@ export default function MediaAdminClient({ locale = "th" }) {
                             }
                           />
 
-                          {/* ✅ Per-item Published date + Read mins */}
                           <div className="grid gap-4 md:grid-cols-2">
                             <label className="block">
                               <div className="text-white/80 text-sm mb-1">

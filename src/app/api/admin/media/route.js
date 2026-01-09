@@ -17,7 +17,7 @@ export async function GET(req) {
       String(searchParams.get("locale") || "th") === "en" ? "en" : "th";
 
     const items = await MediaSlide.find({ locale })
-      .sort({ order: 1, createdAt: -1 })
+      .sort({ order: 1, publishedAt: -1, createdAt: -1 })
       .lean();
 
     return Response.json({ ok: true, items });
@@ -55,8 +55,6 @@ export async function POST(req) {
       imagePublicId: String(body?.imagePublicId || ""),
       isActive: body?.isActive !== false,
       order: nextOrder,
-
-      // ✅ new fields
       publishedAt: body?.publishedAt ? new Date(body.publishedAt) : new Date(),
       readMins: Math.max(1, Number(body?.readMins || 3)),
     });
@@ -87,7 +85,6 @@ export async function PUT(req) {
     if ("linkUrl" in body) patch.linkUrl = String(body.linkUrl || "");
     if ("isActive" in body) patch.isActive = !!body.isActive;
 
-    // ✅ new fields
     if ("publishedAt" in body) {
       patch.publishedAt = body.publishedAt ? new Date(body.publishedAt) : null;
     }
@@ -98,6 +95,10 @@ export async function PUT(req) {
     const item = await MediaSlide.findByIdAndUpdate(id, patch, {
       new: true,
     }).lean();
+
+    if (!item) {
+      return Response.json({ ok: false, error: "Not found" }, { status: 404 });
+    }
 
     return Response.json({ ok: true, item });
   } catch (err) {
