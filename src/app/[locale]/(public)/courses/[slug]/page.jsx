@@ -322,17 +322,17 @@ export default async function Page({ params }) {
               </h1>
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            {/* <div className="flex flex-wrap gap-2">
               <Badge>{course.level || "General"}</Badge>
               <Badge>{course.duration_days || 1} วัน</Badge>
 
-              {/* ✅ โชว์ partner badge เป็น “ชื่อเต็ม” */}
+             
               {(Array.isArray(course.partners) ? course.partners : []).map(
                 (p) => (
                   <Badge key={p}>{labelPartner(p)}</Badge>
                 )
               )}
-            </div>
+            </div> */}
 
             {course.short_description ? (
               <p className="mt-4  whitespace-pre-wrap text-sm leading-relaxed text-white/80">
