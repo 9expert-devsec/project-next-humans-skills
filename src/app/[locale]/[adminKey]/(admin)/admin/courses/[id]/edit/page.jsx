@@ -1,9 +1,15 @@
-// src/app/[locale]/(admin)/admin/courses/[id]/edit/page.jsx
+// src/app/[locale]/[adminKey]/(admin)/admin/courses/[id]/edit/page.jsx
 import CourseEditClient from "./CourseEditClient";
 
-export default async function Page({ params }) {
-  const { locale, id } = await params;
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
-  const safeLocale = locale === "en" ? "en" : "th";
-  return <CourseEditClient locale={safeLocale} id={id} />;
+export default async function Page({ params }) {
+  const p = await params;
+
+  const safeLocale = p?.locale === "en" ? "en" : "th";
+  const adminKey = String(p?.adminKey || "");
+  const id = String(p?.id || "");
+
+  return <CourseEditClient locale={safeLocale} adminKey={adminKey} id={id} />;
 }

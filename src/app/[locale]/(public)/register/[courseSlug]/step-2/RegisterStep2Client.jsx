@@ -5,6 +5,10 @@ import { useRouter } from "next/navigation";
 import StepBar from "@/components/StepBar";
 import { ArrowLeft } from "lucide-react";
 
+export const metadata = {
+  robots: { index: false, follow: false },
+};
+
 function cx(...a) {
   return a.filter(Boolean).join(" ");
 }
@@ -20,16 +24,16 @@ function sourceLabel(locale, channel) {
   const c = String(channel || "").trim();
 
   const mapTH = {
-    bitkub: "Bitkub Academy",
-    "9expert": "9Expert Training",
-    key: "Key Solutions Training",
+    "Bitkub Academy": "Bitkub Academy",
+    "9Expert Training": "9Expert Training",
+    "Key Solutions Training": "Key Solutions Training",
     other: "อื่นๆ (Other)",
   };
 
   const mapEN = {
-    bitkub: "Bitkub Academy",
-    "9expert": "9Expert Training",
-    key: "Key Solutions Training",
+    "Bitkub Academy": "Bitkub Academy",
+    "9Expert Training": "9Expert Training",
+    "Key Solutions Training": "Key Solutions Training",
     other: "Other",
   };
 
@@ -288,7 +292,7 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
 
   if (!course || !draft) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-10 text-white">
+      <div className="mx-auto max-w-4xl mt-32 px-4 py-10 text-white">
         <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur md:p-7">
           <div className="text-2xl font-extrabold">
             {isEN ? "Loading..." : "กำลังโหลดข้อมูล..."}
@@ -553,11 +557,11 @@ export default function RegisterStep2Client({ locale = "th", courseSlug }) {
           <Section
             no={4}
             title={isEN ? "Note" : "หมายเหตุ"}
-            subtitle={
-              isEN
-                ? "Source channel (required) + note (optional)"
-                : "ช่องทางรับข่าวสาร (บังคับ) + หมายเหตุ (ไม่บังคับ)"
-            }
+            // subtitle={
+            //   isEN
+            //     ? "Source channel (required) + note (optional)"
+            //     : "ช่องทางรับข่าวสาร (บังคับ) + หมายเหตุ (ไม่บังคับ)"
+            // }
           >
             <div className="grid gap-4 md:grid-cols-12">
               <div className="md:col-span-12">

@@ -105,12 +105,11 @@ function normalizePatch(body = {}, existing = {}) {
       body?.short_description ?? existing.short_description ?? ""
     ),
 
-    level: ["executive", "middle", "workforce", "citizen", "general"].includes(
+    level: ["Executive", "Middle Management", "Workforce", "Citizen Developer", "General"].includes(
       body.level
     )
       ? body.level
-      : existing.level || "general",
-
+      : existing.level || "General",
     duration_days: Math.max(
       1,
       Number(body?.duration_days ?? existing.duration_days ?? 1)

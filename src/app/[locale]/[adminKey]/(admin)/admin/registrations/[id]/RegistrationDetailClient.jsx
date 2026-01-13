@@ -1,3 +1,4 @@
+// src/app/[locale]/[adminKey]/(admin)/admin/registrations/[id]/RegistrationsDetailClient.jsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -20,6 +21,21 @@ const STATUS_OPTIONS = [
   { value: "done", label: "done" },
   { value: "cancelled", label: "cancelled" },
 ];
+
+const SOURCE_LABEL = {
+  "Bitkub Academy": "Bitkub Academy",
+  "9Expert Training": "9Expert Training",
+  "Key Solutions Training": "Key Solutions Training",
+  other: "Other",
+};
+
+function renderSource(item) {
+  const ch = String(item?.source_channel || "").trim();
+  const other = String(item?.source_other || "").trim();
+  if (!ch) return "-";
+  if (ch === "other") return other ? `Other: ${other}` : "Other";
+  return SOURCE_LABEL[ch] || ch;
+}
 
 function Row({ k, v }) {
   return (
@@ -47,9 +63,7 @@ export default function RegistrationDetailClient({ locale = "th", id }) {
     try {
       const res = await fetch(
         `/api/admin/registrations/${encodeURIComponent(id)}`,
-        {
-          cache: "no-store",
-        }
+        { cache: "no-store" }
       );
       const data = await res.json().catch(() => ({}));
       if (!data?.ok) throw new Error(data?.error || "load failed");
@@ -132,7 +146,9 @@ export default function RegistrationDetailClient({ locale = "th", id }) {
       <div className="mx-auto max-w-5xl px-4 py-10 text-white">
         <div className="text-2xl font-extrabold">Not found</div>
         <button
-          onClick={() => router.push(`/${locale}/k8Pz7M2xYn5R0wLq/admin/registrations`)}
+          onClick={() =>
+            router.push(`/${locale}/k8Pz7M2xYn5R0wLq/admin/registrations`)
+          }
           className="mt-5 h-10 rounded-xl bg-white px-4 text-sm font-extrabold text-slate-900"
         >
           Back to list
@@ -159,7 +175,9 @@ export default function RegistrationDetailClient({ locale = "th", id }) {
 
           <div className="flex flex-wrap gap-2">
             <button
-              onClick={() => router.push(`/${locale}/k8Pz7M2xYn5R0wLq/admin/registrations`)}
+              onClick={() =>
+                router.push(`/${locale}/k8Pz7M2xYn5R0wLq/admin/registrations`)
+              }
               className="h-10 rounded-xl bg-white/10 px-4 text-sm font-extrabold text-white ring-1 ring-white/10 hover:bg-white/15"
             >
               Back
@@ -202,10 +220,12 @@ export default function RegistrationDetailClient({ locale = "th", id }) {
               <Row k="Created" v={fmtDate(item.createdAt)} />
               <Row k="Locale" v={item.locale || "-"} />
               <Row k="CourseSlug" v={item.courseSlug || "-"} />
+              <Row k="Source channel" v={renderSource(item)} /> {/* ✅ NEW */}
               <Row k="Name" v={fullName || "-"} />
               <Row k="Email" v={item.email || "-"} />
               <Row k="Phone" v={item.contact_phone || "-"} />
               <Row k="Company" v={item.company || "-"} />
+              <Row k="Branch" v={item.branch || "-"} /> {/* ✅ NEW */}
               <Row k="Tax ID" v={item.tax_id || "-"} />
             </div>
 

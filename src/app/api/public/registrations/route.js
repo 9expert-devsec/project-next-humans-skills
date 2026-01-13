@@ -24,16 +24,65 @@ function clean(s) {
   return String(s || "").trim();
 }
 
+// ✅ NEW: ช่วยต่อสตริงแบบไม่เอาค่าว่าง
+function joinParts(parts, sep = " ") {
+  return parts.map(clean).filter(Boolean).join(sep);
+}
+
+// ✅ NEW: ประกอบที่อยู่เต็ม (กันบรรทัดว่าง + ฟอร์แมตให้สวย)
+function buildCompanyAddressFull(p) {
+  const base = clean(p.receipt_address);
+
+  const subdistrict = clean(p.subdistrict);
+  const district = clean(p.district);
+  const province = clean(p.province);
+  const postcode = clean(p.postcode);
+
+  // ปรับคำหน้าได้ตามใจ (บางคนใช้ “ตำบล/อำเภอ”)
+  const tail = joinParts([
+    subdistrict ? `แขวง/ตำบล ${subdistrict}` : "",
+    district ? `เขต/อำเภอ ${district}` : "",
+    province ? `จังหวัด ${province}` : "",
+    postcode ? `${postcode}` : "",
+  ]);
+
+  return joinParts([base, tail]);
+}
+
+const SOURCE_ALLOWED = new Set(["Bitkub Academy", "9Expert Training", "Key Solutions Training", "Other", ""]);
+
+function normalizeSourceChannel(x) {
+  const v = clean(x);
+  return SOURCE_ALLOWED.has(v) ? v : "";
+}
+
+function sourceLabel(channel, other, locale = "th") {
+  const isEN = locale === "en";
+  if (channel === "Bitkub Academy") return isEN ? "Bitkub Academy" : "Bitkub Academy";
+  if (channel === "9Expert Training")
+    return isEN ? "9Expert Training" : "9Expert Training";
+  if (channel === "Key Solutions Training")
+    return isEN ? "Key Solutions Training" : "Key Solutions Training";
+  if (channel === "Other") return clean(other) || (isEN ? "Other" : "อื่นๆ");
+  return "";
+}
+
 function pickDraft(draft = {}) {
+  const source_channel = normalizeSourceChannel(draft.source_channel);
+  const source_other =
+    source_channel === "other" ? clean(draft.source_other) : "";
+
   return {
     courseSlug: clean(draft.courseSlug),
     locale: clean(draft.locale || "th"),
 
+    // section 1
     trainee_count: Math.max(1, Number(draft.trainee_count || 1)),
     training_location: clean(draft.training_location),
     month_interest: clean(draft.month_interest),
     year_interest: clean(draft.year_interest),
 
+    // section 2
     first_name: clean(draft.first_name),
     last_name: clean(draft.last_name),
     position: clean(draft.position),
@@ -43,27 +92,36 @@ function pickDraft(draft = {}) {
     ),
     email: clean(draft.email),
 
+    // section 3
     company: clean(draft.company),
 
-    // ✅ NEW: branch (default ให้ปลอดภัย เผื่อ draft เก่า)
+    // branch
     branch: clean(draft.branch) || "สำนักงานใหญ่",
+
+    // ✅ marketing/source (normalize แล้วเท่านั้น)
+    source_channel,
+    source_other,
 
     tax_id: normalizeDigits(draft.tax_id),
     company_phone: normalizeDigits(
       draft.company_phone || draft.company_phone_raw
     ),
     receipt_address: clean(draft.receipt_address),
+
+    // ✅ address pieces
     province: clean(draft.province),
     district: clean(draft.district),
     subdistrict: clean(draft.subdistrict),
     postcode: clean(draft.postcode),
 
+    // section 4
     note: clean(draft.note),
   };
 }
 
 function validatePayload(p) {
   const errs = [];
+
   if (!p.courseSlug) errs.push("courseSlug is required");
 
   if (!p.month_interest) errs.push("month_interest is required");
@@ -77,14 +135,23 @@ function validatePayload(p) {
   if (p.email && !isValidEmail(p.email)) errs.push("email is invalid");
 
   if (!p.company) errs.push("company is required");
-
-  // ✅ NEW: branch required
   if (!p.branch) errs.push("branch is required");
 
   if (!p.tax_id) errs.push("tax_id is required");
   if (p.tax_id && p.tax_id.length > 13)
     errs.push("tax_id must be <= 13 digits");
   if (!p.receipt_address) errs.push("receipt_address is required");
+
+  // ✅ NEW: ต้องเลือกช่องทาง
+  if (!p.source_channel) errs.push("source_channel is required");
+  if (p.source_channel === "other" && !p.source_other)
+    errs.push("source_other is required");
+
+  // (optional) ถ้าคุณอยาก “บังคับ” ที่อยู่ให้ครบชุดด้วย ค่อยเปิดใช้
+  // if (!p.province) errs.push("province is required");
+  // if (!p.district) errs.push("district is required");
+  // if (!p.subdistrict) errs.push("subdistrict is required");
+  // if (!p.postcode) errs.push("postcode is required");
 
   return errs;
 }
@@ -101,14 +168,12 @@ function adminBccList() {
 export async function POST(req) {
   await dbConnect();
 
-  // IP / UA
   const ip =
     req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
     req.headers.get("x-real-ip") ||
     "unknown";
   const userAgent = req.headers.get("user-agent") || "";
 
-  // ✅ rate limit (5 ครั้ง/นาที/IP)
   const rl = rateLimitHit(`nxreg:${ip}`, { limit: 5, windowMs: 60_000 });
   if (!rl.ok) {
     return Response.json(
@@ -121,7 +186,6 @@ export async function POST(req) {
   const draft = body?.draft || body || {};
   const payload = pickDraft(draft);
 
-  // ✅ verify reCAPTCHA v3 (server-side)
   const recaptchaToken = clean(body?.recaptchaToken);
   const vr = await verifyRecaptchaV3(recaptchaToken, "nx_register_submit");
   if (!vr.ok) {
@@ -136,20 +200,17 @@ export async function POST(req) {
     return Response.json({ ok: false, errors: errs }, { status: 400 });
   }
 
-  // หา courseCode จาก courseSlug (ถ้าไม่มี fallback เป็น slug)
   const course = await Course.findOne({ slug: payload.courseSlug })
     .select("course_code slug title_th title_en")
     .lean();
 
   const courseCode = course?.course_code || payload.courseSlug || "COURSE";
 
-  // ✅ refNo แยกตามคอร์ส
   const refNo = await generateRefNoByCourse({
     prefix: "NX",
     courseCode,
   });
 
-  // ✅ create registration
   const doc = await Registration.create({
     ref_no: refNo,
     course_code: clean(courseCode).toUpperCase(),
@@ -160,17 +221,18 @@ export async function POST(req) {
     source: "web",
   });
 
-  // ✅ BCC admin หลายคน
   const adminBcc = adminBccList();
 
-  // ✅ title สำหรับ email (เอาชื่อคอร์สจริง ถ้ามี)
   const courseTitle =
     (payload.locale === "en" ? course?.title_en : course?.title_th) ||
     course?.title_th ||
     course?.title_en ||
     payload.courseSlug;
 
-  // ✅ Template Model (ต้องตรงกับตัวแปรใน Postmark Template)
+  // ✅ NEW: ที่อยู่เต็มสำหรับแสดงบนเมล (รวม จังหวัด/อำเภอ/ตำบล/รหัสไปรษณีย์)
+  const companyAddressFull = buildCompanyAddressFull(payload);
+
+  // ✅ ส่งเข้าเมลด้วย
   const templateModel = {
     ref_no: doc.ref_no,
     submitted_at: new Date(doc.createdAt).toLocaleString("th-TH", {
@@ -188,18 +250,33 @@ export async function POST(req) {
     coordinator_phone: payload.contact_phone,
 
     company_name: payload.company,
-
-    // ✅ NEW: map ไปให้ template ที่คุณใส่ {{company_branch}}
     company_branch: payload.branch,
-
     company_tax_id: payload.tax_id,
-    company_address: payload.receipt_address,
+
+    // ✅ UPDATED: เดิมส่ง receipt_address อย่างเดียว
+    // company_address: payload.receipt_address,
+    // ✅ เปลี่ยนเป็น “ที่อยู่เต็ม”
+    company_address: companyAddressFull,
+
+    // ✅ (optional) ถ้าคุณอยากแสดงแยกบรรทัดในเมลด้วย ก็ส่งเพิ่มไว้ได้
+    company_province: payload.province || "",
+    company_district: payload.district || "",
+    company_subdistrict: payload.subdistrict || "",
+    company_postcode: payload.postcode || "",
+
+    // ✅ NEW: สำหรับ section “ข้อมูลเพิ่มเติม”
+    source_channel: payload.source_channel || "",
+    source_other: payload.source_other || "",
+    source_channel_label: sourceLabel(
+      payload.source_channel,
+      payload.source_other,
+      payload.locale
+    ),
 
     current_status: doc.status,
     note: payload.note || "",
   };
 
-  // ✅ ส่งด้วย Postmark Template (template เดียว ส่งให้ user + BCC admin)
   try {
     const tplId =
       payload.locale === "en"
@@ -214,12 +291,9 @@ export async function POST(req) {
         model: templateModel,
         tag: "nx-registration",
       });
-    } else {
-      console.warn("Missing Postmark template env for locale:", payload.locale);
     }
   } catch (e) {
     console.error("Send template email failed:", e);
-    // ไม่ throw เพื่อไม่ให้การลงทะเบียนพัง
   }
 
   return Response.json({

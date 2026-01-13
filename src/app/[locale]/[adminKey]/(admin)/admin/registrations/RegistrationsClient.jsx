@@ -1,3 +1,4 @@
+// src/app/[locale]/[adminKey]/(admin)/admin/registrations/RegistrationsClient.jsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -66,6 +67,28 @@ const STATUS_OPTIONS_QUICK = [
   { value: "cancelled", label: "cancelled" },
 ];
 
+const SOURCE_OPTIONS = [
+  { value: "", label: "ทุกช่องทาง" },
+  { value: "Bitkub Academy", label: "Bitkub Academy" },
+  { value: "9Expert Training", label: "9Expert Training" },
+  { value: "Key Solutions Training", label: "Key Solutions Training" },
+  { value: "Other", label: "Other" },
+];
+
+function renderSource(it) {
+  const ch = String(it?.source_channel || "").trim();
+  const other = String(it?.source_other || "").trim();
+  const map = {
+    "Bitkub Academy": "Bitkub Academy",
+    "9Expert Training": "9Expert Training",
+    "Key Solutions Training": "Key Solutions Training",
+    other: "Other",
+  };
+  if (!ch) return "-";
+  if (ch === "other") return other ? `Other: ${other}` : "Other";
+  return map[ch] || ch;
+}
+
 export default function RegistrationsClient({ locale = "th" }) {
   const router = useRouter();
   const sp = useSearchParams();
@@ -94,6 +117,7 @@ export default function RegistrationsClient({ locale = "th" }) {
   const q0 = sp.get("q") || "";
   const status0 = sp.get("status") || "";
   const courseSlug0 = sp.get("courseSlug") || "";
+  const source0 = sp.get("source") || ""; // ✅ NEW
   const from0 = sp.get("from") || "";
   const to0 = sp.get("to") || "";
   const page0 = Number(sp.get("page") || 1);
@@ -101,6 +125,7 @@ export default function RegistrationsClient({ locale = "th" }) {
   const [q, setQ] = useState(q0);
   const [status, setStatus] = useState(status0);
   const [courseSlug, setCourseSlug] = useState(courseSlug0);
+  const [source, setSource] = useState(source0); // ✅ NEW
   const [from, setFrom] = useState(from0);
   const [to, setTo] = useState(to0);
 
@@ -111,22 +136,24 @@ export default function RegistrationsClient({ locale = "th" }) {
     setQ(q0);
     setStatus(status0);
     setCourseSlug(courseSlug0);
+    setSource(source0);
     setFrom(from0);
     setTo(to0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q0, status0, courseSlug0, from0, to0]);
+  }, [q0, status0, courseSlug0, source0, from0, to0]);
 
   const query = useMemo(() => {
     const u = new URLSearchParams();
     if (q0) u.set("q", q0);
     if (status0) u.set("status", status0);
     if (courseSlug0) u.set("courseSlug", courseSlug0);
+    if (source0) u.set("source", source0); // ✅ NEW
     if (from0) u.set("from", from0);
     if (to0) u.set("to", to0);
     u.set("page", String(page0 || 1));
     u.set("limit", "20");
     return u.toString();
-  }, [q0, status0, courseSlug0, from0, to0, page0]);
+  }, [q0, status0, courseSlug0, source0, from0, to0, page0]);
 
   async function load() {
     setLoading(true);
@@ -144,7 +171,6 @@ export default function RegistrationsClient({ locale = "th" }) {
         totalPages: data.totalPages || 1,
       });
 
-      // reset selection เมื่อโหลดหน้าใหม่ (กันเผลอ)
       setSelected({});
       setBulkStatus("");
     } catch (e) {
@@ -166,10 +192,13 @@ export default function RegistrationsClient({ locale = "th" }) {
     if (q.trim()) u.set("q", q.trim());
     if (status) u.set("status", status);
     if (courseSlug.trim()) u.set("courseSlug", courseSlug.trim());
+    if (source) u.set("source", source); // ✅ NEW
     if (from) u.set("from", from);
     if (to) u.set("to", to);
     u.set("page", "1");
-    router.push(`/${locale}/k8Pz7M2xYn5R0wLq/admin/registrations?${u.toString()}`);
+    router.push(
+      `/${locale}/k8Pz7M2xYn5R0wLq/admin/registrations?${u.toString()}`
+    );
   }
 
   function clearFilters() {
@@ -179,7 +208,9 @@ export default function RegistrationsClient({ locale = "th" }) {
   function goPage(p) {
     const u = new URLSearchParams(sp.toString());
     u.set("page", String(p));
-    router.push(`/${locale}/k8Pz7M2xYn5R0wLq/admin/registrations?${u.toString()}`);
+    router.push(
+      `/${locale}/k8Pz7M2xYn5R0wLq/admin/registrations?${u.toString()}`
+    );
   }
 
   function toggleOne(id, checked) {
@@ -234,11 +265,11 @@ export default function RegistrationsClient({ locale = "th" }) {
   }
 
   function exportCsv() {
-    // export ตาม filter ปัจจุบัน (q0,status0,courseSlug0,from0,to0)
     const u = new URLSearchParams();
     if (q0) u.set("q", q0);
     if (status0) u.set("status", status0);
     if (courseSlug0) u.set("courseSlug", courseSlug0);
+    if (source0) u.set("source", source0); // ✅ NEW
     if (from0) u.set("from", from0);
     if (to0) u.set("to", to0);
     const url = `/api/admin/registrations/export.csv?${u.toString()}`;
@@ -331,6 +362,27 @@ export default function RegistrationsClient({ locale = "th" }) {
                   "placeholder:text-white/35 focus:border-white/20 focus:ring-2 focus:ring-white/10"
                 )}
               />
+            </div>
+
+            {/* ✅ NEW source filter */}
+            <div className="md:col-span-3">
+              <div className="mb-1 text-xs font-bold text-white/70">
+                ช่องทางข่าวสาร
+              </div>
+              <select
+                value={source}
+                onChange={(e) => setSource(e.target.value)}
+                className={cx(
+                  "h-10 w-full rounded-xl border border-white/10 bg-black/15 px-3 text-sm text-white outline-none",
+                  "focus:border-white/20 focus:ring-2 focus:ring-white/10"
+                )}
+              >
+                {SOURCE_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="md:col-span-3 grid grid-cols-2 gap-3">
@@ -442,7 +494,7 @@ export default function RegistrationsClient({ locale = "th" }) {
         {/* Table */}
         <div className="mt-6 overflow-hidden rounded-2xl border border-white/10">
           <div className="overflow-auto">
-            <table className="min-w-[1040px] w-full text-left text-sm">
+            <table className="min-w-[1220px] w-full text-left text-sm">
               <thead className="bg-white/5 text-white/70">
                 <tr>
                   <th className="px-4 py-3 w-[44px]">
@@ -459,6 +511,7 @@ export default function RegistrationsClient({ locale = "th" }) {
                   <th className="px-4 py-3">Phone</th>
                   <th className="px-4 py-3">Company</th>
                   <th className="px-4 py-3">Course</th>
+                  <th className="px-4 py-3">Source</th> 
                   <th className="px-4 py-3">Status</th>
                 </tr>
               </thead>
@@ -466,7 +519,7 @@ export default function RegistrationsClient({ locale = "th" }) {
               <tbody className="divide-y divide-white/10 text-white/85">
                 {items.length === 0 ? (
                   <tr>
-                    <td className="px-4 py-6 text-white/60" colSpan={9}>
+                    <td className="px-4 py-6 text-white/60" colSpan={10}>
                       {loading ? "Loading..." : "ไม่พบข้อมูล"}
                     </td>
                   </tr>
@@ -496,6 +549,7 @@ export default function RegistrationsClient({ locale = "th" }) {
                       >
                         {fmtDate(it.createdAt)}
                       </td>
+
                       <td
                         className="px-4 py-3 font-mono text-xs text-white/75 cursor-pointer"
                         onClick={() =>
@@ -506,6 +560,7 @@ export default function RegistrationsClient({ locale = "th" }) {
                       >
                         {it.ref_no || "-"}
                       </td>
+
                       <td
                         className="px-4 py-3 cursor-pointer"
                         onClick={() =>
@@ -516,10 +571,17 @@ export default function RegistrationsClient({ locale = "th" }) {
                       >
                         {(it.first_name || "") + " " + (it.last_name || "")}
                       </td>
+
                       <td className="px-4 py-3">{it.email || "-"}</td>
                       <td className="px-4 py-3">{it.contact_phone || "-"}</td>
                       <td className="px-4 py-3">{it.company || "-"}</td>
                       <td className="px-4 py-3">{it.courseSlug || "-"}</td>
+
+                      {/* ✅ NEW */}
+                      <td className="px-4 py-3 text-white/80">
+                        {renderSource(it)}
+                      </td>
+
                       <td className="px-4 py-3">
                         <span
                           className={cx(

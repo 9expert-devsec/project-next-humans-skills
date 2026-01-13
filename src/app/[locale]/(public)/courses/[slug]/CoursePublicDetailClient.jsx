@@ -2,7 +2,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
+import { gaEvent } from "@/lib/ga";
 
 function cx(...a) {
   return a.filter(Boolean).join(" ");
@@ -16,9 +17,9 @@ function periodLabel(p, isEN) {
 }
 
 const PARTNER_LABEL = {
-  bitkub: "Bitkub",
-  "9expert": "9Expert",
-  key: "Key",
+  "Bitkub Academy": "Bitkub Academy",
+  "9Expert Training": "9Expert Training",
+  "Key Solutions Training": "Key Solutions Training",
 };
 
 function renderPartners(session) {
@@ -42,6 +43,17 @@ export default function CoursePublicDetailClient({ locale = "th", course }) {
     course?.title_th ||
     course?.title_en ||
     "Untitled";
+
+  useEffect(() => {
+    if (!slug) return;
+
+    gaEvent({
+      action: "view_course",
+      category: "course",
+      label: slug,
+      value: 1,
+    });
+  }, [slug]);
 
   const short = course?.short_description || course?.short || "";
 

@@ -2,84 +2,47 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import CourseForm from "@/components/admin/courses/CourseForm";
 import AdminTopbar from "@/components/admin/AdminTopbar";
+import AdminCourseFormClient from "@/components/admin/courses/AdminCourseFormClient";
 
 function cx(...a) {
   return a.filter(Boolean).join(" ");
 }
 
-export default function CourseEditClient({ locale, id }) {
+export default function CourseEditClient({
+  locale = "th",
+  adminKey = "",
+  id = "",
+}) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
   const [item, setItem] = useState(null);
 
-  const backHref = useMemo(() => `/${locale}/k8Pz7M2xYn5R0wLq/admin/courses`, [locale]);
+  const baseAdmin = useMemo(
+    () => `/${locale}/${adminKey}/admin`,
+    [locale, adminKey]
+  );
+  const backHref = useMemo(() => `${baseAdmin}/courses`, [baseAdmin]);
 
   async function load() {
+    if (!id) return;
     setErr("");
     setLoading(true);
     try {
+      // ✅ ใช้ route รายตัวที่คุณมีอยู่แล้ว
       const res = await fetch(`/api/admin/courses/${encodeURIComponent(id)}`, {
         credentials: "include",
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data?.ok) {
+      if (!res.ok || !data?.ok)
         throw new Error(data?.error || `Load failed (${res.status})`);
-      }
       setItem(data.item || null);
     } catch (e) {
       setErr(e?.message || "Load failed");
       setItem(null);
     } finally {
       setLoading(false);
-    }
-  }
-
-  async function onSubmit(values) {
-    setErr("");
-    setSaving(true);
-    try {
-      // ถ้า slug ว่าง → ไม่ส่ง (เพื่อ “คง slug เดิม” ตาม API ของคุณ)
-      const payload = { ...values };
-      if (!String(payload.slug || "").trim()) delete payload.slug;
-
-      const res = await fetch(`/api/admin/courses/${encodeURIComponent(id)}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data?.ok) {
-        throw new Error(data?.error || `Save failed (${res.status})`);
-      }
-      setItem(data.item || null);
-    } catch (e) {
-      setErr(e?.message || "Save failed");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function onDelete() {
-    if (!confirm("ลบคอร์สนี้แน่ใจนะครับ?")) return;
-    setErr("");
-    setSaving(true);
-    try {
-      const res = await fetch(`/api/admin/courses/${encodeURIComponent(id)}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data?.ok) {
-        throw new Error(data?.error || `Delete failed (${res.status})`);
-      }
-      location.href = backHref;
-    } catch (e) {
-      setErr(e?.message || "Delete failed");
-      setSaving(false);
     }
   }
 
@@ -101,7 +64,7 @@ export default function CourseEditClient({ locale, id }) {
           <div>
             <h1 className="text-2xl font-extrabold text-white">แก้ไขคอร์ส</h1>
             <p className="mt-1 text-sm text-white/60">
-              แก้ข้อมูลหลักของคอร์ส และบันทึกด้วยปุ่ม Save
+              แก้ข้อมูลคอร์ส และบันทึกด้วยปุ่ม Save
             </p>
           </div>
 
@@ -112,16 +75,19 @@ export default function CourseEditClient({ locale, id }) {
             >
               ← กลับไปหน้ารวม
             </Link>
+
+            {/* ปุ่ม Reload ไว้กัน error/load */}
             <button
-              onClick={onDelete}
-              disabled={saving || loading}
+              type="button"
+              onClick={load}
+              disabled={loading}
               className={cx(
                 "rounded-xl px-4 py-2 text-sm font-extrabold",
-                "border border-rose-500/30 bg-rose-500/15 text-rose-200",
-                "hover:bg-rose-500/20 disabled:opacity-60"
+                "border border-white/10 bg-white/5 text-white/80",
+                "hover:bg-white/10 disabled:opacity-60"
               )}
             >
-              ลบคอร์ส
+              Reload
             </button>
           </div>
         </div>
@@ -138,16 +104,17 @@ export default function CourseEditClient({ locale, id }) {
           ) : !item ? (
             <div className="text-white/60">Not found</div>
           ) : (
-            <CourseForm
+            <AdminCourseFormClient
               mode="edit"
               locale={locale}
-              initialValue={item}
-              saving={saving}
-              onSubmit={onSubmit}
-              onReload={load}
+              adminKey={adminKey}
+              initial={item}
             />
           )}
         </div>
+
+        {/* NOTE: ถ้าคุณยังต้องการปุ่ม Delete ในหน้านี้
+            ให้บอกผม เดี๋ยวผมเพิ่มให้ โดยยิง DELETE /api/admin/courses/[id] */}
       </div>
     </div>
   );

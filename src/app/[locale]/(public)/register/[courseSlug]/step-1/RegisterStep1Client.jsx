@@ -6,6 +6,9 @@ import { useRouter } from "next/navigation";
 import StepBar from "@/components/StepBar";
 import { ArrowLeft } from "lucide-react";
 
+export const metadata = {
+  robots: { index: false, follow: false },
+};
 
 function cx(...a) {
   return a.filter(Boolean).join(" ");
@@ -69,11 +72,15 @@ function Field({ label, required, children, hint, error }) {
 
       {children}
 
-      {error ? (
+      {/* {error ? (
         <div className="mt-2 text-xs font-semibold text-rose-300">{error}</div>
       ) : hint ? (
         <div className="mt-2 text-xs text-white/50">{hint}</div>
-      ) : null}
+      ) : null} */}
+
+       {error ? (
+        <div className="mt-2 text-xs font-semibold text-rose-300">{error}</div>
+      ) :  null}
     </div>
   );
 }
@@ -186,14 +193,14 @@ function InfoTip({ text }) {
       </span>
 
       <span
-  className={cx(
-    "pointer-events-none absolute left-full top-1/2 z-20 ml-2 w-[min(18rem,calc(100vw-2rem))] -translate-y-1/2",
-    "rounded-2xl border border-white/10 bg-slate-950/95 px-3 py-2 text-xs text-white/85 shadow-xl",
-    "opacity-0 translate-x-1 transition group-hover:opacity-100 group-hover:translate-x-0"
-  )}
->
-  {text}
-</span>
+        className={cx(
+          "pointer-events-none absolute left-full top-1/2 z-20 ml-2 w-[min(18rem,calc(100vw-2rem))] -translate-y-1/2",
+          "rounded-2xl border border-white/10 bg-slate-950/95 px-3 py-2 text-xs text-white/85 shadow-xl",
+          "opacity-0 translate-x-1 transition group-hover:opacity-100 group-hover:translate-x-0"
+        )}
+      >
+        {text}
+      </span>
     </span>
   );
 }
@@ -282,6 +289,8 @@ function getDefaultForm(locale = "th") {
     postcode: "",
 
     // section 4
+    source_channel: "",
+    source_other: "",
     note: "",
   };
 }
@@ -314,6 +323,9 @@ function sanitizeDraft(d = {}, locale = "th") {
   out.tax_id = String(out.tax_id || "")
     .replace(/\D/g, "")
     .slice(0, 13);
+
+  out.source_channel = String(out.source_channel || "").trim();
+  out.source_other = String(out.source_other || "").trim();
 
   return out;
 }
@@ -650,6 +662,14 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
     if (!t(form.receipt_address))
       e.receipt_address = isEN ? "Required" : "กรุณากรอกที่อยู่ออกใบเสร็จ";
 
+    if (!t(form.source_channel))
+      e.source_channel = isEN
+        ? "Please select a channel"
+        : "กรุณาเลือกช่องทางรับข่าวสาร";
+
+    if (t(form.source_channel) === "other" && !t(form.source_other))
+      e.source_other = isEN ? "Please specify" : "กรุณาระบุช่องทางอื่นๆ";
+
     // ✅ ถ้าคุณต้องการ “บังคับ” จังหวัด/อำเภอ/ตำบลด้วย ให้ปลดคอมเมนต์ 3 บรรทัดนี้
     // if (!t(form.province)) e.province = isEN ? "Required" : "กรุณาเลือกจังหวัด";
     // if (!t(form.district)) e.district = isEN ? "Required" : "กรุณาเลือกอำเภอ/เขต";
@@ -707,9 +727,9 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
 
   if (!course) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-10 text-white">
-        <div className="text-2xl font-extrabold">Course not found</div>
-        <div className="mt-2 text-white/60">ไม่พบคอร์สสำหรับการลงทะเบียน</div>
+      <div className="mx-auto max-w-4xl mt-32 px-4 py-10 text-white">
+        <div className="text-2xl font-extrabold">Loading...</div>
+        <div className="mt-2 text-white/60">กำลังพาท่านไปยังหน้าลงทะเบียน</div>
         <button
           onClick={() => router.push(`/${locale}`)}
           className="mt-5 inline-flex rounded-xl bg-white px-4 py-2 text-sm font-extrabold text-slate-900"
@@ -725,19 +745,19 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
       <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur md:p-7">
         {/* header */}
         <div className="flex flex-wrap justify-between">
-            <button
-              onClick={onBack}
-              className=" rounded-2xl bg-white/10 px-5 py-2 text-sm font-extrabold text-white ring-1 ring-white/10 hover:bg-white/15"
-            >
-              <ArrowLeft />
-            </button>
-            <button
-              onClick={onResetDraft}
-              className=" rounded-2xl bg-rose-500/15 px-5 text-sm font-bold text-rose-100 ring-1 ring-rose-500/20 hover:bg-rose-500/20"
-            >
-              {isEN ? "Clear" : "ล้างข้อมูล"}
-            </button>
-          </div>
+          <button
+            onClick={onBack}
+            className=" rounded-2xl bg-white/10 px-5 py-2 text-sm font-extrabold text-white ring-1 ring-white/10 hover:bg-white/15"
+          >
+            <ArrowLeft />
+          </button>
+          <button
+            onClick={onResetDraft}
+            className=" rounded-2xl bg-rose-500/15 px-5 text-sm font-bold text-rose-100 ring-1 ring-rose-500/20 hover:bg-rose-500/20"
+          >
+            {isEN ? "Clear" : "ล้างข้อมูล"}
+          </button>
+        </div>
         <div className="mt-4">
           <div className="text-4xl font-extrabold text-white text-center">
             {isEN ? "Register" : "ลงทะเบียน"}
@@ -747,7 +767,6 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
               ? "Fill in information for registration inquiry"
               : "กรอกข้อมูลเพื่อส่งความสนใจลงทะเบียน"}
           </div>
-          
         </div>
         <div className="mt-6">
           <StepBar current={1} locale={locale} />
@@ -1377,11 +1396,11 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
           <Section
             no={4}
             title={isEN ? "Additional info" : "ข้อมูลเพิ่มเติม"}
-            subtitle={
-              isEN
-                ? "Information source (required) + Note (optional)"
-                : "ช่องทางรับข่าวสาร (บังคับ) + หมายเหตุ (ไม่บังคับ)"
-            }
+            // subtitle={
+            //   isEN
+            //     ? "Information source (required) + Note (optional)"
+            //     : "ช่องทางรับข่าวสาร (บังคับ) + หมายเหตุ (ไม่บังคับ)"
+            // }
           >
             <Field
               label={
@@ -1394,21 +1413,21 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
             >
               <div className="grid gap-3 md:grid-cols-2">
                 <SourceRadio
-                  value="bitkub"
+                  value="Bitkub Academy"
                   selected={form.source_channel}
                   onSelect={setSourceChannel}
                   label="Bitkub Academy"
                   dataField="source_channel"
                 />
                 <SourceRadio
-                  value="9expert"
+                  value="9Expert Training"
                   selected={form.source_channel}
                   onSelect={setSourceChannel}
                   label="9Expert Training"
                   dataField="source_channel"
                 />
                 <SourceRadio
-                  value="key"
+                  value="Key Solutions Training"
                   selected={form.source_channel}
                   onSelect={setSourceChannel}
                   label="Key Solutions Training"
