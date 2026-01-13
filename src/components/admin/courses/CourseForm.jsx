@@ -27,7 +27,7 @@ function pickInitial(x) {
     title_en: v.title_en || "",
     short_description: v.short_description || "",
 
-    level: v.level || "general",
+    level: v.level || "General",
     duration_days: Number(v.duration_days || 1),
     status: v.status || "draft",
     isActive: typeof v.isActive === "boolean" ? v.isActive : true,
@@ -121,7 +121,7 @@ export default function CourseForm({
     });
   }
 
-  const partnersOptions = useMemo(() => ["bitkub", "9expert", "key"], []);
+  const partnersOptions = useMemo(() => ["Bitkub Academy", "9Expert Training", "Key Solutions Training"], []);
 
   function buildPayload() {
     const payload = {
@@ -301,7 +301,7 @@ export default function CourseForm({
               onChange={(e) => setField("level", e.target.value)}
               className="w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white outline-none focus:border-white/25"
             >
-              {["general", "executive", "middle", "workforce", "citizen"].map(
+              {["General", "Executive", "Middle Management", "Workforce", "Citizen Developer"].map(
                 (v) => (
                   <option key={v} value={v} className="bg-slate-900">
                     {v}

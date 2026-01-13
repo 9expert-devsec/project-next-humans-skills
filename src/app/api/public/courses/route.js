@@ -16,7 +16,7 @@ function normalizeCourse(c) {
     short_description: c.short_description || "",
     cover: c.cover_image || "",
     cover_image: c.cover_image || "",
-    level: c.level || "general",
+    level: c.level || "General",
     duration_days: c.duration_days || 1,
     status: c.status || "draft",
     isActive: !!c.isActive,

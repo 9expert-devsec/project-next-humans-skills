@@ -1,4 +1,4 @@
-// /api/admin/courses/route.js
+// src/app/api/admin/courses/route.js
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Course from "@/models/Course";
@@ -16,13 +16,24 @@ function makeSlug(s) {
   return slug || "course";
 }
 
-async function ensureUniqueSlug(base) {
+async function ensureUniqueSlug(base, excludeId = "") {
   let slug = base;
   let i = 1;
-  while (await Course.exists({ slug })) {
+
+  // กันชน: ถ้า edit แล้ว slug เดิมของตัวเอง ให้ผ่านได้
+  // ใช้ while loop ตรวจว่ามี slug ชนกับคนอื่นไหม
+  // excludeId: ถ้ามี จะตรวจว่า doc ที่ชนเป็นคนละ _id
+  // (ถ้าไม่มี excludeId -> create mode ปกติ)
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const exists = await Course.findOne({ slug }).select({ _id: 1 }).lean();
+    if (!exists) break;
+    if (excludeId && String(exists._id) === String(excludeId)) break;
+
     i += 1;
     slug = `${base}-${i}`;
   }
+
   return slug;
 }
 
@@ -34,10 +45,10 @@ function cleanStr(x) {
   return String(x || "").trim();
 }
 
-function uniq(arr) {
+function uniq(list) {
   const out = [];
   const seen = new Set();
-  for (const v of arr) {
+  for (const v of Array.isArray(list) ? list : []) {
     const s = cleanStr(v);
     if (!s) continue;
     if (seen.has(s)) continue;
@@ -47,13 +58,26 @@ function uniq(arr) {
   return out;
 }
 
+/* ---------------- topic groups ---------------- */
+function normalizeTopicGroups(input) {
+  const groups = Array.isArray(input) ? input : [];
+  return groups
+    .map((g) => {
+      const title = cleanStr(g?.title);
+      const items = Array.isArray(g?.items)
+        ? g.items.map((x) => cleanStr(x)).filter(Boolean)
+        : [];
+      return { title, items };
+    })
+    .filter((g) => g.title || (g.items && g.items.length));
+}
+
+/* ---------------- curriculum ---------------- */
 /**
- * ✅ Normalize curriculum to support session.partners (array)
- * - supports legacy session.partner (string)
- * - ensures partners is always array of strings
- *
- * allowCustom=false: จะกรองเฉพาะ key ที่อยู่ใน course.partners (และ/หรือ list ที่ส่งมา)
- * ถ้าคุณอยากให้พิมพ์ custom ได้ ให้เปลี่ยนเป็น true
+ * ✅ Normalize curriculum to support:
+ * - session.partners (array)
+ * - legacy session.partner (string) -> merge เข้า partners
+ * - session.topic_groups (array of {title, items})
  */
 function normalizeCurriculum(
   curriculumInput,
@@ -76,6 +100,7 @@ function normalizeCurriculum(
         const partners = allowCustom
           ? merged
           : merged.filter((k) => allow.has(k));
+        const topic_groups = normalizeTopicGroups(s?.topic_groups);
 
         return {
           period: cleanStr(s?.period) || "morning",
@@ -85,6 +110,7 @@ function normalizeCurriculum(
           topics: Array.isArray(s?.topics)
             ? s.topics.map((x) => cleanStr(x)).filter(Boolean)
             : [],
+          topic_groups, // ✅ ใหม่
           notes: cleanStr(s?.notes),
         };
       });
@@ -101,17 +127,24 @@ function normalizeCurriculum(
 function normalizeBody(body = {}) {
   const partners = arr(body.partners).map(cleanStr).filter(Boolean);
 
-  const out = {
+  return {
+    id: cleanStr(body.id),
+
     slug: cleanStr(body.slug),
     title_th: cleanStr(body.title_th),
     title_en: cleanStr(body.title_en),
     short_description: cleanStr(body.short_description),
 
-    level: ["Executive", "Middle Management", "Workforce", "Citizen Developer", "General"].includes(
-      body.level
-    )
+    level: [
+      "Executive",
+      "Middle Management",
+      "Workforce",
+      "Citizen Developer",
+      "General",
+    ].includes(body.level)
       ? body.level
       : "General",
+
     duration_days: Math.max(1, Number(body.duration_days || 1)),
 
     status: ["draft", "published", "archived"].includes(body.status)
@@ -134,7 +167,6 @@ function normalizeBody(body = {}) {
       benefits: arr(body?.content?.benefits).map(cleanStr).filter(Boolean),
     },
 
-    // ✅ normalize curriculum ให้รองรับ partners[]
     curriculum: normalizeCurriculum(body.curriculum, partners, true),
 
     executive_summary: cleanStr(body.executive_summary),
@@ -153,8 +185,6 @@ function normalizeBody(body = {}) {
       certificate_template: body?.business?.certificate_template || null,
     },
   };
-
-  return out;
 }
 
 /* ---------------- route ---------------- */
@@ -205,7 +235,6 @@ export async function GET(req) {
 export async function POST(req) {
   await dbConnect();
   const body = await req.json().catch(() => ({}));
-
   const b = normalizeBody(body);
 
   if (!b.title_th) {
@@ -219,6 +248,46 @@ export async function POST(req) {
   const base = makeSlug(b.slug || b.title_th);
   b.slug = await ensureUniqueSlug(base);
 
+  // ไม่ต้องส่ง id เข้า create
+  delete b.id;
+
   const doc = await Course.create(b);
   return NextResponse.json({ ok: true, item: doc });
+}
+
+export async function PUT(req) {
+  await dbConnect();
+  const body = await req.json().catch(() => ({}));
+  const b = normalizeBody(body);
+
+  const id = cleanStr(b.id);
+  if (!id) {
+    return NextResponse.json(
+      { ok: false, error: "id is required" },
+      { status: 400 }
+    );
+  }
+
+  if (!b.title_th) {
+    return NextResponse.json(
+      { ok: false, error: "title_th is required" },
+      { status: 400 }
+    );
+  }
+
+  // slug: ถ้าไม่ส่งมา ให้ gen จาก title_th
+  const base = makeSlug(b.slug || b.title_th);
+  b.slug = await ensureUniqueSlug(base, id);
+
+  delete b.id;
+
+  const updated = await Course.findByIdAndUpdate(id, b, { new: true }).lean();
+  if (!updated) {
+    return NextResponse.json(
+      { ok: false, error: "not found" },
+      { status: 404 }
+    );
+  }
+
+  return NextResponse.json({ ok: true, item: updated });
 }

@@ -42,7 +42,7 @@ export default function ProfileFlipCard({
                 <div className="relative h-12 w-[180px]">
                   <Image
                     src={logoSrc}
-                    alt={`${company} logo`}
+                    alt={`${company} front-logo`}
                     fill
                     className="object-contain"
                     priority
@@ -95,7 +95,7 @@ export default function ProfileFlipCard({
                 <div className="relative h-14 w-[200px] opacity-95">
                   <Image
                     src={logoB}
-                    alt={`${company} logo`}
+                    alt={`${company} back-logo`}
                     fill
                     className="object-contain"
                   />

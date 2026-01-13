@@ -1,19 +1,75 @@
+// src/app/[locale]/(public)/page.jsx
 import Image from "next/image";
 
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
 import CourseGridClient from "@/components/ui/CourseGridClient";
-import HeroIllustration from "@/components/public/HeroIllustration";
 import ProfileFlipCard from "@/components/cards/ProfileFlipCard";
 import AudiencePill from "@/components/cards/AudiencePill";
-import CourseCard from "@/components/cards/CourseCard";
-
 import NewsMediaPanelClient from "@/components/public/NewsMediaPanelClient";
 
 import { Crown, Briefcase, Leaf } from "lucide-react";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+/* ---------------- SEO: Home Metadata ---------------- */
+export async function generateMetadata({ params }) {
+  const p = await params;
+  const locale = p?.locale === "en" ? "en" : "th";
+  const isEN = locale === "en";
+
+  const title = isEN
+    ? "The Next Humans Skills | Training & Leadership Programs"
+    : "The Next Humans Skills | แพลตฟอร์มอบรมและพัฒนาทักษะยุคใหม่";
+
+  const description = isEN
+    ? "A modern training-registration platform by 9Expert Training, Key Solutions Training, and Bitkub Academy. Explore leadership, AI, data, and digital skills programs."
+    : "แพลตฟอร์มลงทะเบียนอบรมยุคใหม่ โดย 9Expert Training, Key Solutions Training และ Bitkub Academy รวมหลักสูตรผู้นำ AI Data และทักษะดิจิทัล";
+
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://thenexthumansskills.com";
+  const url = `${baseUrl}/${locale}`;
+
+  // แนะนำทำไฟล์ OG แยก 1200x630 ที่ public/og/home-og.png
+  // ถ้ายังไม่มี ใช้ banner ที่มีอยู่ก็ได้
+  const ogImage =
+    (process.env.NEXT_PUBLIC_SITE_URL || "https://thenexthumansskills.com") +
+    "/og/home-og.png";
+
+  return {
+    title,
+    description,
+
+    robots: {
+      index: true,
+      follow: true,
+    },
+
+    alternates: {
+      canonical: url,
+      languages: {
+        th: `${baseUrl}/th`,
+        en: `${baseUrl}/en`,
+      },
+    },
+
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: "The Next Humans Skills",
+      locale: isEN ? "en_US" : "th_TH",
+      type: "website",
+      images: [{ url: ogImage, width: 1200, height: 630, alt: title }],
+    },
+
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [ogImage],
+    },
+  };
+}
 
 export default async function Page({ params }) {
   const p = await params;
@@ -35,48 +91,47 @@ export default async function Page({ params }) {
     courseDesc: isEN ? "Latest courses available" : "คอร์สที่เปิดใช้งานล่าสุด",
   };
 
-  const ITEMS = [
-    { label: "People", icon: "users" },
-    { label: "Data", icon: "bar" },
-    { label: "Technology", icon: "cpu" },
-    { label: "Strategy", icon: "compass" },
-  ];
-
   const Audience_ITEMS = [
     { label: "ผู้บริหารระดับสูง", icon: Crown },
     { label: "ผู้นำระดับกลาง", icon: Briefcase },
     { label: "พนักงานยุคใหม่", icon: Leaf },
   ];
 
-  const COURSES = [
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://thenexthumansskills.com";
+
+  const jsonLd = [
     {
-      title: "The Next-Gen Strategic Leadership in the Digital Era Economy",
-      coverSrc: "",
-      tags: ["Tag", "Citizen"],
-      href: "#",
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      name: "The Next Humans Skills",
+      url: `${siteUrl}/${locale}`,
+      logo: `${siteUrl}/icon.ico`,
     },
     {
-      title: "The Next-Step Data-Driven Leadership & Strategic Communication",
-      coverSrc: "",
-      tags: ["Tag", "Citizen"],
-      href: "#",
-    },
-    {
-      title: "The Next-Gen Innovator : AI, Automation and Blockchain",
-      coverSrc: "",
-      tags: ["Tag", "Citizen"],
-      href: "#",
-    },
-    {
-      title: "The Next Accelerator : Workforce AI & Financial Empowerment",
-      coverSrc: "",
-      tags: ["Tag", "Citizen"],
-      href: "#",
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      name: "The Next Humans Skills",
+      url: siteUrl,
+      inLanguage: locale,
     },
   ];
 
   return (
     <>
+      {/* ✅ H1 สำหรับ SEO (ไม่กระทบ UI) */}
+      <h1 className="sr-only">
+        {isEN
+          ? "The Next Humans Skills — Modern training registration platform"
+          : "The Next Humans Skills — แพลตฟอร์มลงทะเบียนอบรมและพัฒนาทักษะยุคใหม่"}
+      </h1>
+
+      {/* ✅ JSON-LD */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       <section id="banner" className="mx-auto max-w-7xl mt-24">
         <Image
           src="/banner-landingpage-thenexthumansskills3.png"
@@ -222,7 +277,7 @@ export default async function Page({ params }) {
         </div>
       </section>
 
-      {/* ✅ News / Media (ตำแหน่งตามที่วงแดงไว้) */}
+      {/* ✅ News / Media */}
       <section id="news" className="mx-auto w-full max-w-7xl px-6 pb-20">
         <div className="text-white text-4xl font-bold">{t.newsTitle}</div>
         <div className="mt-2 text-white/70 text-lg">{t.newsDesc}</div>

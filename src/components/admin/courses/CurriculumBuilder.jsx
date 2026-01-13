@@ -1,3 +1,4 @@
+// src/components/admin/courses/CurriculumBuilder.jsx
 "use client";
 
 import { useMemo } from "react";
@@ -10,13 +11,31 @@ function safeArr(x) {
   return Array.isArray(x) ? x : [];
 }
 
+function cleanStr(x) {
+  return String(x ?? "").trim();
+}
+
 function newDay(dayNum) {
   return {
     day: dayNum,
     title: "",
     sessions: [
-      { period: "morning", title: "", partners: [], topics: [], notes: "" },
-      { period: "afternoon", title: "", partners: [], topics: [], notes: "" },
+      {
+        period: "morning",
+        title: "",
+        partners: [],
+        topics: [], // legacy
+        topic_groups: [], // new
+        notes: "",
+      },
+      {
+        period: "afternoon",
+        title: "",
+        partners: [],
+        topics: [],
+        topic_groups: [],
+        notes: "",
+      },
     ],
   };
 }
@@ -28,27 +47,41 @@ function periodLabel(p) {
 }
 
 /**
- * ✅ normalize รองรับข้อมูลเก่า:
- * - session.partner (string) -> session.partners (array)
- * - ถ้าไม่มี partners ให้ default เป็น []
+ * ✅ Editor normalize:
+ * - ห้าม filter ค่าว่างทิ้ง (เพื่อไม่ให้ Add Group/Item หาย)
+ * - ยอมรับ legacy:
+ *   - session.partner (string) -> partners[]
+ * - partners ใน state จะเป็น array of "keys" เสมอ (bitkub/9expert/key)
  */
 function normalizeDays(rawDays) {
   const days = Array.isArray(rawDays) ? rawDays : [];
+
   return days.map((d, di) => {
     const sessions = Array.isArray(d?.sessions) ? d.sessions : [];
+
     const normSessions = sessions.map((s) => {
-      const legacyPartner = String(s?.partner || "").trim();
+      const legacyPartner = cleanStr(s?.partner);
+
       const partners = Array.isArray(s?.partners)
-        ? s.partners.map((x) => String(x || "").trim()).filter(Boolean)
+        ? s.partners.map((x) => cleanStr(x)).filter(Boolean)
         : legacyPartner
         ? [legacyPartner]
         : [];
-      const next = {
-        ...s,
-        partners,
-      };
-      // ไม่จำเป็นต้องลบ partner ทิ้ง แต่จะไม่ใช้งานแล้ว
-      return next;
+
+      const topic_groups = Array.isArray(s?.topic_groups)
+        ? s.topic_groups.map((g) => {
+            const title = String(g?.title ?? "");
+            const itemsRaw = Array.isArray(g?.items) ? g.items : [];
+            const items = itemsRaw.map((x) => String(x ?? ""));
+            return { title, items: items.length ? items : [""] };
+          })
+        : [];
+
+      const topics = Array.isArray(s?.topics)
+        ? s.topics.map((x) => String(x ?? ""))
+        : [];
+
+      return { ...s, partners, topics, topic_groups };
     });
 
     return {
@@ -65,8 +98,30 @@ export default function CurriculumBuilder({
   onChange,
   partners = [],
 }) {
-  // ✅ ใช้ normalized data เพื่อรองรับข้อมูลเก่า
   const days = useMemo(() => normalizeDays(value), [value]);
+
+  // ✅ partners prop รองรับ 2 แบบ:
+  // 1) ["bitkub","9expert","key"]
+  // 2) [{key:"bitkub",label:"Bitkub Academy"}, ...]
+  const partnerOptions = useMemo(() => {
+    const arr = Array.isArray(partners) ? partners : [];
+    if (arr.length === 0) return [];
+    if (typeof arr[0] === "string") {
+      return arr.map((k) => ({ key: String(k), label: String(k) }));
+    }
+    return arr
+      .map((p) => ({
+        key: cleanStr(p?.key),
+        label: cleanStr(p?.label) || cleanStr(p?.key),
+      }))
+      .filter((p) => p.key);
+  }, [partners]);
+
+  const labelByKey = useMemo(() => {
+    const m = new Map();
+    for (const p of partnerOptions) m.set(p.key, p.label);
+    return m;
+  }, [partnerOptions]);
 
   const nextDayNumber = useMemo(() => {
     const max = days.reduce((m, d) => Math.max(m, Number(d?.day || 0)), 0);
@@ -78,8 +133,7 @@ export default function CurriculumBuilder({
   }
 
   function setDay(idx, patch) {
-    const next = days.map((d, i) => (i === idx ? { ...d, ...patch } : d));
-    commit(next);
+    commit(days.map((d, i) => (i === idx ? { ...d, ...patch } : d)));
   }
 
   function addDay() {
@@ -87,275 +141,343 @@ export default function CurriculumBuilder({
   }
 
   function removeDay(idx) {
-    const next = days
-      .filter((_, i) => i !== idx)
-      .map((d, i) => ({ ...d, day: i + 1 }));
-    commit(next);
+    commit(
+      days.filter((_, i) => i !== idx).map((d, i) => ({ ...d, day: i + 1 }))
+    );
   }
 
   function addSession(dayIdx) {
-    const next = days.map((x, i) =>
-      i === dayIdx
-        ? {
-            ...x,
-            sessions: [
-              ...(x.sessions || []),
-              {
-                period: "evening",
-                title: "",
-                partners: [],
-                topics: [],
-                notes: "",
-              },
-            ],
-          }
-        : x
+    commit(
+      days.map((d, i) =>
+        i === dayIdx
+          ? {
+              ...d,
+              sessions: [
+                ...(d.sessions || []),
+                {
+                  period: "evening",
+                  title: "",
+                  partners: [],
+                  topics: [],
+                  topic_groups: [],
+                  notes: "",
+                },
+              ],
+            }
+          : d
+      )
     );
-    commit(next);
   }
 
   function removeSession(dayIdx, sessionIdx) {
-    const next = days.map((d, i) => {
-      if (i !== dayIdx) return d;
-      const sessions = (d.sessions || []).filter((_, si) => si !== sessionIdx);
-      return { ...d, sessions };
-    });
-    commit(next);
+    commit(
+      days.map((d, i) =>
+        i === dayIdx
+          ? { ...d, sessions: d.sessions.filter((_, si) => si !== sessionIdx) }
+          : d
+      )
+    );
   }
 
   function setSession(dayIdx, sessionIdx, patch) {
-    const next = days.map((d, i) => {
-      if (i !== dayIdx) return d;
-      const sessions = (d.sessions || []).map((s, si) =>
-        si === sessionIdx ? { ...s, ...patch } : s
-      );
-      return { ...d, sessions };
-    });
-    commit(next);
+    commit(
+      days.map((d, i) =>
+        i === dayIdx
+          ? {
+              ...d,
+              sessions: d.sessions.map((s, si) =>
+                si === sessionIdx ? { ...s, ...patch } : s
+              ),
+            }
+          : d
+      )
+    );
   }
 
-  function setTopicsFromText(dayIdx, sessionIdx, text) {
-    const topics = String(text || "")
-      .split("\n")
-      .map((x) => x.trim())
-      .filter(Boolean);
-    setSession(dayIdx, sessionIdx, { topics });
-  }
+  /* ---------------- partner helpers ---------------- */
 
-  function toggleSessionPartner(dayIdx, sessionIdx, k) {
+  function toggleSessionPartner(dayIdx, sessionIdx, key) {
     const s = days?.[dayIdx]?.sessions?.[sessionIdx];
-    const current = safeArr(s?.partners);
-    const has = current.includes(k);
-    const nextPartners = has ? current.filter((x) => x !== k) : [...current, k];
-    setSession(dayIdx, sessionIdx, { partners: nextPartners });
+    const cur = safeArr(s?.partners).map(cleanStr).filter(Boolean);
+    const has = cur.includes(key);
+    const next = has ? cur.filter((x) => x !== key) : [...cur, key];
+    setSession(dayIdx, sessionIdx, { partners: next });
   }
+
+  /* ---------------- topic groups helpers ---------------- */
+
+  function addGroup(dayIdx, sessionIdx) {
+    const s = days[dayIdx].sessions[sessionIdx];
+    setSession(dayIdx, sessionIdx, {
+      topic_groups: [...safeArr(s.topic_groups), { title: "", items: [""] }],
+    });
+  }
+
+  function removeGroup(dayIdx, sessionIdx, groupIdx) {
+    const s = days[dayIdx].sessions[sessionIdx];
+    setSession(dayIdx, sessionIdx, {
+      topic_groups: safeArr(s.topic_groups).filter((_, i) => i !== groupIdx),
+    });
+  }
+
+  function setGroupTitle(dayIdx, sessionIdx, groupIdx, title) {
+    const s = days[dayIdx].sessions[sessionIdx];
+    setSession(dayIdx, sessionIdx, {
+      topic_groups: safeArr(s.topic_groups).map((g, i) =>
+        i === groupIdx ? { ...g, title } : g
+      ),
+    });
+  }
+
+  function addGroupItem(dayIdx, sessionIdx, groupIdx) {
+    const s = days[dayIdx].sessions[sessionIdx];
+    setSession(dayIdx, sessionIdx, {
+      topic_groups: safeArr(s.topic_groups).map((g, i) =>
+        i === groupIdx ? { ...g, items: [...safeArr(g.items), ""] } : g
+      ),
+    });
+  }
+
+  function setGroupItem(dayIdx, sessionIdx, groupIdx, itemIdx, text) {
+    const s = days[dayIdx].sessions[sessionIdx];
+    setSession(dayIdx, sessionIdx, {
+      topic_groups: safeArr(s.topic_groups).map((g, i) => {
+        if (i !== groupIdx) return g;
+        const items = [...safeArr(g.items)];
+        items[itemIdx] = text;
+        return { ...g, items };
+      }),
+    });
+  }
+
+  function removeGroupItem(dayIdx, sessionIdx, groupIdx, itemIdx) {
+    const s = days[dayIdx].sessions[sessionIdx];
+    setSession(dayIdx, sessionIdx, {
+      topic_groups: safeArr(s.topic_groups).map((g, i) => {
+        if (i !== groupIdx) return g;
+        const items = safeArr(g.items);
+        const nextItems = items.filter((_, ii) => ii !== itemIdx);
+        return { ...g, items: nextItems.length ? nextItems : [""] };
+      }),
+    });
+  }
+
+  /* ---------------- render ---------------- */
 
   return (
     <div className="grid gap-4">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center justify-between">
         <div>
           <div className="text-sm font-extrabold text-white">
             Curriculum Builder
           </div>
           <div className="mt-1 text-xs text-white/60">
-            เพิ่มวัน/ช่วง/หัวข้อ (รองรับหลาย Partner ต่อ session ✅)
+            รองรับหัวข้อหลัก + หัวข้อย่อย (Topic Groups) ✅
           </div>
         </div>
 
         <button
           type="button"
           onClick={addDay}
-          className="rounded-xl bg-white px-4 py-2 text-sm font-extrabold text-slate-900 hover:bg-white/90"
+          className="rounded-xl bg-white px-4 py-2 text-sm font-extrabold text-slate-900"
         >
           + Add Day
         </button>
       </div>
 
-      {days.length === 0 ? (
-        <div className="rounded-2xl border border-white/10 bg-black/15 p-4 text-sm text-white/60">
-          ยังไม่มี curriculum — กด “Add Day”
-        </div>
-      ) : null}
+      {days.map((d, dayIdx) => (
+        <div
+          key={dayIdx}
+          className="rounded-3xl border border-white/10 bg-black/15 p-4"
+        >
+          <div className="flex items-center justify-between gap-2">
+            <input
+              value={d.title}
+              onChange={(e) => setDay(dayIdx, { title: e.target.value })}
+              placeholder={`Day ${d.day} title`}
+              className="w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-white outline-none"
+            />
 
-      <div className="grid gap-4">
-        {days.map((d, dayIdx) => (
-          <div
-            key={dayIdx}
-            className="rounded-3xl border border-white/10 bg-black/15 p-4"
-          >
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="min-w-[260px] flex-1">
-                <div className="text-xs font-extrabold text-white/70">
-                  Day {d.day}
+            <button
+              type="button"
+              onClick={() => removeDay(dayIdx)}
+              className="rounded-xl bg-rose-500/15 px-4 py-2 text-sm font-extrabold text-rose-200"
+            >
+              Remove Day
+            </button>
+          </div>
+
+          <div className="mt-4 grid gap-3">
+            {d.sessions.map((s, sessionIdx) => (
+              <div
+                key={sessionIdx}
+                className="rounded-2xl border border-white/10 bg-white/5 p-4"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="text-xs font-extrabold text-white/60">
+                    {periodLabel(s.period)}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeSession(dayIdx, sessionIdx)}
+                    className="text-xs text-white/50"
+                  >
+                    Remove
+                  </button>
                 </div>
+
                 <input
-                  value={d.title || ""}
-                  onChange={(e) => setDay(dayIdx, { title: e.target.value })}
-                  placeholder="Day title เช่น The Power of AI and Leadership Transformation"
-                  className="mt-2 w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white outline-none focus:border-white/25"
+                  value={s.title}
+                  onChange={(e) =>
+                    setSession(dayIdx, sessionIdx, { title: e.target.value })
+                  }
+                  placeholder="Session title"
+                  className="mt-2 w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-2 text-white outline-none"
                 />
-              </div>
 
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => addSession(dayIdx)}
-                  className="rounded-xl bg-white/10 px-4 py-2 text-sm font-extrabold text-white ring-1 ring-white/10 hover:bg-white/15"
-                >
-                  + Add Session
-                </button>
-                <button
-                  type="button"
-                  onClick={() => removeDay(dayIdx)}
-                  className="rounded-xl bg-rose-500/15 px-4 py-2 text-sm font-extrabold text-rose-200 ring-1 ring-rose-500/30 hover:bg-rose-500/20"
-                >
-                  Remove Day
-                </button>
-              </div>
-            </div>
+                {/* ✅ Partner chips (แสดงชื่อเต็ม แต่เก็บเป็น key) */}
+                <div className="mt-3">
+                  <div className="mb-2 text-xs font-extrabold text-white/70">
+                    Partner (เลือกได้หลายอัน)
+                  </div>
 
-            <div className="mt-4 grid gap-3">
-              {(d.sessions || []).map((s, sessionIdx) => (
-                <div
-                  key={sessionIdx}
-                  className="rounded-2xl border border-white/10 bg-white/5 p-4"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <select
-                        value={s.period || "morning"}
-                        onChange={(e) =>
-                          setSession(dayIdx, sessionIdx, {
-                            period: e.target.value,
-                          })
-                        }
-                        className="rounded-xl border border-white/10 bg-black/25 px-3 py-2 text-xs font-extrabold text-white outline-none"
-                      >
-                        <option value="morning" className="bg-slate-900">
-                          Morning
-                        </option>
-                        <option value="afternoon" className="bg-slate-900">
-                          Afternoon
-                        </option>
-                        <option value="evening" className="bg-slate-900">
-                          Evening
-                        </option>
-                      </select>
-
-                      <div className="text-xs font-extrabold text-white/60">
-                        {periodLabel(s.period || "morning")}
-                      </div>
+                  <div className="w-full rounded-2xl border border-white/10 bg-black/25 p-3">
+                    <div className="flex flex-wrap gap-2">
+                      {partnerOptions.length === 0 ? (
+                        <div className="text-xs text-white/50">-</div>
+                      ) : (
+                        partnerOptions.map((p) => {
+                          const active = safeArr(s.partners).includes(p.key);
+                          return (
+                            <button
+                              key={p.key}
+                              type="button"
+                              onClick={() =>
+                                toggleSessionPartner(dayIdx, sessionIdx, p.key)
+                              }
+                              className={cx(
+                                "rounded-full px-3 py-2 text-xs font-extrabold ring-1",
+                                active
+                                  ? "bg-emerald-500/15 text-emerald-200 ring-emerald-500/30"
+                                  : "bg-white/5 text-white/70 ring-white/10 hover:bg-white/10"
+                              )}
+                              title="คลิกเพื่อเลือก/ยกเลิก"
+                            >
+                              {p.label}
+                            </button>
+                          );
+                        })
+                      )}
                     </div>
 
+                    <div className="mt-2 text-[11px] text-white/45">
+                      เลือกแล้ว:{" "}
+                      {safeArr(s.partners).length
+                        ? safeArr(s.partners)
+                            .map((k) => labelByKey.get(k) || k)
+                            .join(", ")
+                        : "-"}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Topic Groups */}
+                <div className="mt-4 rounded-2xl border border-white/10 bg-black/10 p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs font-extrabold text-white">
+                      Topics (Groups)
+                    </div>
                     <button
                       type="button"
-                      onClick={() => removeSession(dayIdx, sessionIdx)}
-                      className="rounded-xl bg-white/5 px-3 py-2 text-xs font-extrabold text-white/70 ring-1 ring-white/10 hover:bg-white/10"
+                      onClick={() => addGroup(dayIdx, sessionIdx)}
+                      className="rounded-xl bg-white px-3 py-1 text-xs font-extrabold text-slate-900"
                     >
-                      Remove
+                      + Add Group
                     </button>
                   </div>
 
-                  <div className="mt-3 grid gap-3 md:grid-cols-3">
-                    <div className="md:col-span-2">
-                      <div className="mb-2 text-xs font-extrabold text-white/70">
-                        Session Title
-                      </div>
-                      <input
-                        value={s.title || ""}
-                        onChange={(e) =>
-                          setSession(dayIdx, sessionIdx, {
-                            title: e.target.value,
-                          })
-                        }
-                        placeholder='เช่น "Leading Change & Visionary Leadership in the Digital Era"'
-                        className="w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white outline-none focus:border-white/25"
-                      />
-                    </div>
+                  <div className="mt-3 grid gap-3">
+                    {safeArr(s.topic_groups).map((g, gi) => (
+                      <div
+                        key={gi}
+                        className="rounded-xl border border-white/10 bg-white/5 p-3"
+                      >
+                        <input
+                          value={g.title}
+                          onChange={(e) =>
+                            setGroupTitle(
+                              dayIdx,
+                              sessionIdx,
+                              gi,
+                              e.target.value
+                            )
+                          }
+                          placeholder="Group title"
+                          className="w-full rounded-xl border border-white/10 bg-black/25 px-3 py-2 text-white outline-none"
+                        />
 
-                    {/* ✅ Partner multi */}
-                    <div>
-                      <div className="mb-2 text-xs font-extrabold text-white/70">
-                        Partner (เลือกได้หลายอัน)
-                      </div>
-
-                      <div className="w-full rounded-2xl border border-white/10 bg-black/25 p-3">
-                        <div className="flex flex-wrap gap-2">
-                          {partners.length === 0 ? (
-                            <div className="text-xs text-white/50">-</div>
-                          ) : (
-                            partners.map((p) => {
-                              const active = safeArr(s.partners).includes(p);
-                              return (
-                                <button
-                                  key={p}
-                                  type="button"
-                                  onClick={() =>
-                                    toggleSessionPartner(dayIdx, sessionIdx, p)
-                                  }
-                                  className={cx(
-                                    "rounded-full px-3 py-2 text-xs font-extrabold ring-1",
-                                    active
-                                      ? "bg-emerald-500/15 text-emerald-200 ring-emerald-500/30"
-                                      : "bg-white/5 text-white/70 ring-white/10 hover:bg-white/10"
-                                  )}
-                                  title="คลิกเพื่อเลือก/ยกเลิก"
-                                >
-                                  {p}
-                                </button>
-                              );
-                            })
-                          )}
+                        <div className="mt-2 grid gap-2">
+                          {safeArr(g.items).map((it, ii) => (
+                            <div key={ii} className="flex gap-2">
+                              <input
+                                value={it}
+                                onChange={(e) =>
+                                  setGroupItem(
+                                    dayIdx,
+                                    sessionIdx,
+                                    gi,
+                                    ii,
+                                    e.target.value
+                                  )
+                                }
+                                className="flex-1 rounded-xl border border-white/10 bg-black/25 px-3 py-2 text-white outline-none"
+                              />
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  removeGroupItem(dayIdx, sessionIdx, gi, ii)
+                                }
+                                className="text-xs text-rose-300"
+                              >
+                                ลบ
+                              </button>
+                            </div>
+                          ))}
                         </div>
 
-                        <div className="mt-2 text-[11px] text-white/45">
-                          เลือกแล้ว:{" "}
-                          {safeArr(s.partners).length
-                            ? safeArr(s.partners).join(", ")
-                            : "-"}
+                        <div className="mt-2 flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => addGroupItem(dayIdx, sessionIdx, gi)}
+                            className="text-xs text-white/70"
+                          >
+                            + Add item
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removeGroup(dayIdx, sessionIdx, gi)}
+                            className="text-xs text-rose-300"
+                          >
+                            Remove group
+                          </button>
                         </div>
                       </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 grid gap-3 md:grid-cols-2">
-                    <div>
-                      <div className="mb-2 text-xs font-extrabold text-white/70">
-                        Topics (บรรทัดละ 1 ข้อ)
-                      </div>
-                      <textarea
-                        rows={6}
-                        value={
-                          Array.isArray(s.topics) ? s.topics.join("\n") : ""
-                        }
-                        onChange={(e) =>
-                          setTopicsFromText(dayIdx, sessionIdx, e.target.value)
-                        }
-                        className="w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white outline-none focus:border-white/25"
-                      />
-                    </div>
-                    <div>
-                      <div className="mb-2 text-xs font-extrabold text-white/70">
-                        Notes (optional)
-                      </div>
-                      <textarea
-                        rows={6}
-                        value={s.notes || ""}
-                        onChange={(e) =>
-                          setSession(dayIdx, sessionIdx, {
-                            notes: e.target.value,
-                          })
-                        }
-                        className="w-full rounded-2xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-white outline-none focus:border-white/25"
-                      />
-                    </div>
+                    ))}
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
+
+            <button
+              type="button"
+              onClick={() => addSession(dayIdx)}
+              className="rounded-xl bg-white/10 px-4 py-2 text-xs font-extrabold text-white"
+            >
+              + Add Session
+            </button>
           </div>
-        ))}
-      </div>
+        </div>
+      ))}
     </div>
   );
 }

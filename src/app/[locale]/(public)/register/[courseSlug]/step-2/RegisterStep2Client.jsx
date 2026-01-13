@@ -5,6 +5,10 @@ import { useRouter } from "next/navigation";
 import StepBar from "@/components/StepBar";
 import { ArrowLeft } from "lucide-react";
 
+export const metadata = {
+  robots: { index: false, follow: false },
+};
+
 function cx(...a) {
   return a.filter(Boolean).join(" ");
 }
@@ -20,16 +24,16 @@ function sourceLabel(locale, channel) {
   const c = String(channel || "").trim();
 
   const mapTH = {
-    bitkub: "Bitkub Academy",
-    "9expert": "9Expert Training",
-    key: "Key Solutions Training",
+    "Bitkub Academy": "Bitkub Academy",
+    "9Expert Training": "9Expert Training",
+    "Key Solutions Training": "Key Solutions Training",
     other: "อื่นๆ (Other)",
   };
 
   const mapEN = {
-    bitkub: "Bitkub Academy",
-    "9expert": "9Expert Training",
-    key: "Key Solutions Training",
+    "Bitkub Academy": "Bitkub Academy",
+    "9Expert Training": "9Expert Training",
+    "Key Solutions Training": "Key Solutions Training",
     other: "Other",
   };
 

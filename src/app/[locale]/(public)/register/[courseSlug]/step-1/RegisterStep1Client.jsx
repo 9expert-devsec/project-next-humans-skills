@@ -6,6 +6,10 @@ import { useRouter } from "next/navigation";
 import StepBar from "@/components/StepBar";
 import { ArrowLeft } from "lucide-react";
 
+export const metadata = {
+  robots: { index: false, follow: false },
+};
+
 function cx(...a) {
   return a.filter(Boolean).join(" ");
 }
@@ -1409,21 +1413,21 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
             >
               <div className="grid gap-3 md:grid-cols-2">
                 <SourceRadio
-                  value="bitkub"
+                  value="Bitkub Academy"
                   selected={form.source_channel}
                   onSelect={setSourceChannel}
                   label="Bitkub Academy"
                   dataField="source_channel"
                 />
                 <SourceRadio
-                  value="9expert"
+                  value="9Expert Training"
                   selected={form.source_channel}
                   onSelect={setSourceChannel}
                   label="9Expert Training"
                   dataField="source_channel"
                 />
                 <SourceRadio
-                  value="key"
+                  value="Key Solutions Training"
                   selected={form.source_channel}
                   onSelect={setSourceChannel}
                   label="Key Solutions Training"

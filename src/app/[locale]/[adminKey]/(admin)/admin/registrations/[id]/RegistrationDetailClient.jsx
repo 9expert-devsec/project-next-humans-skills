@@ -23,9 +23,9 @@ const STATUS_OPTIONS = [
 ];
 
 const SOURCE_LABEL = {
-  bitkub: "Bitkub Academy",
-  "9expert": "9Expert Training",
-  key: "Key Solutions Training",
+  "Bitkub Academy": "Bitkub Academy",
+  "9Expert Training": "9Expert Training",
+  "Key Solutions Training": "Key Solutions Training",
   other: "Other",
 };
 

@@ -69,19 +69,19 @@ const STATUS_OPTIONS_QUICK = [
 
 const SOURCE_OPTIONS = [
   { value: "", label: "ทุกช่องทาง" },
-  { value: "bitkub", label: "Bitkub Academy" },
-  { value: "9expert", label: "9Expert Training" },
-  { value: "key", label: "Key Solutions Training" },
-  { value: "other", label: "Other" },
+  { value: "Bitkub Academy", label: "Bitkub Academy" },
+  { value: "9Expert Training", label: "9Expert Training" },
+  { value: "Key Solutions Training", label: "Key Solutions Training" },
+  { value: "Other", label: "Other" },
 ];
 
 function renderSource(it) {
   const ch = String(it?.source_channel || "").trim();
   const other = String(it?.source_other || "").trim();
   const map = {
-    bitkub: "Bitkub Academy",
-    "9expert": "9Expert Training",
-    key: "Key Solutions Training",
+    "Bitkub Academy": "Bitkub Academy",
+    "9Expert Training": "9Expert Training",
+    "Key Solutions Training": "Key Solutions Training",
     other: "Other",
   };
   if (!ch) return "-";

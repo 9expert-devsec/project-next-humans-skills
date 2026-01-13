@@ -5,6 +5,18 @@ import AdminTopbar from "@/components/admin/AdminTopbar";
 import { MESSAGES } from "@/lib/i18n/messages";
 import { requireAdmin } from "@/lib/adminAuth.server";
 
+export const metadata = {
+  robots: {
+    index: false,
+    follow: false,
+    googleBot: {
+      index: false,
+      follow: false,
+      noimageindex: true,
+    },
+  },
+};
+
 export default async function AdminLayout({ children, params }) {
   const { locale, adminKey } = await params;
 

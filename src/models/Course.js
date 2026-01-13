@@ -3,6 +3,14 @@ import mongoose from "mongoose";
 
 const { Schema } = mongoose;
 
+const TopicGroupSchema = new Schema(
+  {
+    title: { type: String, default: "" },
+    items: [{ type: String }],
+  },
+  { _id: false }
+);
+
 const SessionSchema = new Schema(
   {
     period: {
@@ -12,13 +20,14 @@ const SessionSchema = new Schema(
     },
     title: { type: String, default: "" },
 
-    // ✅ ใหม่: รองรับหลาย partner ต่อ 1 session
-    partners: [{ type: String }], // ["bitkub","9expert","key"]
-
-    // ✅ เก่า: คงไว้เพื่อ backward compat (เผื่อข้อมูลเก่ามีอยู่)
+    partners: [{ type: String }],
     partner: { type: String, default: "" },
 
-    topics: [{ type: String }],
+    topics: [{ type: String }], // legacy
+
+    // ✅ ใหม่: หัวข้อหลัก + หัวข้อย่อย (แนะนำใช้ตัวนี้)
+    topic_groups: { type: [TopicGroupSchema], default: [] },
+
     notes: { type: String, default: "" },
   },
   { _id: false }
@@ -44,7 +53,13 @@ const CourseSchema = new Schema(
 
     level: {
       type: String,
-      enum: ["Executive", "Middle Management", "Workforce", "Citizen Developer", "General"],
+      enum: [
+        "Executive",
+        "Middle Management",
+        "Workforce",
+        "Citizen Developer",
+        "General",
+      ],
       default: "General",
       index: true,
     },

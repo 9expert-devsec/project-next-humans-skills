@@ -3,6 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import StepBar from "@/components/StepBar";
+import { gaEvent } from "@/lib/ga";
+
+export const metadata = {
+  robots: { index: false, follow: false },
+};
 
 function cx(...a) {
   return a.filter(Boolean).join(" ");
@@ -21,16 +26,16 @@ function sourceLabel(locale, channel) {
   const c = String(channel || "").trim();
 
   const mapTH = {
-    bitkub: "Bitkub Academy",
-    "9expert": "9Expert Training",
-    key: "Key Solutions Training",
+    "Bitkub Academy": "Bitkub Academy",
+    "9Expert Training": "9Expert Training",
+    "Key Solutions Training": "Key Solutions Training",
     other: "อื่นๆ (Other)",
   };
 
   const mapEN = {
-    bitkub: "Bitkub Academy",
-    "9expert": "9Expert Training",
-    key: "Key Solutions Training",
+    "Bitkub Academy": "Bitkub Academy",
+    "9Expert Training": "9Expert Training",
+    "Key Solutions Training": "Key Solutions Training",
     other: "Other",
   };
 
@@ -45,7 +50,6 @@ function formatSource(locale, channel, otherText) {
   const t = String(otherText || "").trim();
   return t ? `${base}: ${t}` : base;
 }
-
 
 function Section({ title, subtitle, children }) {
   return (
@@ -189,6 +193,30 @@ export default function RegisterStep3Client({ locale = "th", courseSlug }) {
 
     return () => (alive = false);
   }, [result?.registrationId]);
+
+  useEffect(() => {
+    // ยิงเมื่อมีหลักฐานว่า success จริง (มี refNo หรือ registrationId)
+    const id = String(result?.registrationId || "").trim();
+    const ref = String(result?.refNo || "").trim();
+
+    if (!courseSlug) return;
+    if (!id && !ref) return;
+
+    gaEvent({
+      action: "register_success",
+      category: "registration",
+      label: courseSlug,
+      value: 1,
+    });
+
+    // (optional) ส่งข้อมูลเพิ่มแบบอ่านง่ายใน GA
+    // gaEvent({
+    //   action: "register_success_ref",
+    //   category: "registration",
+    //   label: `${courseSlug}:${ref || id}`,
+    //   value: 1,
+    // });
+  }, [courseSlug, result?.registrationId, result?.refNo]);
 
   // data to display: prefer serverData
   const data = serverData || draft || null;
@@ -380,7 +408,6 @@ export default function RegisterStep3Client({ locale = "th", courseSlug }) {
                   </div>
                 ) : null}
               </div>
-
             </div>
           </Section>
 

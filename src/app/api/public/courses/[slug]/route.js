@@ -14,7 +14,7 @@ function normalizeCourse(c) {
     title_en: c.title_en || "",
     short_description: c.short_description || "",
     cover_image: c.cover_image || "",
-    level: c.level || "general",
+    level: c.level || "General",
     duration_days: c.duration_days || 1,
     status: c.status || "draft",
     isActive: !!c.isActive,

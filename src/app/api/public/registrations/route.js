@@ -49,7 +49,7 @@ function buildCompanyAddressFull(p) {
   return joinParts([base, tail]);
 }
 
-const SOURCE_ALLOWED = new Set(["bitkub", "9expert", "key", "other", ""]);
+const SOURCE_ALLOWED = new Set(["Bitkub Academy", "9Expert Training", "Key Solutions Training", "Other", ""]);
 
 function normalizeSourceChannel(x) {
   const v = clean(x);
@@ -58,12 +58,12 @@ function normalizeSourceChannel(x) {
 
 function sourceLabel(channel, other, locale = "th") {
   const isEN = locale === "en";
-  if (channel === "bitkub") return isEN ? "Bitkub Academy" : "Bitkub Academy";
-  if (channel === "9expert")
+  if (channel === "Bitkub Academy") return isEN ? "Bitkub Academy" : "Bitkub Academy";
+  if (channel === "9Expert Training")
     return isEN ? "9Expert Training" : "9Expert Training";
-  if (channel === "key")
+  if (channel === "Key Solutions Training")
     return isEN ? "Key Solutions Training" : "Key Solutions Training";
-  if (channel === "other") return clean(other) || (isEN ? "Other" : "อื่นๆ");
+  if (channel === "Other") return clean(other) || (isEN ? "Other" : "อื่นๆ");
   return "";
 }
 

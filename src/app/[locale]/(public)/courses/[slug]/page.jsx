@@ -2,7 +2,7 @@
 import Link from "next/link";
 import dbConnect from "@/lib/dbConnect";
 import Course from "@/models/Course";
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from "lucide-react";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,10 +15,20 @@ function Badge({ children }) {
   );
 }
 
+/**
+ * ✅ รองรับทั้ง key แบบใหม่ และชื่อเต็มแบบเก่า (backward compatible)
+ * - ใหม่: bitkub / 9expert / key
+ * - เก่า: "Bitkub Academy" / "9Expert Training" / "Key Solutions Training"
+ */
 const PARTNER_LABEL = {
-  bitkub: "Bitkub",
-  "9expert": "9Expert",
-  key: "Key Solutions",
+  bitkub: "Bitkub Academy",
+  "9expert": "9Expert Training",
+  key: "Key Solutions Training",
+
+  // legacy
+  "Bitkub Academy": "Bitkub Academy",
+  "9Expert Training": "9Expert Training",
+  "Key Solutions Training": "Key Solutions Training",
 };
 
 function Bullet({ items }) {
@@ -36,6 +46,58 @@ function Bullet({ items }) {
   );
 }
 
+function TopicGroups({ groups, legacyTopics }) {
+  const g = Array.isArray(groups) ? groups : [];
+  const legacy = Array.isArray(legacyTopics)
+    ? legacyTopics.filter(Boolean)
+    : [];
+
+  if (g.length) {
+    return (
+      <div className="mt-3 grid gap-3">
+        {g.map((x, i) => (
+          <div
+            key={i}
+            className="rounded-2xl border border-[#0B1C2C]/10 bg-white p-3"
+          >
+            {x.title ? (
+              <div className="text-base font-extrabold text-[#0B1C2C]">
+                {x.title}
+              </div>
+            ) : null}
+
+            {Array.isArray(x.items) && x.items.length ? (
+              <ul className="mt-2 grid gap-1 text-base text-[#0B1C2C]/75">
+                {x.items.map((t, ti) => (
+                  <li key={ti} className="flex gap-2">
+                    <span className="mt-2 h-1.5 w-1.5 rounded-full bg-[#0B1C2C]/65" />
+                    <span>{t}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (legacy.length) {
+    return (
+      <ul className="mt-3 grid gap-1 text-base text-[#0B1C2C]/75">
+        {legacy.map((t, ti) => (
+          <li key={ti} className="flex gap-2">
+            <span className="mt-2 h-1.5 w-1.5 rounded-full bg-[#0B1C2C]/75" />
+            <span>{t}</span>
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
+  return null;
+}
+
 function Section({ title, children }) {
   if (!children) return null;
   return (
@@ -47,17 +109,115 @@ function Section({ title, children }) {
   );
 }
 
+function normalizePartnerKey(x) {
+  const v = String(x || "").trim();
+  return v;
+}
+
+function labelPartner(x) {
+  const k = normalizePartnerKey(x);
+  return PARTNER_LABEL[k] || k;
+}
+
 function getSessionPartnerKeys(s) {
   if (Array.isArray(s?.partners) && s.partners.length) {
-    return s.partners.map((x) => String(x || "").trim()).filter(Boolean);
+    return s.partners.map(normalizePartnerKey).filter(Boolean);
   }
-  const one = String(s?.partner || "").trim();
+  const one = normalizePartnerKey(s?.partner);
   return one ? [one] : [];
 }
 
 function renderPartnersLine(keys) {
   if (!keys.length) return "";
-  return keys.map((k) => PARTNER_LABEL[k] || k).join(" • ");
+  return keys.map(labelPartner).join(" • ");
+}
+
+export async function generateMetadata({ params }) {
+  const p = await params; // ✅ Next 15/16 ต้อง await
+  const locale = p?.locale === "en" ? "en" : "th";
+  const slug = decodeURIComponent(String(p?.slug || "")).trim();
+
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://thenexthumansskills.com";
+
+  if (!slug) {
+    return {
+      title: "Course not found | The Next Humans Skills",
+      robots: { index: false, follow: false },
+    };
+  }
+
+  // ดึง course (ใช้ DB ได้ เพราะ runtime=nodejs)
+  await (await import("@/lib/dbConnect")).default();
+  const Course = (await import("@/models/Course")).default;
+
+  const course = await Course.findOne({
+    slug,
+    isActive: true,
+    status: "published",
+  }).lean();
+
+  if (!course) {
+    return {
+      title: "Course not found | The Next Humans Skills",
+      robots: { index: false, follow: false },
+    };
+  }
+
+  const title =
+    locale === "en"
+      ? course.title_en || course.title_th
+      : course.title_th || course.title_en;
+
+  const description =
+    course.short_description ||
+    course.content?.rationale?.slice(0, 160) ||
+    "หลักสูตรอบรมเพื่อพัฒนาทักษะบุคลากรยุคใหม่";
+
+  const url = `${baseUrl}/${locale}/courses/${slug}`;
+  const image = course.cover_image || `${baseUrl}/og/course-default.png`;
+
+  return {
+    title: `${title} | The Next Humans Skills`,
+    description,
+
+    robots: {
+      index: true,
+      follow: true,
+    },
+
+    alternates: {
+      canonical: url,
+      languages: {
+        th: `${baseUrl}/th/courses/${slug}`,
+        en: `${baseUrl}/en/courses/${slug}`,
+      },
+    },
+
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: "The Next Humans Skills",
+      locale: locale === "en" ? "en_US" : "th_TH",
+      type: "article",
+      images: [
+        {
+          url: image,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
+    },
+
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [image],
+    },
+  };
 }
 
 export default async function Page({ params }) {
@@ -81,7 +241,6 @@ export default async function Page({ params }) {
 
   await dbConnect();
 
-  // ✅ ดึงจาก DB ตรง (เทียบกับ API public)
   const course = await Course.findOne({
     slug: safeSlug,
     isActive: true,
@@ -111,57 +270,68 @@ export default async function Page({ params }) {
 
   return (
     <div className="mx-auto max-w-7xl ">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Course",
+            name: titleTH,
+            description:
+              course.short_description || course.content?.rationale || "",
+            provider: {
+              "@type": "Organization",
+              name: "The Next Humans Skills",
+              url:
+                process.env.NEXT_PUBLIC_SITE_URL ||
+                "https://thenexthumansskills.com",
+            },
+            hasCourseInstance: {
+              "@type": "CourseInstance",
+              courseMode: "Onsite",
+              instructor: (course.partners || []).map((p) => ({
+                "@type": "Organization",
+                name: labelPartner(p),
+              })),
+            },
+          }),
+        }}
+      />
       {/* HERO / COVER */}
       <div className="mt-24 overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur flex flex-col lg:flex-row-reverse">
         <div className="relative w-full lg:w-[60%]">
           {cover ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={cover}
-              alt={titleTH}
-              className=" w-full object-cover "
-            />
+            <img src={cover} alt={titleTH} className=" w-full object-cover " />
           ) : (
             <div className=" w-full bg-black/20" />
           )}
 
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/0" />
-
-          {/* <div className="absolute inset-x-0 bottom-0 p-6 md:p-8">
-            <h1 className="text-2xl font-extrabold text-white md:text-3xl lg:text-4xl">
-              {titleTH}
-            </h1>
-            {titleEN ? (
-              <div className="mt-1 text-white/70">{titleEN}</div>
-            ) : null}
-          </div> */}
         </div>
 
         <div className="flex flex-col gap-6 p-6 w-full lg:w-[40%] md:items-start md:justify-between">
           <div className="flex flex-col gap-5">
-            <Link
-              href={`/${safeLocale}`}
-              // className="rounded-xl bg-white/10 px-2 py-2 text-sm w-fit text-white ring-1 ring-white/10 hover:bg-white/15"
-            >
+            <Link href={`/${safeLocale}`}>
               <ArrowLeft />
-              {/* Back */}
             </Link>
+
             <div>
-              
               <h1 className="text-xl font-extrabold text-white md:text-2xl lg:text-3xl">
                 {titleTH}
               </h1>
-              {/* {titleEN ? (
-                <div className="mt-1 text-white/70">{titleEN}</div>
-              ) : null} */}
             </div>
 
             <div className="flex flex-wrap gap-2">
-              <Badge>{course.level || "general"}</Badge>
+              <Badge>{course.level || "General"}</Badge>
               <Badge>{course.duration_days || 1} วัน</Badge>
-              {/* {(course.partners || []).map((p) => (
-                <Badge key={p}>{PARTNER_LABEL[p] || p}</Badge>
-              ))} */}
+
+              {/* ✅ โชว์ partner badge เป็น “ชื่อเต็ม” */}
+              {(Array.isArray(course.partners) ? course.partners : []).map(
+                (p) => (
+                  <Badge key={p}>{labelPartner(p)}</Badge>
+                )
+              )}
             </div>
 
             {course.short_description ? (
@@ -178,12 +348,6 @@ export default async function Page({ params }) {
             >
               ลงทะเบียน
             </Link>
-            {/* <Link
-              href={`/${safeLocale}`}
-              className="rounded-xl bg-white/10 px-5 py-3 text-sm font-extrabold text-white ring-1 ring-white/10 hover:bg-white/15"
-            >
-              Back
-            </Link> */}
           </div>
         </div>
       </div>
@@ -222,7 +386,10 @@ export default async function Page({ params }) {
                     className="rounded-2xl border-2 border-white/50 bg-black/20 p-4"
                   >
                     <div className="text-lg font-extrabold text-white">
-                      <span className="mr-1 px-2 py-1 bg-white text-[#0B1C2C] rounded-full">วันที่ {d.day}</span> : {d.title}
+                      <span className="mr-1 px-2 py-1 bg-white text-[#0B1C2C] rounded-full">
+                        วันที่ {d.day}
+                      </span>{" "}
+                      : {d.title}
                     </div>
 
                     <div className="mt-3 grid gap-3">
@@ -244,16 +411,11 @@ export default async function Page({ params }) {
                               {s.title}
                             </div>
 
-                            {Array.isArray(s.topics) && s.topics.length ? (
-                              <ul className="mt-3 grid gap-1 text-base text-[#0B1C2C]/75">
-                                {s.topics.map((t, ti) => (
-                                  <li key={ti} className="flex gap-2">
-                                    <span className="mt-2 h-1.5 w-1.5 rounded-full bg-[#0B1C2C]/75" />
-                                    <span>{t}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            ) : null}
+                            {/* ✅ ใหม่: ถ้ามี topic_groups ให้ใช้ component นี้ (fallback ไป topics เดิม) */}
+                            <TopicGroups
+                              groups={s.topic_groups}
+                              legacyTopics={s.topics}
+                            />
 
                             {s.notes ? (
                               <div className="mt-3 whitespace-pre-wrap text-xs text-white/55">

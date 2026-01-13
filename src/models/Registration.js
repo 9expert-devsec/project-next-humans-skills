@@ -36,7 +36,7 @@ const RegistrationSchema = new mongoose.Schema(
     // ✅ marketing/source
     source_channel: {
       type: String,
-      enum: ["bitkub", "9expert", "key", "other", ""],
+      enum: ["Bitkub Academy", "9Expert Training", "Key Solutions Training", "Other", ""],
       default: "",
       index: true,
     },

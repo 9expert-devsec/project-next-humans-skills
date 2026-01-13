@@ -39,7 +39,7 @@ export default function AdminLoginClient({ locale = "th", adminKey = "" }) {
         method: "POST",
         headers: { "content-type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, adminKey }),
       });
 
       const data = await res.json().catch(() => ({}));
