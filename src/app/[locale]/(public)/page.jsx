@@ -278,7 +278,7 @@ export default async function Page({ params }) {
       </section>
 
       {/* ✅ News / Media */}
-      <section id="news" className="mx-auto w-full max-w-7xl px-6 pb-20">
+      <section id="news" className="mx-auto w-full max-w-7xl px-4 pb-20">
         <div className="text-white text-4xl font-bold">{t.newsTitle}</div>
         <div className="mt-2 text-white/70 text-lg">{t.newsDesc}</div>
 
