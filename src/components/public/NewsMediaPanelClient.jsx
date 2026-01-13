@@ -48,7 +48,7 @@ function fmtDate(d, locale) {
 export default function NewsMediaPanelClient({
   locale = "th",
   limit = 20,
-  sideCount = 4,
+  sideCount = 3,
   autoMs = 5000,
 }) {
   const isEN = locale === "en";
@@ -142,11 +142,12 @@ export default function NewsMediaPanelClient({
 
   return (
     <>
-      <div className="grid gap-6 lg:grid-cols-[1.65fr_.85fr]">
+      {/* <div className="grid gap-6 lg:grid-cols-[1.65fr_.85fr]"> */}
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-stretch">
         {/* Featured */}
-        <div className="rounded-3xl border border-white/10 bg-white/5 overflow-hidden">
+        <div className="rounded-3xl border border-white/10 bg-white/5 overflow-hidden w-full lg:w-3/5 lg:flex lg:flex-col ">
           <div
-            className="relative aspect-[16/9] bg-black/30"
+            className="relative aspect-[16/9] lg:aspect-auto lg:flex-1 bg-black/30"
             onMouseEnter={() => setAutoPlay(false)}
             onMouseLeave={() => setAutoPlay(true)}
           >
@@ -160,11 +161,11 @@ export default function NewsMediaPanelClient({
 
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
 
-            <div className="absolute left-4 top-4">
+            {/* <div className="absolute left-4 top-4">
               <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white">
                 {isEN ? "Featured Post" : "ข่าวเด่น"}
               </span>
-            </div>
+            </div> */}
 
             <div className="absolute right-4 top-4 flex items-center gap-2">
               <button
@@ -195,51 +196,58 @@ export default function NewsMediaPanelClient({
 
             <div className="absolute inset-x-0 bottom-0 p-5 sm:p-7">
               {/* ✅ date + read mins */}
-              <div className="text-white/70 text-xs sm:text-sm flex items-center gap-2">
-                <span>{featuredDate}</span>
-                <span className="opacity-60">•</span>
-                <span>
-                  {featuredRead} {isEN ? "min read" : "นาทีอ่าน"}
-                </span>
-              </div>
 
-              <div className="mt-2 text-white text-xl sm:text-2xl font-extrabold leading-snug">
-                {featured?.title || (isEN ? "Untitled" : "ไม่มีชื่อ")}
-              </div>
+              <div className="flex justify-between flex-row lg:flex-col">
+                <div className="flex flex-col w-3/5 md:w-4/5 lg:w-full gap-1">
+                  <div className="text-white/70 text-xs sm:text-sm flex items-center gap-2">
+                    <span>{featuredDate}</span>
+                    <span className="opacity-60">•</span>
+                    <span>
+                      {featuredRead} {isEN ? "min read" : "นาทีอ่าน"}
+                    </span>
+                  </div>
 
-              {featured?.caption ? (
-                <div className="mt-2 text-white/80 text-sm sm:text-base max-w-3xl">
-                  {clampText(featured.caption, 220)}
+                  <div className=" text-white text-lg lg:text-2xl font-extrabold leading-snug line-clamp-1 sm:line-clamp-2">
+                    {featured?.title || (isEN ? "Untitled" : "ไม่มีชื่อ")}
+                  </div>
+
+                  {featured?.caption ? (
+                    <div className=" text-white/80 text-sm lg:text-base  line-clamp-1 lg:line-clamp-3">
+                      {clampText(featured.caption, 220)}
+                    </div>
+                  ) : null}
                 </div>
-              ) : null}
 
-              <div className="mt-4 flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => setOpen(true)}
-                  className="rounded-xl bg-white/15 hover:bg-white/20 text-white px-4 py-2 text-sm font-semibold"
-                >
-                  {isEN ? "View" : "ดูภาพใหญ่"}
-                </button>
+                <div className="flex items-end">
+                  <div className="mt-4 flex items-center gap-3 flex-col lg:flex-row">
+                    <button
+                      type="button"
+                      onClick={() => setOpen(true)}
+                      className="rounded-xl bg-white/15 hover:bg-white/20 text-white px-4 py-2 text-sm font-semibold"
+                    >
+                      {isEN ? "View" : "ดูภาพใหญ่"}
+                    </button>
 
-                {featured?.linkUrl ? (
-                  <a
-                    href={featured.linkUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-black/25 hover:bg-black/35 text-white px-4 py-2 text-sm font-semibold"
-                  >
-                    {isEN ? "Read more" : "อ่านต่อ"}
-                    <ExternalLink size={16} />
-                  </a>
-                ) : null}
+                    {featured?.linkUrl ? (
+                      <a
+                        href={featured.linkUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-black/25 hover:bg-black/35 text-white px-4 py-2 text-sm font-semibold"
+                      >
+                        {isEN ? "Read more" : "อ่านต่อ"}
+                        <ExternalLink size={16} />
+                      </a>
+                    ) : null}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
         {/* Side list */}
-        <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+        <div className="rounded-3xl border border-white/10 bg-white/5 p-4  w-full lg:w-2/5  ">
           <div className="text-white font-bold text-lg">
             {isEN ? "Latest" : "รายการข่าว"}
           </div>
@@ -284,12 +292,12 @@ export default function NewsMediaPanelClient({
                       </span>
                     </div>
 
-                    <div className="mt-1 text-white font-semibold leading-snug line-clamp-2">
+                    <div className="mt-1 text-white font-semibold leading-snug text-sm line-clamp-2 min-h-[2.75em]">
                       {it.title || (isEN ? "Untitled" : "ไม่มีชื่อ")}
                     </div>
 
                     {it.caption ? (
-                      <div className="mt-1 text-white/60 text-xs line-clamp-2">
+                      <div className="mt-1 text-white/60 text-xs line-clamp-2 min-h-[2.67em]">
                         {it.caption}
                       </div>
                     ) : null}
@@ -304,23 +312,24 @@ export default function NewsMediaPanelClient({
       {/* Modal */}
       {open ? (
         <div
-          className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm"
+          className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6"
           onMouseDown={() => setOpen(false)}
         >
           <div
-            className="mx-auto mt-10 w-[min(980px,92vw)] rounded-3xl border border-white/10 bg-[#0B1C2C] overflow-hidden"
+            className="w-full sm:w-3/5 max-w-3xl max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-3rem)] overflow-y-auto
+             rounded-3xl border border-white/10 bg-[#0B1C2C] "
             onMouseDown={(e) => e.stopPropagation()}
           >
-            <div className="relative aspect-[16/9] bg-black/30">
+            <div className="relative aspect-[16/9] bg-black/30 w-full ">
               <Image
                 src={featured?.imageUrl}
                 alt={featured?.title || "image"}
                 fill
-                className="object-contain"
+                className="object-cover"
               />
             </div>
 
-            <div className="p-5 sm:p-6">
+            <div className="p-5 sm:p-6 ">
               <div className="text-white/70 text-xs sm:text-sm flex items-center gap-2">
                 <span>{featuredDate}</span>
                 <span className="opacity-60">•</span>
