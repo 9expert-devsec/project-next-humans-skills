@@ -96,6 +96,7 @@ function ClickableCard({ icon, title, subtitle, href, newTab = false }) {
   );
 }
 
+
 export default function Footer() {
   const year = new Date().getFullYear();
 
