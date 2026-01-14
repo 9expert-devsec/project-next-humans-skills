@@ -297,7 +297,7 @@ export default function RegistrationsClient({ locale = "th" }) {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8">
+    <div className="mx-auto max-w-7xl p-4">
       <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
