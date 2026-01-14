@@ -53,13 +53,13 @@ export default function CourseEditClient({
 
   return (
     <div>
-      <AdminTopbar
+      {/* <AdminTopbar
         title="Edit Course"
         subtitle={item?.title_th ? item.title_th : `#${id}`}
         locale={locale}
-      />
+      /> */}
 
-      <div className="mx-auto max-w-5xl px-4 py-8">
+      <div className=" p-4 ">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-extrabold text-white">แก้ไขคอร์ส</h1>
