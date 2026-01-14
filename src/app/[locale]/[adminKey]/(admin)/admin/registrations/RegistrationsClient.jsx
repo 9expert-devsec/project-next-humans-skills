@@ -310,7 +310,6 @@ export default function RegistrationsClient({ locale = "th" }) {
             </div>
           </div>
 
-
           <div className="text-sm text-white/60">
             {loading ? "Loading..." : ""}
           </div>
