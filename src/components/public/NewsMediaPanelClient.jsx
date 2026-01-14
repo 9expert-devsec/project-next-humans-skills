@@ -61,6 +61,24 @@ export default function NewsMediaPanelClient({
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  useEffect(() => {
     let alive = true;
 
     (async () => {
@@ -101,13 +119,14 @@ export default function NewsMediaPanelClient({
   useEffect(() => {
     if (!autoPlay) return;
     if (!items.length) return;
+    if (open) return;
 
     const t = setInterval(() => {
       setActive((i) => (i + 1) % items.length);
     }, autoMs);
 
     return () => clearInterval(t);
-  }, [autoPlay, items.length, autoMs]);
+  }, [autoPlay, items.length, autoMs, open]);
 
   function prev() {
     if (!items.length) return;
@@ -222,7 +241,10 @@ export default function NewsMediaPanelClient({
                   <div className="mt-4 flex items-center gap-3 flex-col lg:flex-row">
                     <button
                       type="button"
-                      onClick={() => setOpen(true)}
+                      onClick={() => {
+                        setAutoPlay(false);
+                        setOpen(true);
+                      }}
                       className="rounded-xl bg-white/15 hover:bg-white/20 text-white px-4 py-2 text-sm font-semibold"
                     >
                       {isEN ? "View" : "ดูภาพใหญ่"}
@@ -247,16 +269,16 @@ export default function NewsMediaPanelClient({
         </div>
 
         {/* Side list */}
-        <div className="rounded-3xl border border-white/10 bg-white/5 p-4  w-full lg:w-2/5  ">
+        <div className="rounded-3xl border border-white/10 bg-white/5 p-4  w-full lg:w-2/5  lg:flex lg:flex-col lg:h-full min-h-0">
           <div className="text-white font-bold text-lg">
             {isEN ? "Latest" : "รายการข่าว"}
           </div>
-          <div className="mt-1 text-white/60 text-sm">
+          {/* <div className="mt-1 text-white/60 text-sm">
             {isEN ? "Click to switch featured." : "คลิกเพื่อเปลี่ยนข่าวเด่น"}
-          </div>
+          </div> */}
 
-          <div className="mt-4 space-y-3">
-            {sideItems.map((it, idx) => {
+          <div className="mt-4 space-y-3 overflow-y-auto pr-1 custom-scroll max-h-[calc(3*130px+2*0.75rem)]">
+            {items.map((it, idx) => {
               const isActive = idx === active;
               const d = fmtDate(it.publishedAt || it.createdAt, locale);
               const rm = Math.max(1, Number(it.readMins || 3));
@@ -267,7 +289,7 @@ export default function NewsMediaPanelClient({
                   type="button"
                   onClick={() => setActive(idx)}
                   className={cx(
-                    "w-full text-left rounded-2xl border p-3 flex gap-3 items-center transition",
+                    "w-full h-[130px] text-left rounded-2xl border p-3 flex gap-3 items-center transition",
                     isActive
                       ? "border-white/25 bg-white/10"
                       : "border-white/10 bg-black/15 hover:bg-black/25"
@@ -313,7 +335,10 @@ export default function NewsMediaPanelClient({
       {open ? (
         <div
           className="fixed inset-0 z-[80] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6"
-          onMouseDown={() => setOpen(false)}
+          onMouseDown={() => {
+            setOpen(false);
+            setAutoPlay(true);
+          }}
         >
           <div
             className="w-full sm:w-3/5 max-w-3xl max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-3rem)] overflow-y-auto
@@ -338,12 +363,14 @@ export default function NewsMediaPanelClient({
                 </span>
               </div>
 
-              <div className="mt-2 text-white text-xl font-extrabold">
+              <div className="mt-2 text-white text-lg sm:text-xl font-extrabold">
                 {featured?.title || (isEN ? "Untitled" : "ไม่มีชื่อ")}
               </div>
 
               {featured?.caption ? (
-                <div className="mt-2 text-white/80">{featured.caption}</div>
+                <div className="mt-2 text-sm sm:text-base text-white/80">
+                  {featured.caption}
+                </div>
               ) : null}
 
               <div className="mt-4 flex items-center justify-between gap-3">
@@ -363,7 +390,10 @@ export default function NewsMediaPanelClient({
 
                 <button
                   type="button"
-                  onClick={() => setOpen(false)}
+                  onClick={() => {
+                    setOpen(false);
+                    setAutoPlay(true);
+                  }}
                   className="rounded-xl border border-white/15 bg-black/25 hover:bg-black/35 text-white px-4 py-2 text-sm font-semibold"
                 >
                   {isEN ? "Close" : "ปิด"}
