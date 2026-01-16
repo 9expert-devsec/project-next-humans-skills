@@ -132,7 +132,8 @@ export default function Footer() {
             </div>
 
             <p className="mt-3 max-w-xl text-sm leading-relaxed text-white/65">
-              ศูนย์กลางการเรียนรู้ &amp; ระบบลงทะเบียนอบรม
+              {/* ศูนย์กลางการเรียนรู้ &amp; ระบบลงทะเบียนอบรม */}
+              สร้างทักษะให้เป็นบุคลากรในโลกยุคใหม่
             </p>
 
             {/* เผื่ออยากเปิด LINE ไว้ */}

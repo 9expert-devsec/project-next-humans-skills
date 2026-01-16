@@ -83,7 +83,7 @@ export default async function Page({ params }) {
       : "ระบบลงทะเบียนอบรม + หลังบ้านจัดการ (โทนทันสมัย)",
     cta1: isEN ? "Browse Courses" : "ดูคอร์สแนะนำ",
     cta2: isEN ? "Go to Admin" : "ไปหน้าแอดมิน",
-    newsTitle: isEN ? "News / Media" : "ข่าวสาร / สื่อ",
+    newsTitle: isEN ? "News" : "ข่าวประชาสัมพันธ์",
     newsDesc: isEN
       ? "Updates, events, and highlights from our partners"
       : "อัปเดตกิจกรรม ข่าวสาร และไฮไลต์จากพาร์ทเนอร์",
@@ -280,7 +280,7 @@ export default async function Page({ params }) {
       {/* ✅ News / Media */}
       <section id="news" className="mx-auto w-full max-w-7xl px-4 pb-20">
         <div className="text-white text-4xl font-bold">{t.newsTitle}</div>
-        <div className="mt-2 text-white/70 text-lg">{t.newsDesc}</div>
+        {/* <div className="mt-2 text-white/70 text-lg">{t.newsDesc}</div> */}
 
         <div className="mt-10">
           <NewsMediaPanelClient locale={locale} />
