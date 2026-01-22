@@ -105,8 +105,8 @@ export default function Footer() {
   const EMAIL = "sirinthra.n@9expert.co.th";
   const LINE_URL = "https://line.me/R/ti/p/%409expert";
 
-  const PHONE_TEXT2 = "094-992-9216";
-  const PHONE_TEL2 = "0949929216";
+  const PHONE_TEXT2 = "082-925-4599";
+  const PHONE_TEL2 = "0829254599";
   const EMAIL2 = "bovy.chayanee@bitkub.com";
 
   const PHONE_TEXT3 = "082-481-2442";
