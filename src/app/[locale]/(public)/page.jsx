@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 
 /* ---------------- SEO: Home Metadata ---------------- */
 export async function generateMetadata({ params }) {
-  const p = await params;
+  const p = params;
   const locale = p?.locale === "en" ? "en" : "th";
   const isEN = locale === "en";
 
@@ -26,16 +26,16 @@ export async function generateMetadata({ params }) {
     : "แพลตฟอร์มลงทะเบียนอบรมยุคใหม่ โดย 9Expert Training, Key Solutions Training และ Bitkub Academy รวมหลักสูตรผู้นำ AI Data และทักษะดิจิทัล";
 
   const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL || "https://thenexthumansskills.com";
+    process.env.NEXT_PUBLIC_SITE_URL || "https://www.thenexthumansskills.com";
   const url = `${baseUrl}/${locale}`;
 
   // แนะนำทำไฟล์ OG แยก 1200x630 ที่ public/og/home-og.png
   // ถ้ายังไม่มี ใช้ banner ที่มีอยู่ก็ได้
-  const ogImage =
-    (process.env.NEXT_PUBLIC_SITE_URL || "https://thenexthumansskills.com") +
-    "/og/home-og.png";
+  const ogImage = `${baseUrl}/og/home-og.png`;
 
   return {
+    metadataBase: new URL(baseUrl),
+
     title,
     description,
 
@@ -122,8 +122,8 @@ export default async function Page({ params }) {
       {/* ✅ H1 สำหรับ SEO (ไม่กระทบ UI) */}
       <h1 className="sr-only">
         {isEN
-          ? "The Next Humans Skills — Modern training registration platform"
-          : "The Next Humans Skills — แพลตฟอร์มลงทะเบียนอบรมและพัฒนาทักษะยุคใหม่"}
+          ? "The Next Humans Skills — Developing digital-era workforce skills to prepare for the future"
+          : "The Next Humans Skills - พัฒนาทักษะบุคลากรยุคดิจิทัลพร้อมรับอนาคต"}
       </h1>
 
       {/* ✅ JSON-LD */}
@@ -154,6 +154,15 @@ export default async function Page({ params }) {
 
           <div className="mt-12 grid gap-8 sm:grid-cols-1 lg:grid-cols-3 justify-items-center">
             <ProfileFlipCard
+              logoSrc="/logo/bitkub-black.png"
+              logoB="/logo/bitkub-white.png"
+              personSrc="/people/k-stamp.png"
+              name="คุณกันตณัฐ วุฒิธร"
+              title="ผู้ช่วยผู้จัดการฝ่ายวิเคราะห์สินทรัพย์ดิจิทัล"
+              company="บริษัท บิทคับ แล็บส์ จำกัด"
+              intro="ผู้เชี่ยวชาญด้านสินทรัพย์ดิจิทัล เทคโนโลยีบล็อกเชน และ Web3 ที่มุ่งสร้างความเข้าใจเชิงลึกเกี่ยวกับ Digital Assets และโครงสร้างเศรษฐกิจดิจิทัลยุคใหม่"
+            />
+            <ProfileFlipCard
               logoSrc="/logo/9Expert.svg"
               logoB="/logo/9Expert.svg"
               personSrc="/people/k-chalaivate.png"
@@ -171,15 +180,7 @@ export default async function Page({ params }) {
               company="บริษัท คีย์โซลูชั่นเทรนนิ่ง จำกัด"
               intro="ผู้เชี่ยวชาญด้านการพัฒนาซอฟต์สกิล การพัฒนาศักยภาพบุคลากร และการยกระดับองค์กร เพื่อเสริมสร้างทักษะด้านความคิด การสื่อสารและภาวะผู้นำ"
             />
-            <ProfileFlipCard
-              logoSrc="/logo/bitkub-black.png"
-              logoB="/logo/bitkub-white.png"
-              personSrc="/people/k-stamp.png"
-              name="คุณกันตณัฐ วุฒิธร"
-              title="ผู้ช่วยผู้จัดการฝ่ายวิเคราะห์สินทรัพย์ดิจิทัล"
-              company="บริษัท บิทคับ แล็บส์ จำกัด"
-              intro="ผู้เชี่ยวชาญด้านสินทรัพย์ดิจิทัล เทคโนโลยีบล็อกเชน และ Web3 ที่มุ่งสร้างความเข้าใจเชิงลึกเกี่ยวกับ Digital Assets และโครงสร้างเศรษฐกิจดิจิทัลยุคใหม่"
-            />
+            
           </div>
         </div>
       </section>

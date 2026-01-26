@@ -268,6 +268,11 @@ export default async function Page({ params }) {
   const titleEN = course.title_en || "";
   const cover = course.cover_image || "";
 
+  const isEN = safeLocale === "en";
+  const registerHref = `/${safeLocale}/register/${encodeURIComponent(
+    course.slug || safeSlug,
+  )}/step-1`;
+
   return (
     <div className="mx-auto max-w-7xl ">
       <script
@@ -431,6 +436,15 @@ export default async function Page({ params }) {
             </div>
           </Section>
         ) : null}
+
+        <section className="mt-5 flex justify-center">
+          <Link
+            href={registerHref}
+            className="inline-flex items-center justify-center rounded-xl bg-white px-14 py-5 text-xl font-extrabold text-slate-900 hover:bg-white/90"
+          >
+            {isEN ? "Register" : "ลงทะเบียน"}
+          </Link>
+        </section>
       </div>
     </div>
   );
