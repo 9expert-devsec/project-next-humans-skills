@@ -100,8 +100,8 @@ function ClickableCard({ icon, title, subtitle, href, newTab = false }) {
 export default function Footer() {
   const year = new Date().getFullYear();
 
-  const PHONE_TEXT = "02-219-4304 ต่อ 204";
-  const PHONE_TEL = "022194304";
+  const PHONE_TEXT = "081-908-6099";
+  const PHONE_TEL = "0819086099";
   const EMAIL = "sirinthra.n@9expert.co.th";
   const LINE_URL = "https://line.me/R/ti/p/%409expert";
 
@@ -147,6 +147,29 @@ export default function Footer() {
             </div> */}
           </div>
 
+          {/* Bitkub */}
+          <div className="p-4 border-2 rounded-lg border-[#00B358]/40">
+            <div className="mb-3 text-sm font-semibold text-white/90">
+              ติดต่อ Bitkub Academy
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <ClickableCard
+                icon={<IconPhone />}
+                title={PHONE_TEXT2}
+                subtitle="คุณโบวี่"
+                href={`tel:${PHONE_TEL2}`}
+              />
+
+              <ClickableCard
+                icon={<IconMail />}
+                title={EMAIL2}
+                subtitle="อีเมลติดต่อ"
+                href={`mailto:${EMAIL2}`}
+              />
+            </div>
+          </div>
+
           {/* 9Expert */}
           <div className="p-4 border-2 rounded-lg border-[#66ccff]/40">
             <div className="mb-3 text-sm font-semibold text-white/90">
@@ -171,28 +194,7 @@ export default function Footer() {
 
           </div>
 
-          {/* Bitkub */}
-          <div className="p-4 border-2 rounded-lg border-[#00B358]/40">
-            <div className="mb-3 text-sm font-semibold text-white/90">
-              ติดต่อ Bitkub Academy
-            </div>
-
-            <div className="flex flex-col gap-3">
-              <ClickableCard
-                icon={<IconPhone />}
-                title={PHONE_TEXT2}
-                subtitle="คุณโบวี่"
-                href={`tel:${PHONE_TEL2}`}
-              />
-
-              <ClickableCard
-                icon={<IconMail />}
-                title={EMAIL2}
-                subtitle="อีเมลติดต่อ"
-                href={`mailto:${EMAIL2}`}
-              />
-            </div>
-          </div>
+          
 
           {/* Key Solutions */}
           <div className="p-4 border-2 rounded-lg border-[#F6D62D]/40">
