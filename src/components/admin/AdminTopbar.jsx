@@ -62,6 +62,13 @@ export default function AdminTopbar({
             Media
           </Link>
 
+          <Link
+            href={`${base}/articles`}
+            className="rounded-lg px-3 py-2 text-xs font-extrabold text-white/80 hover:bg-white/10"
+          >
+            Articles
+          </Link>
+
           <button
             onClick={logout}
             className="rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-xs font-extrabold text-white hover:bg-white/10"
