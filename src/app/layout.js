@@ -3,6 +3,7 @@ import "./globals.css";
 import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import AnalyticsProvider from "@/components/AnalyticsProvider";
+import VercelSpeedInsightsClient from "@/components/VercelSpeedInsightsClient";
 
 const geistSans = Geist({
   subsets: ["latin"],
@@ -18,7 +19,7 @@ const geistMono = Geist_Mono({
 export const metadata = {
   // ✅ ช่วยให้ OG/Twitter URL แบบ relative กลายเป็น absolute ได้ถูกต้อง
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL || "https://www.thenexthumansskills.com"
+    process.env.NEXT_PUBLIC_SITE_URL || "https://www.thenexthumansskills.com",
   ),
 
   // ✅ ค่ากลางทั้งเว็บ (หน้าอื่นสามารถ override ได้ด้วย generateMetadata)
@@ -181,7 +182,9 @@ export default function RootLayout({ children }) {
           id="jsonld-educational-org"
           type="application/ld+json"
           strategy="beforeInteractive"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdEducationalOrg) }}
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(jsonLdEducationalOrg),
+          }}
         />
         <Script
           id="jsonld-website"
@@ -193,13 +196,18 @@ export default function RootLayout({ children }) {
           id="jsonld-organization"
           type="application/ld+json"
           strategy="beforeInteractive"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdOrganization) }}
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(jsonLdOrganization),
+          }}
         />
       </head>
 
       <body suppressHydrationWarning>
         {GA_ID && <AnalyticsProvider />}
         {children}
+
+        <VercelSpeedInsightsClient />
+        
       </body>
     </html>
   );

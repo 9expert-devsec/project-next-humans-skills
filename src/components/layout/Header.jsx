@@ -125,14 +125,14 @@ export default function Header({ locale = "th" }) {
               {t.course}
             </button>
           )}
-          {isHome && (
+          {/* {isHome && (
             <Link
               href={`/${locale}/blog`}
               className="px-2 py-1 text-lg hover:opacity-80"
             >
               บล็อก
             </Link>
-          )}
+          )} */}
 
           {/* เปิดใช้ทีหลังได้ */}
           {/*
