@@ -13,6 +13,7 @@ export default function Header({ locale = "th" }) {
     home: isEN ? "Home" : "หน้าแรก",
     admin: isEN ? "Admin" : "แอดมิน",
     course: isEN ? "Course" : "หลักสูตร",
+    blog: isEN ? "Blog" : "บล็อก",
   };
 
   // ✅ show menu "หลักสูตร" เฉพาะหน้า home ของ locale นั้น ๆ
@@ -57,7 +58,7 @@ export default function Header({ locale = "th" }) {
       {
         threshold: 0,
         rootMargin: "-72px 0px 0px 0px",
-      }
+      },
     );
 
     io.observe(bannerEl);
@@ -81,6 +82,7 @@ export default function Header({ locale = "th" }) {
       } catch {}
     }
   }
+
 
   return (
     <header
@@ -123,6 +125,14 @@ export default function Header({ locale = "th" }) {
               {t.course}
             </button>
           )}
+          {/* {isHome && (
+            <Link
+              href={`/${locale}/blog`}
+              className="px-2 py-1 text-lg hover:opacity-80"
+            >
+              บล็อก
+            </Link>
+          )} */}
 
           {/* เปิดใช้ทีหลังได้ */}
           {/*

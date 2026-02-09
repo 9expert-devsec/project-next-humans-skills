@@ -52,4 +52,4 @@ export default async function PublicLayout({ children, params }) {
       </footer>
     </>
   );
-}
+} 

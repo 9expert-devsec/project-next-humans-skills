@@ -1,0 +1,38 @@
+.root table {
+  width: 100%;
+  margin: 14px 0;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.root th,
+.root td {
+  padding: 10px 12px;
+  min-width: 120px;
+  vertical-align: top;
+
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.root th {
+  background: rgba(255, 255, 255, 0.06);
+  font-weight: 700;
+}
+
+.root tr:last-child td,
+.root tr:last-child th {
+  border-bottom: 0;
+}
+
+.root td:last-child,
+.root th:last-child {
+  border-right: 0;
+}
