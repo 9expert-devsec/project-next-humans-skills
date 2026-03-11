@@ -203,7 +203,7 @@ export default function UpcomingClassesClient({ locale = "th", limit = 4 }) {
                     No cover
                   </div>
                 )}
- 
+
                 {/* overlays */}
                 {/* <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_120%_at_50%_30%,rgba(0,0,0,0)_35%,rgba(0,0,0,0.65)_100%)]" />
                 <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_60%_at_85%_10%,rgba(56,189,248,0.35)_0%,rgba(56,189,248,0)_60%)]" />
