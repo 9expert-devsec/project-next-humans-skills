@@ -15,17 +15,10 @@ function Badge({ children }) {
   );
 }
 
-/**
- * ✅ รองรับทั้ง key แบบใหม่ และชื่อเต็มแบบเก่า (backward compatible)
- * - ใหม่: bitkub / 9expert / key
- * - เก่า: "Bitkub Academy" / "9Expert Training" / "Key Solutions Training"
- */
 const PARTNER_LABEL = {
   bitkub: "Bitkub Academy",
   "9expert": "9Expert Training",
   key: "Key Solutions Training",
-
-  // legacy
   "Bitkub Academy": "Bitkub Academy",
   "9Expert Training": "9Expert Training",
   "Key Solutions Training": "Key Solutions Training",
@@ -110,8 +103,7 @@ function Section({ title, children }) {
 }
 
 function normalizePartnerKey(x) {
-  const v = String(x || "").trim();
-  return v;
+  return String(x || "").trim();
 }
 
 function labelPartner(x) {
@@ -133,7 +125,7 @@ function renderPartnersLine(keys) {
 }
 
 export async function generateMetadata({ params }) {
-  const p = await params; // ✅ Next 15/16 ต้อง await
+  const p = await params;
   const locale = p?.locale === "en" ? "en" : "th";
   const slug = decodeURIComponent(String(p?.slug || "")).trim();
 
@@ -147,7 +139,6 @@ export async function generateMetadata({ params }) {
     };
   }
 
-  // ดึง course (ใช้ DB ได้ เพราะ runtime=nodejs)
   await (await import("@/lib/dbConnect")).default();
   const Course = (await import("@/models/Course")).default;
 
@@ -180,12 +171,7 @@ export async function generateMetadata({ params }) {
   return {
     title: `${title} | The Next Humans Skills`,
     description,
-
-    robots: {
-      index: true,
-      follow: true,
-    },
-
+    robots: { index: true, follow: true },
     alternates: {
       canonical: url,
       languages: {
@@ -193,7 +179,6 @@ export async function generateMetadata({ params }) {
         en: `${baseUrl}/en/courses/${slug}`,
       },
     },
-
     openGraph: {
       title,
       description,
@@ -201,16 +186,8 @@ export async function generateMetadata({ params }) {
       siteName: "The Next Humans Skills",
       locale: locale === "en" ? "en_US" : "th_TH",
       type: "article",
-      images: [
-        {
-          url: image,
-          width: 1200,
-          height: 630,
-          alt: title,
-        },
-      ],
+      images: [{ url: image, width: 1200, height: 630, alt: title }],
     },
-
     twitter: {
       card: "summary_large_image",
       title,
@@ -245,7 +222,23 @@ export default async function Page({ params }) {
     slug: safeSlug,
     isActive: true,
     status: "published",
-  }).lean();
+  })
+    .select({
+      slug: 1,
+      title_th: 1,
+      title_en: 1,
+      short_description: 1,
+      cover_image: 1,
+      duration_days: 1,
+      partners: 1,
+      content: 1,
+      curriculum: 1,
+
+      // ✅ upcoming
+      isUpcoming: 1,
+      upcomingTag: 1,
+    })
+    .lean();
 
   if (!course) {
     return (
@@ -265,13 +258,20 @@ export default async function Page({ params }) {
   }
 
   const titleTH = course.title_th || "Untitled";
-  const titleEN = course.title_en || "";
   const cover = course.cover_image || "";
-
   const isEN = safeLocale === "en";
-  const registerHref = `/${safeLocale}/register/${encodeURIComponent(
+
+  const inhouseHref = `/${safeLocale}/register/${encodeURIComponent(
     course.slug || safeSlug,
   )}/step-1`;
+
+  const upcomingRegisterHref = `/${safeLocale}/upcoming-register/${encodeURIComponent(
+    course.slug || safeSlug,
+  )}`;
+
+  const showUpcomingRegister = !!course.isUpcoming;
+  const upcomingIsFull = String(course.upcomingTag || "") === "full";
+  const canUpcomingRegister = showUpcomingRegister && !upcomingIsFull;
 
   return (
     <div className="mx-auto max-w-7xl ">
@@ -302,6 +302,7 @@ export default async function Page({ params }) {
           }),
         }}
       />
+
       {/* HERO / COVER */}
       <div className="mt-24 overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur flex flex-col lg:flex-row-reverse">
         <div className="relative w-full lg:w-[60%]">
@@ -327,31 +328,46 @@ export default async function Page({ params }) {
               </h1>
             </div>
 
-            {/* <div className="flex flex-wrap gap-2">
-              <Badge>{course.level || "General"}</Badge>
-              <Badge>{course.duration_days || 1} วัน</Badge>
-
-             
-              {(Array.isArray(course.partners) ? course.partners : []).map(
-                (p) => (
-                  <Badge key={p}>{labelPartner(p)}</Badge>
-                )
-              )}
-            </div> */}
-
             {course.short_description ? (
-              <p className="mt-4  whitespace-pre-wrap text-sm leading-relaxed text-white/80">
+              <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed text-white/80">
                 {course.short_description}
               </p>
             ) : null}
           </div>
 
-          <div className="flex shrink-0 gap-2">
+          {/* ✅ CTA Buttons */}
+          <div className="flex shrink-0 flex-wrap gap-2">
+            {/* 2) Upcoming register */}
+            {showUpcomingRegister ? (
+              canUpcomingRegister ? (
+                <Link
+                  href={upcomingRegisterHref}
+                  className="rounded-xl border bg-white px-5 py-3 text-sm font-extrabold text-slate-900 hover:bg-white/90"
+                >
+                  {isEN ? "Register" : "ลงทะเบียน"}
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  disabled
+                  aria-disabled="true"
+                  title={isEN ? "This class is full" : "คลาสเต็มแล้ว"}
+                  className="
+                    rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-extrabold
+                    text-white/45 cursor-not-allowed
+                  "
+                >
+                  {isEN ? "Full" : "เต็มแล้ว"}
+                </button>
+              )
+            ) : null}
+
+            {/* 1) Inhouse */}
             <Link
-              href={`/${safeLocale}/register/${course.slug}/step-1`}
-              className="rounded-xl bg-white px-5 py-3 text-sm font-extrabold text-slate-900 hover:bg-white/90"
+              href={inhouseHref}
+              className="rounded-xl  border-white/15 bg-white/10 px-5 py-3 text-sm font-extrabold text-white hover:bg-white/15"
             >
-              ลงทะเบียน
+              {isEN ? "Request Quotation (Inhouse)" : "ขอใบเสนอราคา Inhouse"}
             </Link>
           </div>
         </div>
@@ -416,7 +432,6 @@ export default async function Page({ params }) {
                               {s.title}
                             </div>
 
-                            {/* ✅ ใหม่: ถ้ามี topic_groups ให้ใช้ component นี้ (fallback ไป topics เดิม) */}
                             <TopicGroups
                               groups={s.topic_groups}
                               legacyTopics={s.topics}
@@ -437,12 +452,38 @@ export default async function Page({ params }) {
           </Section>
         ) : null}
 
-        <section className="mt-5 flex justify-center">
+        {/* ✅ CTA Bottom */}
+        <section className="mt-5 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          {showUpcomingRegister ? (
+            canUpcomingRegister ? (
+              <Link
+                href={upcomingRegisterHref}
+                className="inline-flex items-center justify-center rounded-xl bg-white px-10 py-4 text-lg font-extrabold text-slate-900 hover:bg-white/90 "
+              >
+                {isEN ? "Register" : "ลงทะเบียน"}
+              </Link>
+            ) : (
+              <button
+                type="button"
+                disabled
+                aria-disabled="true"
+                title={isEN ? "This class is full" : "คลาสเต็มแล้ว"}
+                className="
+                  inline-flex items-center justify-center rounded-xl
+                  border border-white/10 bg-white/5 px-10 py-4
+                  text-lg font-extrabold text-white/45 cursor-not-allowed
+                "
+              >
+                {isEN ? "Full" : "เต็มแล้ว"}
+              </button>
+            )
+          ) : null}
+
           <Link
-            href={registerHref}
-            className="inline-flex items-center justify-center rounded-xl bg-white px-14 py-5 text-xl font-extrabold text-slate-900 hover:bg-white/90"
+            href={inhouseHref}
+            className="inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/10 px-10 py-4 text-lg font-extrabold text-white hover:bg-white/15"
           >
-            {isEN ? "Register" : "ลงทะเบียน"}
+            {isEN ? "Request Quotation (Inhouse)" : "ขอใบเสนอราคา Inhouse"}
           </Link>
         </section>
       </div>

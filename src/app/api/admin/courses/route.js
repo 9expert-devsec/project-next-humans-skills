@@ -1,4 +1,3 @@
-// src/app/api/admin/courses/route.js
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import Course from "@/models/Course";
@@ -20,11 +19,6 @@ async function ensureUniqueSlug(base, excludeId = "") {
   let slug = base;
   let i = 1;
 
-  // กันชน: ถ้า edit แล้ว slug เดิมของตัวเอง ให้ผ่านได้
-  // ใช้ while loop ตรวจว่ามี slug ชนกับคนอื่นไหม
-  // excludeId: ถ้ามี จะตรวจว่า doc ที่ชนเป็นคนละ _id
-  // (ถ้าไม่มี excludeId -> create mode ปกติ)
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     const exists = await Course.findOne({ slug }).select({ _id: 1 }).lean();
     if (!exists) break;
@@ -73,16 +67,10 @@ function normalizeTopicGroups(input) {
 }
 
 /* ---------------- curriculum ---------------- */
-/**
- * ✅ Normalize curriculum to support:
- * - session.partners (array)
- * - legacy session.partner (string) -> merge เข้า partners
- * - session.topic_groups (array of {title, items})
- */
 function normalizeCurriculum(
   curriculumInput,
   coursePartners = [],
-  allowCustom = true
+  allowCustom = true,
 ) {
   const allow = new Set(uniq(coursePartners));
   const days = Array.isArray(curriculumInput) ? curriculumInput : [];
@@ -105,12 +93,12 @@ function normalizeCurriculum(
         return {
           period: cleanStr(s?.period) || "morning",
           title: cleanStr(s?.title),
-          partners, // ✅ ใหม่
-          partner: legacy, // legacy คงไว้ (optional)
+          partners,
+          partner: legacy,
           topics: Array.isArray(s?.topics)
             ? s.topics.map((x) => cleanStr(x)).filter(Boolean)
             : [],
-          topic_groups, // ✅ ใหม่
+          topic_groups,
           notes: cleanStr(s?.notes),
         };
       });
@@ -126,6 +114,13 @@ function normalizeCurriculum(
 
 function normalizeBody(body = {}) {
   const partners = arr(body.partners).map(cleanStr).filter(Boolean);
+
+  const isUpcoming = !!body.isUpcoming;
+  const upcomingTag = ["", "open", "nearly_full", "full"].includes(
+    cleanStr(body.upcomingTag),
+  )
+    ? cleanStr(body.upcomingTag)
+    : "";
 
   return {
     id: cleanStr(body.id),
@@ -146,6 +141,11 @@ function normalizeBody(body = {}) {
       : "General",
 
     duration_days: Math.max(1, Number(body.duration_days || 1)),
+
+    isUpcoming,
+    upcomingTag,
+    upcomingOrder: Math.max(0, Number(body.upcomingOrder || 0)),
+    upcomingDateText: cleanStr(body.upcomingDateText),
 
     status: ["draft", "published", "archived"].includes(body.status)
       ? body.status
@@ -193,13 +193,13 @@ export async function GET(req) {
   const { searchParams } = new URL(req.url);
 
   const q = cleanStr(searchParams.get("q"));
-  const status = cleanStr(searchParams.get("status")); // draft|published|archived|""
-  const isActive = cleanStr(searchParams.get("isActive")); // true|false|""
+  const status = cleanStr(searchParams.get("status"));
+  const isActive = cleanStr(searchParams.get("isActive"));
 
   const page = Math.max(1, Number(searchParams.get("page") || 1));
   const limit = Math.min(
     100,
-    Math.max(5, Number(searchParams.get("limit") || 20))
+    Math.max(5, Number(searchParams.get("limit") || 20)),
   );
   const skip = (page - 1) * limit;
 
@@ -210,10 +210,12 @@ export async function GET(req) {
       { title_en: { $regex: q, $options: "i" } },
       { slug: { $regex: q, $options: "i" } },
       { short_description: { $regex: q, $options: "i" } },
+      { upcomingDateText: { $regex: q, $options: "i" } },
     ];
   }
-  if (["draft", "published", "archived"].includes(status))
+  if (["draft", "published", "archived"].includes(status)) {
     filter.status = status;
+  }
   if (isActive === "true") filter.isActive = true;
   if (isActive === "false") filter.isActive = false;
 
@@ -240,15 +242,13 @@ export async function POST(req) {
   if (!b.title_th) {
     return NextResponse.json(
       { ok: false, error: "title_th is required" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
-  // slug: ถ้าไม่ส่งมา ให้ gen จาก title_th
   const base = makeSlug(b.slug || b.title_th);
   b.slug = await ensureUniqueSlug(base);
 
-  // ไม่ต้องส่ง id เข้า create
   delete b.id;
 
   const doc = await Course.create(b);
@@ -264,18 +264,17 @@ export async function PUT(req) {
   if (!id) {
     return NextResponse.json(
       { ok: false, error: "id is required" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
   if (!b.title_th) {
     return NextResponse.json(
       { ok: false, error: "title_th is required" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
-  // slug: ถ้าไม่ส่งมา ให้ gen จาก title_th
   const base = makeSlug(b.slug || b.title_th);
   b.slug = await ensureUniqueSlug(base, id);
 
@@ -285,7 +284,7 @@ export async function PUT(req) {
   if (!updated) {
     return NextResponse.json(
       { ok: false, error: "not found" },
-      { status: 404 }
+      { status: 404 },
     );
   }
 

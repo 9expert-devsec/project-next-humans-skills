@@ -1,4 +1,3 @@
-// src/components/admin/courses/AdminCourseFormClient.jsx
 "use client";
 
 import { useMemo, useRef, useState } from "react";
@@ -19,7 +18,6 @@ function linesToText(arr) {
   return Array.isArray(arr) ? arr.join("\n") : "";
 }
 
-// ✅ ใช้ key แบบสั้น (เก็บลง DB) แต่แสดง label แบบเต็ม
 const PARTNERS = [
   { key: "bitkub", label: "Bitkub Academy" },
   { key: "9expert", label: "9Expert Training" },
@@ -34,18 +32,25 @@ const LEVELS = [
   { key: "General", label: "General" },
 ];
 
+const UPCOMING_TAGS = [
+  { key: "", label: "-" },
+  { key: "open", label: "เปิดรับสมัคร" },
+  { key: "nearly_full", label: "ใกล้เต็ม" },
+  { key: "full", label: "เต็ม" },
+];
+
 async function uploadToCloudinary(file) {
   const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
   const preset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
 
   if (!cloudName || !preset) {
     throw new Error(
-      "Missing Cloudinary env: NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME or NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET"
+      "Missing Cloudinary env: NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME or NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET",
     );
   }
 
   const url = `https://api.cloudinary.com/v1_1/${encodeURIComponent(
-    cloudName
+    cloudName,
   )}/image/upload`;
 
   const fd = new FormData();
@@ -68,7 +73,7 @@ export default function AdminCourseFormClient({
   adminKey = "",
   initial,
 }) {
-  const [tab, setTab] = useState("basic"); // basic | content | curriculum | executive | publish
+  const [tab, setTab] = useState("basic");
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
 
@@ -77,7 +82,7 @@ export default function AdminCourseFormClient({
 
   const baseAdmin = useMemo(
     () => `/${locale}/${adminKey}/admin`,
-    [locale, adminKey]
+    [locale, adminKey],
   );
 
   const [form, setForm] = useState(() => {
@@ -90,8 +95,15 @@ export default function AdminCourseFormClient({
       short_description: it?.short_description || "",
       level: it?.level || "General",
       duration_days: it?.duration_days || 1,
+
       status: it?.status || "draft",
       isActive: typeof it?.isActive === "boolean" ? it.isActive : true,
+
+      // ✅ upcoming
+      isUpcoming: !!it?.isUpcoming,
+      upcomingTag: it?.upcomingTag || "",
+      upcomingOrder: Number(it?.upcomingOrder || 0),
+      upcomingDateText: it?.upcomingDateText || "",
 
       cover_image: it?.cover_image || "",
 
@@ -133,21 +145,33 @@ export default function AdminCourseFormClient({
       short_description: form.short_description,
       level: form.level,
       duration_days: Number(form.duration_days || 1),
+
       status: form.status,
       isActive: !!form.isActive,
+
+      // ✅ upcoming
+      isUpcoming: !!form.isUpcoming,
+      upcomingTag: form.upcomingTag || "",
+      upcomingOrder: Math.max(0, Number(form.upcomingOrder || 0)),
+      upcomingDateText: form.upcomingDateText,
+
       cover_image: form.cover_image,
       tags,
       partners: form.partners,
+
       content: {
         rationale: form.content.rationale,
         objectives: toLines(form.content.objectivesText),
         target_audience: toLines(form.content.targetAudienceText),
         benefits: toLines(form.content.benefitsText),
       },
+
       curriculum: form.curriculum,
+
       executive_summary: form.executive_summary,
       highlight_modules: toLines(form.highlightText),
       key_takeaways: toLines(form.takeawaysText),
+
       business: {
         price_amount: Number(form.business.price_amount || 0),
         price_currency: form.business.price_currency || "THB",
@@ -169,8 +193,6 @@ export default function AdminCourseFormClient({
   async function onPickFile(e) {
     const f = e.target.files?.[0];
     if (!f) return;
-
-    // reset input to allow re-select same file
     e.target.value = "";
 
     setErr("");
@@ -188,15 +210,15 @@ export default function AdminCourseFormClient({
 
   async function save() {
     setErr("");
+
     if (!form.title_th.trim()) {
       setTab("basic");
       setErr("กรุณากรอก Title (TH)");
       return;
     }
+
     if (!adminKey) {
-      setErr(
-        "Missing adminKey in route (โปรดเช็ค page.jsx ที่เรียก component นี้)"
-      );
+      setErr("Missing adminKey in route");
       return;
     }
 
@@ -217,6 +239,7 @@ export default function AdminCourseFormClient({
         location.href = `${baseAdmin}/courses/${item._id}/edit`;
         return;
       }
+
       location.href = `${baseAdmin}/courses`;
     } catch (e) {
       setErr(String(e?.message || e));
@@ -233,7 +256,7 @@ export default function AdminCourseFormClient({
         "rounded-full px-3 py-2 text-xs font-extrabold ring-1",
         tab === k
           ? "bg-white/10 text-white ring-white/25"
-          : "bg-transparent text-white/60 ring-white/10 hover:bg-white/5"
+          : "bg-transparent text-white/60 ring-white/10 hover:bg-white/5",
       )}
     >
       {label}
@@ -241,7 +264,7 @@ export default function AdminCourseFormClient({
   );
 
   return (
-    <div className=" p-4 ">
+    <div className="p-4">
       <div className="mb-6 flex items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-extrabold text-white">
@@ -295,6 +318,7 @@ export default function AdminCourseFormClient({
                   onChange={(v) => setForm((s) => ({ ...s, title_th: v }))}
                 />
               </Field>
+
               <Field label="Title (EN)">
                 <Input
                   value={form.title_en}
@@ -303,7 +327,7 @@ export default function AdminCourseFormClient({
               </Field>
             </div>
 
-            <Field label="Short Description (ใช้โชว์หน้า Card/Listing)">
+            <Field label="Short Description">
               <TextArea
                 rows={3}
                 value={form.short_description}
@@ -321,6 +345,7 @@ export default function AdminCourseFormClient({
                   options={LEVELS}
                 />
               </Field>
+
               <Field label="Duration (days)">
                 <Input
                   type="number"
@@ -329,7 +354,6 @@ export default function AdminCourseFormClient({
                 />
               </Field>
 
-              {/* ✅ Cover upload + URL + Preview */}
               <Field label="Cover Image">
                 <div className="grid gap-2">
                   <div className="flex flex-wrap items-center gap-2">
@@ -340,7 +364,7 @@ export default function AdminCourseFormClient({
                       className={cx(
                         "rounded-xl px-3 py-2 text-xs font-extrabold ring-1",
                         "bg-white text-slate-900 ring-white/20 hover:bg-white/90",
-                        uploading ? "opacity-70" : ""
+                        uploading ? "opacity-70" : "",
                       )}
                     >
                       {uploading ? "Uploading..." : "Upload Cover"}
@@ -401,7 +425,7 @@ export default function AdminCourseFormClient({
                         "rounded-full px-3 py-2 text-xs font-extrabold ring-1",
                         active
                           ? "bg-emerald-500/15 text-emerald-200 ring-emerald-500/30"
-                          : "bg-white/5 text-white/70 ring-white/10 hover:bg-white/10"
+                          : "bg-white/5 text-white/70 ring-white/10 hover:bg-white/10",
                       )}
                     >
                       {p.label}
@@ -436,7 +460,7 @@ export default function AdminCourseFormClient({
             </Field>
 
             <div className="grid gap-3 md:grid-cols-2">
-              <Field label="วัตถุประสงค์ (Objectives) — บรรทัดละ 1 ข้อ">
+              <Field label="วัตถุประสงค์ (บรรทัดละ 1 ข้อ)">
                 <TextArea
                   rows={8}
                   value={form.content.objectivesText}
@@ -448,7 +472,8 @@ export default function AdminCourseFormClient({
                   }
                 />
               </Field>
-              <Field label="กลุ่มเป้าหมาย (Target Audience) — บรรทัดละ 1 ข้อ">
+
+              <Field label="กลุ่มเป้าหมาย (บรรทัดละ 1 ข้อ)">
                 <TextArea
                   rows={8}
                   value={form.content.targetAudienceText}
@@ -462,7 +487,7 @@ export default function AdminCourseFormClient({
               </Field>
             </div>
 
-            <Field label="ประโยชน์ที่จะได้รับ (Benefits) — บรรทัดละ 1 ข้อ">
+            <Field label="ประโยชน์ที่จะได้รับ (บรรทัดละ 1 ข้อ)">
               <TextArea
                 rows={8}
                 value={form.content.benefitsText}
@@ -496,6 +521,7 @@ export default function AdminCourseFormClient({
                 }
               />
             </Field>
+
             <div className="grid gap-3 md:grid-cols-2">
               <Field label="Highlight Modules — บรรทัดละ 1 ข้อ">
                 <TextArea
@@ -504,6 +530,7 @@ export default function AdminCourseFormClient({
                   onChange={(v) => setForm((s) => ({ ...s, highlightText: v }))}
                 />
               </Field>
+
               <Field label="Key Takeaways — บรรทัดละ 1 ข้อ">
                 <TextArea
                   rows={8}
@@ -517,7 +544,7 @@ export default function AdminCourseFormClient({
 
         {tab === "publish" ? (
           <div className="grid gap-4">
-            <div className="grid gap-3 md:grid-cols-3">
+            <div className="grid gap-3 md:grid-cols-4">
               <Field label="Status">
                 <Select
                   value={form.status}
@@ -543,6 +570,19 @@ export default function AdminCourseFormClient({
                 />
               </Field>
 
+              <Field label="Home: คลาสที่กำลังจะมาถึง">
+                <Select
+                  value={form.isUpcoming ? "1" : "0"}
+                  onChange={(v) =>
+                    setForm((s) => ({ ...s, isUpcoming: v === "1" }))
+                  }
+                  options={[
+                    { key: "1", label: "แสดง" },
+                    { key: "0", label: "ไม่แสดง" },
+                  ]}
+                />
+              </Field>
+
               <Field label="VAT Type">
                 <Select
                   value={form.business.vat_type || ""}
@@ -561,7 +601,23 @@ export default function AdminCourseFormClient({
               </Field>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-2">
+            <div className="grid gap-3 md:grid-cols-3">
+              <Field label="Tag บนการ์ด Upcoming">
+                <Select
+                  value={form.upcomingTag}
+                  onChange={(v) => setForm((s) => ({ ...s, upcomingTag: v }))}
+                  options={UPCOMING_TAGS}
+                />
+              </Field>
+
+              <Field label="Upcoming Order">
+                <Input
+                  type="number"
+                  value={form.upcomingOrder}
+                  onChange={(v) => setForm((s) => ({ ...s, upcomingOrder: v }))}
+                />
+              </Field>
+
               <Field label="Price Amount">
                 <Input
                   type="number"
@@ -574,6 +630,21 @@ export default function AdminCourseFormClient({
                   }
                 />
               </Field>
+            </div>
+
+            <Field label="ข้อความวันอบรม (ใช้ใน public / email / subject)">
+              <Input
+                value={form.upcomingDateText}
+                onChange={(v) =>
+                  setForm((s) => ({ ...s, upcomingDateText: v }))
+                }
+              />
+              <div className="mt-2 text-xs text-white/50">
+                ตัวอย่าง: 10 มี.ค. 2569 หรือ 2 - 3 Dec 2026
+              </div>
+            </Field>
+
+            <div className="grid gap-3 md:grid-cols-2">
               <Field label="Currency">
                 <Input
                   value={form.business.price_currency}

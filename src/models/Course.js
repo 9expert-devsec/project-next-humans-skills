@@ -1,4 +1,3 @@
-// src/models/Course.js
 import mongoose from "mongoose";
 
 const { Schema } = mongoose;
@@ -8,7 +7,7 @@ const TopicGroupSchema = new Schema(
     title: { type: String, default: "" },
     items: [{ type: String }],
   },
-  { _id: false }
+  { _id: false },
 );
 
 const SessionSchema = new Schema(
@@ -23,23 +22,21 @@ const SessionSchema = new Schema(
     partners: [{ type: String }],
     partner: { type: String, default: "" },
 
-    topics: [{ type: String }], // legacy
-
-    // ✅ ใหม่: หัวข้อหลัก + หัวข้อย่อย (แนะนำใช้ตัวนี้)
+    topics: [{ type: String }],
     topic_groups: { type: [TopicGroupSchema], default: [] },
 
     notes: { type: String, default: "" },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const DaySchema = new Schema(
   {
-    day: { type: Number, required: true }, // 1..n
+    day: { type: Number, required: true },
     title: { type: String, default: "" },
     sessions: [SessionSchema],
   },
-  { _id: false }
+  { _id: false },
 );
 
 const CourseSchema = new Schema(
@@ -66,6 +63,20 @@ const CourseSchema = new Schema(
 
     duration_days: { type: Number, default: 1 },
 
+    isUpcoming: { type: Boolean, default: false, index: true },
+    upcomingOrder: { type: Number, default: 0, index: true },
+
+    // ✅ tag สำหรับ section คลาสที่กำลังจะมาถึง
+    upcomingTag: {
+      type: String,
+      enum: ["", "open", "nearly_full", "full"],
+      default: "",
+      index: true,
+    },
+
+    // ✅ ข้อความวันอบรมสำหรับ public / email เช่น "10 มี.ค. 2569" หรือ "2 - 3 Dec 2026"
+    upcomingDateText: { type: String, default: "", trim: true },
+
     status: {
       type: String,
       enum: ["draft", "published", "archived"],
@@ -77,7 +88,7 @@ const CourseSchema = new Schema(
     cover_image: { type: String, default: "" },
 
     tags: [{ type: String }],
-    partners: [{ type: String }], // course-level partners
+    partners: [{ type: String }],
 
     content: {
       rationale: { type: String, default: "" },
@@ -95,14 +106,18 @@ const CourseSchema = new Schema(
     business: {
       price_amount: { type: Number, default: 0 },
       price_currency: { type: String, default: "THB" },
-      vat_type: { type: String, enum: ["include", "exclude", ""], default: "" },
+      vat_type: {
+        type: String,
+        enum: ["include", "exclude", ""],
+        default: "",
+      },
       certificate_template: {
         type: Schema.Types.ObjectId,
         ref: "CertificateTemplate",
       },
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export default mongoose.models.Course || mongoose.model("Course", CourseSchema);
