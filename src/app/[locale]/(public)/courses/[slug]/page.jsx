@@ -1,19 +1,12 @@
 // src/app/[locale]/(public)/courses/[slug]/page.jsx
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import dbConnect from "@/lib/dbConnect";
 import Course from "@/models/Course";
-import { ArrowLeft } from "lucide-react";
+import CourseDetailActions from "@/components/ui/CourseDetailActions";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-function Badge({ children }) {
-  return (
-    <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-extrabold text-white/80 ring-1 ring-white/10">
-      {children}
-    </span>
-  );
-}
 
 const PARTNER_LABEL = {
   bitkub: "Bitkub Academy",
@@ -27,6 +20,7 @@ const PARTNER_LABEL = {
 function Bullet({ items }) {
   const arr = Array.isArray(items) ? items.filter(Boolean) : [];
   if (!arr.length) return null;
+
   return (
     <ul className="mt-3 grid gap-2 text-base text-white/80">
       {arr.map((t, i) => (
@@ -93,10 +87,11 @@ function TopicGroups({ groups, legacyTopics }) {
 
 function Section({ title, children }) {
   if (!children) return null;
+
   return (
     <section className="mt-5">
       <h2 className="text-xl font-bold text-white">{title}</h2>
-      <div className="mt-3 ">{children}</div>
+      <div className="mt-3">{children}</div>
       <div className="mt-8 h-px w-full bg-white/10" />
     </section>
   );
@@ -139,8 +134,7 @@ export async function generateMetadata({ params }) {
     };
   }
 
-  await (await import("@/lib/dbConnect")).default();
-  const Course = (await import("@/models/Course")).default;
+  await dbConnect();
 
   const course = await Course.findOne({
     slug,
@@ -201,6 +195,7 @@ export default async function Page({ params }) {
   const { locale, slug } = await params;
   const safeLocale = locale === "en" ? "en" : "th";
   const safeSlug = decodeURIComponent(String(slug || "")).trim();
+  const isEN = safeLocale === "en";
 
   if (!safeSlug) {
     return (
@@ -233,10 +228,9 @@ export default async function Page({ params }) {
       partners: 1,
       content: 1,
       curriculum: 1,
-
-      // ✅ upcoming
       isUpcoming: 1,
       upcomingTag: 1,
+      upcomingDateText: 1,
     })
     .lean();
 
@@ -257,31 +251,30 @@ export default async function Page({ params }) {
     );
   }
 
-  const titleTH = course.title_th || "Untitled";
+  const title = isEN
+    ? course.title_en || course.title_th || "Untitled"
+    : course.title_th || course.title_en || "Untitled";
+
   const cover = course.cover_image || "";
-  const isEN = safeLocale === "en";
 
-  const inhouseHref = `/${safeLocale}/register/${encodeURIComponent(
-    course.slug || safeSlug,
-  )}/step-1`;
-
-  const upcomingRegisterHref = `/${safeLocale}/upcoming-register/${encodeURIComponent(
-    course.slug || safeSlug,
-  )}`;
-
-  const showUpcomingRegister = !!course.isUpcoming;
-  const upcomingIsFull = String(course.upcomingTag || "") === "full";
-  const canUpcomingRegister = showUpcomingRegister && !upcomingIsFull;
+  const courseForActions = {
+    slug: String(course.slug || safeSlug),
+    title_th: String(course.title_th || ""),
+    title_en: String(course.title_en || ""),
+    isUpcoming: !!course.isUpcoming,
+    upcomingTag: String(course.upcomingTag || ""),
+    upcomingDateText: String(course.upcomingDateText || ""),
+  };
 
   return (
-    <div className="mx-auto max-w-7xl ">
+    <div className="mx-auto max-w-7xl">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "Course",
-            name: titleTH,
+            name: title,
             description:
               course.short_description || course.content?.rationale || "",
             provider: {
@@ -304,19 +297,19 @@ export default async function Page({ params }) {
       />
 
       {/* HERO / COVER */}
-      <div className="mt-24 overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur flex flex-col lg:flex-row-reverse">
+      <div className="mt-24 flex flex-col overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur lg:flex-row-reverse">
         <div className="relative w-full lg:w-[60%]">
           {cover ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={cover} alt={titleTH} className=" w-full object-cover " />
+            <img src={cover} alt={title} className="w-full object-cover" />
           ) : (
-            <div className=" w-full bg-black/20" />
+            <div className="w-full bg-black/20" />
           )}
 
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/0" />
         </div>
 
-        <div className="flex flex-col gap-6 p-6 w-full lg:w-[40%] md:items-start md:justify-between">
+        <div className="flex w-full flex-col gap-6 p-6 md:items-start md:justify-between lg:w-[40%]">
           <div className="flex flex-col gap-5">
             <Link href={`/${safeLocale}`}>
               <ArrowLeft />
@@ -324,7 +317,7 @@ export default async function Page({ params }) {
 
             <div>
               <h1 className="text-xl font-extrabold text-white md:text-2xl lg:text-3xl">
-                {titleTH}
+                {title}
               </h1>
             </div>
 
@@ -335,47 +328,17 @@ export default async function Page({ params }) {
             ) : null}
           </div>
 
-          {/* ✅ CTA Buttons */}
-          <div className="flex shrink-0 flex-wrap gap-2">
-            {/* 2) Upcoming register */}
-            {showUpcomingRegister ? (
-              canUpcomingRegister ? (
-                <Link
-                  href={upcomingRegisterHref}
-                  className="rounded-xl border bg-white px-5 py-3 text-sm font-extrabold text-slate-900 hover:bg-white/90"
-                >
-                  {isEN ? "Register" : "ลงทะเบียน"}
-                </Link>
-              ) : (
-                <button
-                  type="button"
-                  disabled
-                  aria-disabled="true"
-                  title={isEN ? "This class is full" : "คลาสเต็มแล้ว"}
-                  className="
-                    rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-extrabold
-                    text-white/45 cursor-not-allowed
-                  "
-                >
-                  {isEN ? "Full" : "เต็มแล้ว"}
-                </button>
-              )
-            ) : null}
-
-            {/* 1) Inhouse */}
-            <Link
-              href={inhouseHref}
-              className="rounded-xl  border-white/15 bg-white/10 px-5 py-3 text-sm font-extrabold text-white hover:bg-white/15"
-            >
-              {isEN ? "Request Quotation (Inhouse)" : "ขอใบเสนอราคา Inhouse"}
-            </Link>
-          </div>
+          <CourseDetailActions
+            locale={safeLocale}
+            course={courseForActions}
+            size="compact"
+          />
         </div>
       </div>
 
       {/* CONTENT */}
       <div className="mt-10 rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur">
-        <Section title="หลักการและเหตุผล">
+        <Section title={isEN ? "Rationale" : "หลักการและเหตุผล"}>
           {course.content?.rationale ? (
             <p className="whitespace-pre-wrap text-base leading-relaxed text-white/80">
               {course.content.rationale}
@@ -383,20 +346,20 @@ export default async function Page({ params }) {
           ) : null}
         </Section>
 
-        <Section title="วัตถุประสงค์">
+        <Section title={isEN ? "Objectives" : "วัตถุประสงค์"}>
           <Bullet items={course.content?.objectives} />
         </Section>
 
-        <Section title="กลุ่มเป้าหมาย">
+        <Section title={isEN ? "Target Audience" : "กลุ่มเป้าหมาย"}>
           <Bullet items={course.content?.target_audience} />
         </Section>
 
-        <Section title="ประโยชน์ที่จะได้รับ">
+        <Section title={isEN ? "Benefits" : "ประโยชน์ที่จะได้รับ"}>
           <Bullet items={course.content?.benefits} />
         </Section>
 
         {Array.isArray(course.curriculum) && course.curriculum.length ? (
-          <Section title="โครงสร้างหลักสูตร">
+          <Section title={isEN ? "Curriculum Structure" : "โครงสร้างหลักสูตร"}>
             <div className="mt-4 grid gap-4">
               {course.curriculum
                 .slice()
@@ -407,8 +370,8 @@ export default async function Page({ params }) {
                     className="rounded-2xl border-2 border-white/50 bg-black/20 p-4"
                   >
                     <div className="text-lg font-extrabold text-white">
-                      <span className="mr-1 px-2 py-1 bg-white text-[#0B1C2C] rounded-full">
-                        วันที่ {d.day}
+                      <span className="mr-1 rounded-full bg-white px-2 py-1 text-[#0B1C2C]">
+                        {isEN ? `Day ${d.day}` : `วันที่ ${d.day}`}
                       </span>{" "}
                       : {d.title}
                     </div>
@@ -438,7 +401,7 @@ export default async function Page({ params }) {
                             />
 
                             {s.notes ? (
-                              <div className="mt-3 whitespace-pre-wrap text-xs text-white/55">
+                              <div className="mt-3 whitespace-pre-wrap text-xs text-[#0B1C2C]/55">
                                 {s.notes}
                               </div>
                             ) : null}
@@ -452,39 +415,13 @@ export default async function Page({ params }) {
           </Section>
         ) : null}
 
-        {/* ✅ CTA Bottom */}
         <section className="mt-5 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          {showUpcomingRegister ? (
-            canUpcomingRegister ? (
-              <Link
-                href={upcomingRegisterHref}
-                className="inline-flex items-center justify-center rounded-xl bg-white px-10 py-4 text-lg font-extrabold text-slate-900 hover:bg-white/90 "
-              >
-                {isEN ? "Register" : "ลงทะเบียน"}
-              </Link>
-            ) : (
-              <button
-                type="button"
-                disabled
-                aria-disabled="true"
-                title={isEN ? "This class is full" : "คลาสเต็มแล้ว"}
-                className="
-                  inline-flex items-center justify-center rounded-xl
-                  border border-white/10 bg-white/5 px-10 py-4
-                  text-lg font-extrabold text-white/45 cursor-not-allowed
-                "
-              >
-                {isEN ? "Full" : "เต็มแล้ว"}
-              </button>
-            )
-          ) : null}
-
-          <Link
-            href={inhouseHref}
-            className="inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/10 px-10 py-4 text-lg font-extrabold text-white hover:bg-white/15"
-          >
-            {isEN ? "Request Quotation (Inhouse)" : "ขอใบเสนอราคา Inhouse"}
-          </Link>
+          <CourseDetailActions
+            locale={safeLocale}
+            course={courseForActions}
+            size="large"
+            className="justify-center"
+          />
         </section>
       </div>
     </div>
