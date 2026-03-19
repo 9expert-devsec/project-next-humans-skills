@@ -10,6 +10,7 @@ const geistSans = Geist({
   variable: "--font-geist-sans",
   display: "swap",
 });
+
 const geistMono = Geist_Mono({
   subsets: ["latin"],
   variable: "--font-geist-mono",
@@ -17,17 +18,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  // ✅ ช่วยให้ OG/Twitter URL แบบ relative กลายเป็น absolute ได้ถูกต้อง
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL || "https://www.thenexthumansskills.com",
   ),
 
-  // ✅ ค่ากลางทั้งเว็บ (หน้าอื่นสามารถ override ได้ด้วย generateMetadata)
   title: "The Next Humans Skills - สร้างทักษะให้เป็นบุคลากรในโลกยุคใหม่",
   description:
     "พัฒนาทักษะบุคลากรยุคดิจิทัลยุคใหม่ โดยผู้เชี่ยวชาญจาก 9Expert, Key Solutions และ Bitkub Academy ครอบคลุม AI, Data Analytics, Blockchain, Web3 และ Leadership Skills สำหรับผู้บริหารและบุคลากรทุกระดับ",
 
-  // ✅ แก้จาก keyword -> keywords (ตามมาตรฐาน Next.js)
   keywords: [
     "อบรม AI",
     "พัฒนาทักษะดิจิทัล",
@@ -47,7 +45,6 @@ export const metadata = {
 
   authors: [{ name: "The Next Humans Skills" }],
 
-  // meta เพิ่มเติมที่ไม่มี field ตรงๆ
   other: {
     language: "Thai",
     "revisit-after": "7 days",
@@ -58,8 +55,8 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
+  const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID || "GTM-WXWZ2MFN";
 
-  // ✅ JSON-LD (Schema.org) — ระดับองค์กร/เว็บไซต์ เหมาะทำไว้ global
   const jsonLdEducationalOrg = {
     "@context": "https://schema.org",
     "@type": "EducationalOrganization",
@@ -156,10 +153,21 @@ export default function RootLayout({ children }) {
     <html
       lang="th"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable}`}
+      className={`${geistSans.variable} ${geistMono.variable} scroll-smooth`}
     >
       <head>
-        {/* ✅ GA Script (ของเดิม) */}
+        {GTM_ID && (
+          <Script id="gtm-script" strategy="afterInteractive">
+            {`
+              (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+              new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+              j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+              'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+              })(window,document,'script','dataLayer','${GTM_ID}');
+            `}
+          </Script>
+        )}
+
         {GA_ID && (
           <>
             <Script
@@ -177,7 +185,6 @@ export default function RootLayout({ children }) {
           </>
         )}
 
-        {/* ✅ JSON-LD ใส่ global */}
         <Script
           id="jsonld-educational-org"
           type="application/ld+json"
@@ -203,11 +210,22 @@ export default function RootLayout({ children }) {
       </head>
 
       <body suppressHydrationWarning>
+        {GTM_ID && (
+          <noscript>
+            <iframe
+              src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`}
+              height="0"
+              width="0"
+              style={{ display: "none", visibility: "hidden" }}
+            />
+          </noscript>
+        )}
+
         {GA_ID && <AnalyticsProvider />}
+
         {children}
 
         <VercelSpeedInsightsClient />
-        
       </body>
     </html>
   );
