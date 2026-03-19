@@ -77,6 +77,9 @@ const CourseSchema = new Schema(
     // ✅ ข้อความวันอบรมสำหรับ public / email เช่น "10 มี.ค. 2569" หรือ "2 - 3 Dec 2026"
     upcomingDateText: { type: String, default: "", trim: true },
 
+    // ✅ สถานที่รอบ Public / Upcoming สำหรับแสดงบนการ์ด
+    upcomingLocation: { type: String, default: "", trim: true },
+
     status: {
       type: String,
       enum: ["draft", "published", "archived"],
@@ -104,7 +107,12 @@ const CourseSchema = new Schema(
     key_takeaways: [{ type: String }],
 
     business: {
+      // ✅ ราคาเต็ม
       price_amount: { type: Number, default: 0 },
+
+      // ✅ ราคา early bird
+      earlybird_price: { type: Number, default: 0 },
+
       price_currency: { type: String, default: "THB" },
       vat_type: {
         type: String,

@@ -34,6 +34,20 @@ function normalizeCourse(c) {
     upcomingTag: c.upcomingTag || "",
     upcomingOrder: Number(c.upcomingOrder || 0),
     upcoming_date_text: c.upcomingDateText || "",
+
+    // ✅ location สำหรับการ์ด upcoming
+    upcoming_location: c.upcomingLocation || "",
+    upcomingLocation: c.upcomingLocation || "",
+
+    // ✅ ราคา
+    full_price: Number(c?.business?.price_amount || 0),
+    fullPrice: Number(c?.business?.price_amount || 0),
+
+    earlybird_price: Number(c?.business?.earlybird_price || 0),
+    earlybirdPrice: Number(c?.business?.earlybird_price || 0),
+
+    currency: c?.business?.price_currency || "THB",
+    price_currency: c?.business?.price_currency || "THB",
   };
 }
 
@@ -64,6 +78,7 @@ export async function GET(req) {
       { slug: { $regex: q, $options: "i" } },
       { short_description: { $regex: q, $options: "i" } },
       { upcomingDateText: { $regex: q, $options: "i" } },
+      { upcomingLocation: { $regex: q, $options: "i" } },
     ];
   }
 

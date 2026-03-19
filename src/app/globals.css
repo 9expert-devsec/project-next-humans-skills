@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  scroll-behavior: smooth;
+}
+
 :root {
   --bg: #0b1c2d; /* Deep Navy */
   --panel: #1a1f24; /* Charcoal Dark */

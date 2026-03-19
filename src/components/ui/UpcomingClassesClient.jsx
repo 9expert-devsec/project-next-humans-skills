@@ -7,9 +7,13 @@ import {
   AlertTriangle,
   XCircle,
   CalendarDays,
-  Clock3,
   ArrowRight,
+  MapPin,
 } from "lucide-react";
+
+function clean(x) {
+  return String(x || "").trim();
+}
 
 function pickTitle(c, isEN) {
   return (
@@ -27,6 +31,52 @@ function pickCover(c) {
 
 function pickSlug(c) {
   return c?.slug || c?.courseSlug || "";
+}
+
+function pickLocation(c, isEN) {
+  return (
+    clean(c?.upcoming_location) ||
+    clean(c?.upcomingLocation) ||
+    clean(c?.location) ||
+    clean(c?.venue) ||
+    (isEN ? "" : "")
+  );
+}
+
+function pickFullPrice(c) {
+  const n = Number(
+    c?.full_price ??
+      c?.fullPrice ??
+      c?.price_amount ??
+      c?.business?.price_amount ??
+      0,
+  );
+  return Number.isFinite(n) ? n : 0;
+}
+
+function pickEarlyBirdPrice(c) {
+  const n = Number(
+    c?.earlybird_price ??
+      c?.earlybirdPrice ??
+      c?.early_bird_price ??
+      c?.business?.earlybird_price ??
+      c?.business?.earlyBirdPrice ??
+      0,
+  );
+  return Number.isFinite(n) ? n : 0;
+}
+
+function pickCurrency(c) {
+  return (
+    clean(c?.currency || c?.price_currency || c?.business?.price_currency) ||
+    "THB"
+  );
+}
+
+function fmtMoney(n, currency = "THB", isEN = false) {
+  const value = Number(n || 0);
+  if (!Number.isFinite(value) || value <= 0) return "";
+  return `${value.toLocaleString(isEN ? "en-US" : "th-TH")} ${currency}`;
 }
 
 // ✅ ใช้ข้อความวันอบรมจากหลังบ้านก่อน
@@ -66,7 +116,7 @@ function getUpcomingBadge(tag, isEN) {
     return {
       label: isEN ? "Nearly full" : "ใกล้เต็ม",
       Icon: AlertTriangle,
-      className: "bg-amber-500/80 text-amber-100 ring-amber-500/30",
+      className: "bg-amber-500/85 text-amber-100 ring-amber-500/30",
     };
   }
 
@@ -74,15 +124,33 @@ function getUpcomingBadge(tag, isEN) {
     return {
       label: isEN ? "Full" : "เต็ม",
       Icon: XCircle,
-      className: "bg-rose-500/80 text-rose-100 ring-rose-500/30",
+      className: "bg-rose-500/85 text-rose-100 ring-rose-500/30",
     };
   }
 
   return {
     label: isEN ? "Open" : "เปิดรับสมัคร",
     Icon: CheckCircle2,
-    className: "bg-emerald-500/80 text-emerald-100 ring-emerald-500/30",
+    className: "bg-emerald-500/85 text-emerald-100 ring-emerald-500/30",
   };
+}
+
+function PriceCapsule({ label, value, tone = "slate" }) {
+  if (!value) return null;
+
+  const toneClass =
+    tone === "amber"
+      ? "border-amber-400/25 bg-amber-500/15 text-amber-100 ring-amber-400/15"
+      : "border-sky-400/20 bg-slate-900/35 text-slate-100 ring-white/10";
+
+  return (
+    <div
+      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-semibold ring-1 ${toneClass}`}
+    >
+      <span className="opacity-80">{label}</span>
+      <span className="font-extrabold">{value}</span>
+    </div>
+  );
 }
 
 export default function UpcomingClassesClient({ locale = "th", limit = 4 }) {
@@ -138,9 +206,10 @@ export default function UpcomingClassesClient({ locale = "th", limit = 4 }) {
               <div className="flex-1 p-5">
                 <div className="h-4 w-3/5 rounded-xl bg-white/5 animate-pulse" />
                 <div className="mt-3 h-3 w-4/5 rounded-xl bg-white/5 animate-pulse" />
-                <div className="mt-4 flex gap-2">
-                  <div className="h-7 w-28 rounded-full bg-white/5 animate-pulse" />
-                  <div className="h-7 w-24 rounded-full bg-white/5 animate-pulse" />
+                <div className="mt-4 h-3 w-2/5 rounded-xl bg-white/5 animate-pulse" />
+                <div className="mt-5 flex gap-2">
+                  <div className="h-8 w-28 rounded-full bg-white/5 animate-pulse" />
+                  <div className="h-8 w-32 rounded-full bg-white/5 animate-pulse" />
                 </div>
               </div>
             </div>
@@ -168,7 +237,11 @@ export default function UpcomingClassesClient({ locale = "th", limit = 4 }) {
 
         const badge = getUpcomingBadge(c?.upcomingTag, isEN);
         const roundDateLabel = pickRoundDateLabel(c, isEN);
-        const days = Math.max(1, Number(c?.duration_days || 1));
+        const locationText = pickLocation(c, isEN);
+
+        const currency = pickCurrency(c);
+        const fullPriceText = fmtMoney(pickFullPrice(c), currency, isEN);
+        const earlyBirdText = fmtMoney(pickEarlyBirdPrice(c), currency, isEN);
 
         return (
           <Link
@@ -204,13 +277,6 @@ export default function UpcomingClassesClient({ locale = "th", limit = 4 }) {
                   </div>
                 )}
 
-                {/* overlays */}
-                {/* <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_120%_at_50%_30%,rgba(0,0,0,0)_35%,rgba(0,0,0,0.65)_100%)]" />
-                <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_60%_at_85%_10%,rgba(56,189,248,0.35)_0%,rgba(56,189,248,0)_60%)]" />
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/65 via-black/25 to-black/0 sm:bg-gradient-to-t" />
-                <div className="pointer-events-none absolute inset-0 opacity-[0.10] mix-blend-overlay [background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22120%22 height=%22120%22><filter id=%22n%22><feTurbulence type=%22fractalNoise%22 baseFrequency=%220.8%22 numOctaves=%221%22 stitchTiles=%22stitch%22/></filter><rect width=%22120%22 height=%22120%22 filter=%22url(%23n)%22 opacity=%220.6%22/></svg>')]" /> */}
-
-                {/* badge */}
                 <div
                   className={`absolute left-3 top-3 inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ring-1 ${badge.className}`}
                 >
@@ -220,39 +286,49 @@ export default function UpcomingClassesClient({ locale = "th", limit = 4 }) {
               </div>
 
               {/* Content */}
-              <div className="relative flex-1 p-5">
-                <div className="flex items-start justify-between gap-3">
+              <div className="relative flex flex-1 flex-col p-5">
+                <div>
                   <div className="mt-1 line-clamp-2 text-lg font-semibold leading-snug text-white sm:text-xl">
                     {title}
                   </div>
 
-                  <div className="hidden items-center gap-2 text-sm font-semibold text-white/85 sm:inline-flex">
-                    {isEN ? "View" : "ดู"}
-                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                  </div>
+                  {locationText ? (
+                    <div className="mt-2 inline-flex items-center gap-2 text-xs font-medium text-white/70">
+                      <MapPin className="h-3.5 w-3.5 shrink-0 text-cyan-200/90" />
+                      <span className="line-clamp-1">{locationText}</span>
+                    </div>
+                  ) : null}
+
+                  {c?.short_description ? (
+                    <div className="mt-2 line-clamp-2 text-sm text-white/65">
+                      {String(c.short_description)}
+                    </div>
+                  ) : null}
                 </div>
 
-                {c?.short_description ? (
-                  <div className="mt-2 line-clamp-2 text-sm text-white/65">
-                    {String(c.short_description)}
-                  </div>
-                ) : null}
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <PriceCapsule
+                    label={isEN ? "Full price" : "ราคาเต็ม"}
+                    value={fullPriceText}
+                    tone="slate"
+                  />
+                  <PriceCapsule
+                    label={isEN ? "Early bird" : "Early Bird"}
+                    value={earlyBirdText}
+                    tone="amber"
+                  />
+                </div>
 
-                <div className="mt-4 flex flex-wrap justify-end gap-2">
-                  <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white/85 ring-1 ring-white/10">
-                    <Clock3 className="h-4 w-4 text-white/75" />
-                    {isEN ? `${days} day(s)` : `${days} วัน`}
-                  </span>
-
-                  <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white/85 ring-1 ring-white/10">
+                <div className="mt-5 flex items-end justify-between gap-3">
+                  <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-white/85 ring-1 ring-white/10">
                     <CalendarDays className="h-4 w-4 text-white/75" />
                     {roundDateLabel}
-                  </span>
-                </div>
+                  </div>
 
-                <div className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-white/85 sm:hidden">
-                  {isEN ? "View details" : "ดูรายละเอียด"}
-                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                  <div className="inline-flex items-center gap-2 text-sm font-semibold text-white/90">
+                    <span>{isEN ? "View details" : "ดูรายละเอียด"}</span>
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                  </div>
                 </div>
               </div>
             </div>
