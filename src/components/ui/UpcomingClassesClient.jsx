@@ -140,15 +140,18 @@ function PriceCapsule({ label, value, tone = "slate" }) {
 
   const toneClass =
     tone === "amber"
-      ? "border-amber-400/25 bg-amber-500/15 text-amber-100 ring-amber-400/15"
-      : "border-sky-400/20 bg-slate-900/35 text-slate-100 ring-white/10";
+      ? "text-[#ebc246] text-[14px]"
+      : "text-slate-100 text-[11px]";
+
+  const markPrice =
+    tone === "amber" ? "text-[20px]" : "line-through text-white/50";
 
   return (
     <div
-      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-semibold ring-1 ${toneClass}`}
+      className={`inline-flex items-end gap-2 rounded-full font-semibold ${toneClass}`}
     >
-      <span className="opacity-80">{label}</span>
-      <span className="font-extrabold">{value}</span>
+      <span className="opacity-80 leading-none">{label}</span>
+      <span className={`font-extrabold leading-none ${markPrice}`}>{value}</span>
     </div>
   );
 }
@@ -247,6 +250,7 @@ export default function UpcomingClassesClient({ locale = "th", limit = 4 }) {
           <Link
             key={c?._id || slug || title}
             href={href}
+            scroll={true}
             className="
               group relative overflow-hidden rounded-[28px]
               border border-white/15 bg-white/10 backdrop-blur-xl
@@ -287,43 +291,48 @@ export default function UpcomingClassesClient({ locale = "th", limit = 4 }) {
 
               {/* Content */}
               <div className="relative flex flex-1 flex-col p-5">
-                <div>
-                  <div className="mt-1 line-clamp-2 text-lg font-semibold leading-snug text-white sm:text-xl">
+                <div className="flex flex-col gap-2">
+                  <div className="line-clamp-2 text-lg font-semibold leading-snug text-white sm:text-xl">
                     {title}
                   </div>
 
+                  <div className="inline-flex items-center gap-2 text-xs font-semibold text-white">
+                    <CalendarDays className="h-4 w-4 text-cyan-200/90" />
+                    {roundDateLabel}
+                  </div>
+
                   {locationText ? (
-                    <div className="mt-2 inline-flex items-center gap-2 text-xs font-medium text-white/70">
+                    <div className="inline-flex items-center gap-2 text-xs font-semibold text-white">
                       <MapPin className="h-3.5 w-3.5 shrink-0 text-cyan-200/90" />
                       <span className="line-clamp-1">{locationText}</span>
                     </div>
                   ) : null}
 
                   {c?.short_description ? (
-                    <div className="mt-2 line-clamp-2 text-sm text-white/65">
+                    <div className="line-clamp-2 text-sm text-white/65">
                       {String(c.short_description)}
                     </div>
                   ) : null}
                 </div>
+                <div className="flex justify-between items-end">
+                  <div className="mt-4 flex flex-col gap-2 items-start">
+                    <PriceCapsule
+                      label={isEN ? "Full price" : "ราคาเต็ม"}
+                      value={fullPriceText}
+                      tone="slate"
+                    />
+                    <PriceCapsule
+                      label={isEN ? "Early bird" : "Early Bird"}
+                      value={earlyBirdText}
+                      tone="amber"
+                    />
+                  </div>
 
-                <div className="mt-4 flex flex-wrap items-center gap-2">
-                  <PriceCapsule
-                    label={isEN ? "Full price" : "ราคาเต็ม"}
-                    value={fullPriceText}
-                    tone="slate"
-                  />
-                  <PriceCapsule
-                    label={isEN ? "Early bird" : "Early Bird"}
-                    value={earlyBirdText}
-                    tone="amber"
-                  />
-                </div>
-
-                <div className="mt-5 flex items-end justify-between gap-3">
-                  <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-white/85 ring-1 ring-white/10">
+                  {/* <div className="mt-5 flex items-end"> */}
+                  {/* <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-white/85 ring-1 ring-white/10">
                     <CalendarDays className="h-4 w-4 text-white/75" />
                     {roundDateLabel}
-                  </div>
+                  </div> */}
 
                   <div className="inline-flex items-center gap-2 text-sm font-semibold text-white/90">
                     <span>{isEN ? "View details" : "ดูรายละเอียด"}</span>

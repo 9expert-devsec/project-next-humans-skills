@@ -14,7 +14,7 @@ function Badge({ active }) {
         "inline-flex items-center rounded-full px-3 py-1 text-xs font-extrabold ring-1",
         active
           ? "bg-emerald-500/15 text-emerald-200 ring-emerald-500/30"
-          : "bg-rose-500/15 text-rose-200 ring-rose-500/30"
+          : "bg-rose-500/15 text-rose-200 ring-rose-500/30",
       )}
     >
       {active ? "Active" : "Inactive"}
@@ -22,7 +22,48 @@ function Badge({ active }) {
   );
 }
 
-export default function AdminCoursesClient({ locale }) {
+function UpcomingBadge({ item }) {
+  const isUpcoming = !!item?.isUpcoming;
+  const tag = String(item?.upcomingTag || "").trim();
+
+  if (!isUpcoming) {
+    return (
+      <span className="inline-flex rounded-full bg-white/5 px-3 py-1 text-xs font-extrabold text-white/55 ring-1 ring-white/10">
+        No upcoming
+      </span>
+    );
+  }
+
+  if (tag === "full") {
+    return (
+      <span className="inline-flex rounded-full bg-rose-500/15 px-3 py-1 text-xs font-extrabold text-rose-200 ring-1 ring-rose-500/30">
+        Full
+      </span>
+    );
+  }
+
+  if (tag === "nearly_full") {
+    return (
+      <span className="inline-flex rounded-full bg-amber-500/15 px-3 py-1 text-xs font-extrabold text-amber-200 ring-1 ring-amber-500/30">
+        Nearly full
+      </span>
+    );
+  }
+
+  return (
+    <span className="inline-flex rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-extrabold text-emerald-200 ring-1 ring-emerald-500/30">
+      Open
+    </span>
+  );
+}
+
+function fmtMoney(n, currency = "THB") {
+  const x = Number(n || 0);
+  if (!Number.isFinite(x) || x <= 0) return "-";
+  return `${x.toLocaleString()} ${currency}`;
+}
+
+export default function AdminCoursesClient({ locale, adminKey }) {
   const [items, setItems] = useState([]);
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(false);
@@ -48,25 +89,22 @@ export default function AdminCoursesClient({ locale }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
-      {/* watermark (ลบทีหลังได้) */}
-      <div className="fixed bottom-4 right-4 z-[9999] rounded-xl bg-emerald-500/20 px-3 py-2 text-xs font-bold text-emerald-200 ring-1 ring-emerald-500/30">
-        USING: AdminCoursesClient.jsx (NEW)
-      </div>
+  const baseAdmin = `/${locale}/${adminKey}/admin`;
 
+  return (
+    <div className="mx-auto max-w-7xl px-4 py-8">
       <div className="flex items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight text-white">
             Courses
           </h1>
           <p className="mt-2 text-sm text-white/70">
-            จัดการคอร์สทั้งหมด (สร้าง/แก้ไข/ราคา/สถานะ)
+            จัดการคอร์สทั้งหมด (สร้าง/แก้ไข/ราคา/สถานะ/Upcoming)
           </p>
         </div>
 
         <Link
-          href={`/${locale}/k8Pz7M2xYn5R0wLq/admin/courses/new`}
+          href={`${baseAdmin}/courses/new`}
           className="rounded-xl bg-white px-4 py-2.5 text-sm font-extrabold text-slate-900 hover:bg-white/90"
         >
           + New Course
@@ -94,11 +132,14 @@ export default function AdminCoursesClient({ locale }) {
       {/* table */}
       <div className="mt-6 overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px] text-left text-sm text-white/85">
+          <table className="w-full min-w-[1220px] text-left text-sm text-white/85">
             <thead className="bg-black/25 text-xs text-white/60">
               <tr>
                 <th className="px-5 py-3 font-semibold">Title (TH)</th>
                 <th className="px-5 py-3 font-semibold">Slug</th>
+                <th className="px-5 py-3 font-semibold">Upcoming</th>
+                <th className="px-5 py-3 font-semibold">Location</th>
+                <th className="px-5 py-3 font-semibold">Date</th>
                 <th className="px-5 py-3 font-semibold">Price</th>
                 <th className="px-5 py-3 font-semibold">Status</th>
                 <th className="px-5 py-3 text-right font-semibold">Action</th>
@@ -108,7 +149,7 @@ export default function AdminCoursesClient({ locale }) {
             <tbody>
               {items.length === 0 ? (
                 <tr>
-                  <td className="px-5 py-6 text-white/50" colSpan={5}>
+                  <td className="px-5 py-6 text-white/50" colSpan={8}>
                     {loading ? "Loading..." : "No courses"}
                   </td>
                 </tr>
@@ -136,13 +177,38 @@ export default function AdminCoursesClient({ locale }) {
                     </td>
 
                     <td className="px-5 py-4">
-                      {c?.business?.price_amount
-                        ? `${Number(
-                            c.business.price_amount
-                          ).toLocaleString()} ${
-                            c.business.price_currency || "THB"
-                          }`
-                        : "-"}
+                      <UpcomingBadge item={c} />
+                    </td>
+
+                    <td className="px-5 py-4">
+                      <div className="max-w-[180px] truncate text-white/80">
+                        {c.upcomingLocation || "-"}
+                      </div>
+                    </td>
+
+                    <td className="px-5 py-4">
+                      <div className="text-white/80">
+                        {c.upcomingDateText || "-"}
+                      </div>
+                    </td>
+
+                    <td className="px-5 py-4">
+                      <div className="space-y-1">
+                        <div className="text-white/90">
+                          Full:{" "}
+                          {fmtMoney(
+                            c?.business?.price_amount,
+                            c?.business?.price_currency || "THB",
+                          )}
+                        </div>
+                        <div className="text-xs text-amber-200">
+                          Early:{" "}
+                          {fmtMoney(
+                            c?.business?.earlybird_price,
+                            c?.business?.price_currency || "THB",
+                          )}
+                        </div>
+                      </div>
                     </td>
 
                     <td className="px-5 py-4">
@@ -151,7 +217,7 @@ export default function AdminCoursesClient({ locale }) {
 
                     <td className="px-5 py-4 text-right">
                       <Link
-                        href={`/${locale}/k8Pz7M2xYn5R0wLq/admin/courses/${c._id}/edit`}
+                        href={`${baseAdmin}/courses/${c._id}/edit`}
                         className="rounded-lg bg-white px-3 py-2 text-xs font-extrabold text-slate-900 hover:bg-white/90"
                       >
                         Edit

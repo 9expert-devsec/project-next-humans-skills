@@ -149,6 +149,9 @@ function normalizePatch(body = {}, existing = {}) {
     upcomingDateText: cleanStr(
       body?.upcomingDateText ?? existing.upcomingDateText ?? "",
     ),
+    upcomingLocation: cleanStr(
+      body?.upcomingLocation ?? existing.upcomingLocation ?? "",
+    ),
 
     status: ["draft", "published", "archived"].includes(body.status)
       ? body.status
@@ -206,6 +209,11 @@ function normalizePatch(body = {}, existing = {}) {
           price_amount: Number(
             body?.business?.price_amount ??
               existing?.business?.price_amount ??
+              0,
+          ),
+          earlybird_price: Number(
+            body?.business?.earlybird_price ??
+              existing?.business?.earlybird_price ??
               0,
           ),
           price_currency:
@@ -302,6 +310,7 @@ export async function PUT(req, ctx) {
   const unset = {};
   if (patch.business && typeof patch.business === "object") {
     $set["business.price_amount"] = patch.business.price_amount ?? 0;
+    $set["business.earlybird_price"] = patch.business.earlybird_price ?? 0;
     $set["business.price_currency"] = patch.business.price_currency ?? "THB";
     $set["business.vat_type"] = patch.business.vat_type ?? "";
 

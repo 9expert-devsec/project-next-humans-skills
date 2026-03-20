@@ -56,6 +56,10 @@ export default function CoursePublicDetailClient({ locale = "th", course }) {
     });
   }, [slug]);
 
+  useEffect(() => {
+    window.scrollTo({top: 0, behavior: "auto"});
+  },[]);
+
   const short = course?.short_description || course?.short || "";
 
   const detail =

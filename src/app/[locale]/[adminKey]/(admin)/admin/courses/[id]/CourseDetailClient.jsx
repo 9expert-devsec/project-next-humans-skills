@@ -2,6 +2,35 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+function fmtMoney(n, currency = "THB") {
+  const x = Number(n || 0);
+  if (!Number.isFinite(x) || x <= 0) return "-";
+  return `${x.toLocaleString()} ${currency}`;
+}
+
+function UpcomingChip({ item }) {
+  const isUpcoming = !!item?.isUpcoming;
+  const tag = String(item?.upcomingTag || "").trim();
+
+  if (!isUpcoming) {
+    return (
+      <span className="ns-chip" style={{ opacity: 0.7 }}>
+        No upcoming
+      </span>
+    );
+  }
+
+  if (tag === "full") {
+    return <span className="ns-chip">Full</span>;
+  }
+
+  if (tag === "nearly_full") {
+    return <span className="ns-chip">Nearly full</span>;
+  }
+
+  return <span className="ns-chip">Open</span>;
+}
+
 export default function CourseDetailClient({ locale = "th", id, ssrItem }) {
   const t = useMemo(() => {
     return locale === "en"
@@ -22,6 +51,11 @@ export default function CourseDetailClient({ locale = "th", id, ssrItem }) {
           detailTH: "Detail (TH)",
           detailEN: "Detail (EN)",
           status: "Status",
+          upcoming: "Upcoming",
+          location: "Location",
+          date: "Date",
+          fullPrice: "Full price",
+          earlybird: "Early bird",
         }
       : {
           loading: "กำลังโหลด...",
@@ -40,6 +74,11 @@ export default function CourseDetailClient({ locale = "th", id, ssrItem }) {
           detailTH: "รายละเอียด (TH)",
           detailEN: "รายละเอียด (EN)",
           status: "สถานะ",
+          upcoming: "Upcoming",
+          location: "สถานที่",
+          date: "วันอบรม",
+          fullPrice: "ราคาเต็ม",
+          earlybird: "ราคา Early Bird",
         };
   }, [locale]);
 
@@ -133,15 +172,50 @@ export default function CourseDetailClient({ locale = "th", id, ssrItem }) {
               </div>
             </div>
           </div>
+
+          <div style={{ marginTop: 18 }} className="ns-infoGrid">
+            <div className="ns-infoRow">
+              <div className="ns-infoKey">{t.upcoming}</div>
+              <div className="ns-infoVal">
+                <UpcomingChip item={item} />
+              </div>
+            </div>
+            <div className="ns-infoRow">
+              <div className="ns-infoKey">{t.location}</div>
+              <div className="ns-infoVal">{item.upcomingLocation || "-"}</div>
+            </div>
+            <div className="ns-infoRow">
+              <div className="ns-infoKey">{t.date}</div>
+              <div className="ns-infoVal">{item.upcomingDateText || "-"}</div>
+            </div>
+            <div className="ns-infoRow">
+              <div className="ns-infoKey">{t.fullPrice}</div>
+              <div className="ns-infoVal">
+                {fmtMoney(
+                  item?.business?.price_amount,
+                  item?.business?.price_currency || "THB",
+                )}
+              </div>
+            </div>
+            <div className="ns-infoRow">
+              <div className="ns-infoKey">{t.earlybird}</div>
+              <div className="ns-infoVal">
+                {fmtMoney(
+                  item?.business?.earlybird_price,
+                  item?.business?.price_currency || "THB",
+                )}
+              </div>
+            </div>
+          </div>
         </div>
 
         <div>
           <div className="ns-muted" style={{ marginBottom: 8 }}>
             {t.cover}
           </div>
-          {item.coverUrl ? (
+          {item.cover_image || item.coverUrl ? (
             <div className="ns-coverPreview">
-              <img src={item.coverUrl} alt="cover" />
+              <img src={item.cover_image || item.coverUrl} alt="cover" />
             </div>
           ) : (
             <div className="ns-emptyBox">No cover</div>
@@ -154,13 +228,13 @@ export default function CourseDetailClient({ locale = "th", id, ssrItem }) {
           <div className="ns-muted" style={{ marginBottom: 6 }}>
             {t.shortTH}
           </div>
-          <div className="ns-prose">{item.short_th || "-"}</div>
+          <div className="ns-prose">{item.short_description || "-"}</div>
         </div>
         <div>
           <div className="ns-muted" style={{ marginBottom: 6 }}>
             {t.shortEN}
           </div>
-          <div className="ns-prose">{item.short_en || "-"}</div>
+          <div className="ns-prose">{item.short_description || "-"}</div>
         </div>
       </div>
 
@@ -169,13 +243,13 @@ export default function CourseDetailClient({ locale = "th", id, ssrItem }) {
           <div className="ns-muted" style={{ marginBottom: 6 }}>
             {t.detailTH}
           </div>
-          <div className="ns-prose">{item.detail_th || "-"}</div>
+          <div className="ns-prose">{item?.content?.rationale || "-"}</div>
         </div>
         <div>
           <div className="ns-muted" style={{ marginBottom: 6 }}>
             {t.detailEN}
           </div>
-          <div className="ns-prose">{item.detail_en || "-"}</div>
+          <div className="ns-prose">{item?.content?.rationale || "-"}</div>
         </div>
       </div>
 

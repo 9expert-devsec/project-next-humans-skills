@@ -146,6 +146,7 @@ function normalizeBody(body = {}) {
     upcomingTag,
     upcomingOrder: Math.max(0, Number(body.upcomingOrder || 0)),
     upcomingDateText: cleanStr(body.upcomingDateText),
+    upcomingLocation: cleanStr(body.upcomingLocation),
 
     status: ["draft", "published", "archived"].includes(body.status)
       ? body.status
@@ -177,6 +178,7 @@ function normalizeBody(body = {}) {
 
     business: {
       price_amount: Number(body?.business?.price_amount || 0),
+      earlybird_price: Number(body?.business?.earlybird_price || 0),
       price_currency:
         cleanStr(body?.business?.price_currency || "THB") || "THB",
       vat_type: ["include", "exclude", ""].includes(body?.business?.vat_type)
@@ -211,6 +213,7 @@ export async function GET(req) {
       { slug: { $regex: q, $options: "i" } },
       { short_description: { $regex: q, $options: "i" } },
       { upcomingDateText: { $regex: q, $options: "i" } },
+      { upcomingLocation: { $regex: q, $options: "i" } },
     ];
   }
   if (["draft", "published", "archived"].includes(status)) {

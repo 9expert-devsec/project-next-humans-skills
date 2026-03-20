@@ -153,7 +153,7 @@ export default function RootLayout({ children }) {
     <html
       lang="th"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} scroll-smooth`}
+      className={`${geistSans.variable} ${geistMono.variable}`}
     >
       <head>
         {GTM_ID && (

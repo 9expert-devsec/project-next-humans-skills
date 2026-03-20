@@ -99,11 +99,11 @@ export default function AdminCourseFormClient({
       status: it?.status || "draft",
       isActive: typeof it?.isActive === "boolean" ? it.isActive : true,
 
-      // ✅ upcoming
       isUpcoming: !!it?.isUpcoming,
       upcomingTag: it?.upcomingTag || "",
       upcomingOrder: Number(it?.upcomingOrder || 0),
       upcomingDateText: it?.upcomingDateText || "",
+      upcomingLocation: it?.upcomingLocation || "",
 
       cover_image: it?.cover_image || "",
 
@@ -125,6 +125,7 @@ export default function AdminCourseFormClient({
 
       business: {
         price_amount: it?.business?.price_amount || 0,
+        earlybird_price: it?.business?.earlybird_price || 0,
         price_currency: it?.business?.price_currency || "THB",
         vat_type: it?.business?.vat_type || "",
       },
@@ -149,11 +150,11 @@ export default function AdminCourseFormClient({
       status: form.status,
       isActive: !!form.isActive,
 
-      // ✅ upcoming
       isUpcoming: !!form.isUpcoming,
       upcomingTag: form.upcomingTag || "",
       upcomingOrder: Math.max(0, Number(form.upcomingOrder || 0)),
       upcomingDateText: form.upcomingDateText,
+      upcomingLocation: form.upcomingLocation,
 
       cover_image: form.cover_image,
       tags,
@@ -174,6 +175,7 @@ export default function AdminCourseFormClient({
 
       business: {
         price_amount: Number(form.business.price_amount || 0),
+        earlybird_price: Number(form.business.earlybird_price || 0),
         price_currency: form.business.price_currency || "THB",
         vat_type: form.business.vat_type || "",
       },
@@ -396,7 +398,6 @@ export default function AdminCourseFormClient({
 
                   {form.cover_image ? (
                     <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/20">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={form.cover_image}
                         alt="cover preview"
@@ -601,7 +602,7 @@ export default function AdminCourseFormClient({
               </Field>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-3">
+            <div className="grid gap-3 md:grid-cols-4">
               <Field label="Tag บนการ์ด Upcoming">
                 <Select
                   value={form.upcomingTag}
@@ -630,6 +631,19 @@ export default function AdminCourseFormClient({
                   }
                 />
               </Field>
+
+              <Field label="Early Bird Price">
+                <Input
+                  type="number"
+                  value={form.business.earlybird_price}
+                  onChange={(v) =>
+                    setForm((s) => ({
+                      ...s,
+                      business: { ...s.business, earlybird_price: v },
+                    }))
+                  }
+                />
+              </Field>
             </div>
 
             <Field label="ข้อความวันอบรม (ใช้ใน public / email / subject)">
@@ -641,6 +655,18 @@ export default function AdminCourseFormClient({
               />
               <div className="mt-2 text-xs text-white/50">
                 ตัวอย่าง: 10 มี.ค. 2569 หรือ 2 - 3 Dec 2026
+              </div>
+            </Field>
+
+            <Field label="สถานที่รอบ Public / Upcoming">
+              <Input
+                value={form.upcomingLocation}
+                onChange={(v) =>
+                  setForm((s) => ({ ...s, upcomingLocation: v }))
+                }
+              />
+              <div className="mt-2 text-xs text-white/50">
+                ตัวอย่าง: Jupiter อาคาร XYZ / Online via Zoom / Bitkub M Social
               </div>
             </Field>
 
