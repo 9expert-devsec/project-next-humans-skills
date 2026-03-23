@@ -5,6 +5,8 @@ import CourseGridClient from "@/components/ui/CourseGridClient";
 import ProfileFlipCard from "@/components/cards/ProfileFlipCard";
 import AudiencePill from "@/components/cards/AudiencePill";
 import NewsMediaPanelClient from "@/components/public/NewsMediaPanelClient";
+import UpcomingClassesClient from "@/components/ui/UpcomingClassesClient";
+import ScrollToUpcomingButton from "@/components/ui/ScrollToUpcomingButton";
 
 import { Crown, Briefcase, Leaf } from "lucide-react";
 
@@ -76,6 +78,13 @@ export default async function Page({ params }) {
   const locale = p?.locale === "en" ? "en" : "th";
   const isEN = locale === "en";
 
+  const handleScroll = () => {
+    document.getElementById("upcoming-classes")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
+
   const t = {
     title: isEN ? "NEXT SKILLS" : "NEXT SKILLS",
     subtitle: isEN
@@ -132,15 +141,21 @@ export default async function Page({ params }) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <section id="banner" className="mx-auto max-w-7xl mt-24">
-        <Image
-          src="/banner-landingpage-thenexthumansskills3.png"
-          alt="The Next Humans Skills"
-          width={1600}
-          height={600}
-          className="w-full h-auto rounded-3xl border border-white/10"
-          priority
-        />
+      <section id="banner" className="mx-auto mt-24 max-w-7xl">
+        <div className="relative overflow-hidden rounded-3xl">
+          <Image
+            src="/banner-landingpage-thenexthumansskills3.png"
+            alt="The Next Humans Skills"
+            width={1600}
+            height={600}
+            className="h-auto w-full rounded-3xl border border-white/10"
+            priority
+          />
+
+          <div className="absolute left-6 bottom-6 z-20 md:left-10 md:bottom-10 lg:left-20 lg:bottom-14">
+            <ScrollToUpcomingButton />
+          </div>
+        </div>
       </section>
 
       <section className="py-20">
@@ -180,7 +195,6 @@ export default async function Page({ params }) {
               company="บริษัท คีย์โซลูชั่นเทรนนิ่ง จำกัด"
               intro="ผู้เชี่ยวชาญด้านการพัฒนาซอฟต์สกิล การพัฒนาศักยภาพบุคลากร และการยกระดับองค์กร เพื่อเสริมสร้างทักษะด้านความคิด การสื่อสารและภาวะผู้นำ"
             />
-            
           </div>
         </div>
       </section>
@@ -265,6 +279,22 @@ export default async function Page({ params }) {
         <div className="text-white text-center text-xl sm:text-2xl">
           เพื่อสร้างองค์กรที่มีความยืดหยุ่น พร้อมปรับตัว
           และเติบโตอย่างยั่งยืนในยุค Digital
+        </div>
+      </section>
+
+      <section id="upcoming-classes" className="section">
+        <h2 className="text-center text-white text-4xl font-semibold">
+          {isEN ? "Upcoming Classes" : "คลาสที่กำลังจะมาถึง"}
+        </h2>
+
+        {/* <div className="mt-3 text-center text-white/70">
+          {isEN
+            ? "Public rounds with scheduled dates — register directly."
+            : "รอบอบรมแบบ Public ที่กำหนดวันไว้แล้ว — เลือกลงทะเบียนได้ทันที"}
+        </div> */}
+
+        <div className="panel mt-8">
+          <UpcomingClassesClient locale={locale} limit={4} />
         </div>
       </section>
 

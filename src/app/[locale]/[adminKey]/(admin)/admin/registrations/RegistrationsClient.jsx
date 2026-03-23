@@ -89,7 +89,8 @@ function renderSource(it) {
   return map[ch] || ch;
 }
 
-export default function RegistrationsClient({ locale = "th" }) {
+export default function RegistrationsClient({ locale = "th", adminKey = "" }) {
+  const baseAdmin = `/${locale}/${adminKey}/admin`;
   const router = useRouter();
   const sp = useSearchParams();
 
@@ -197,19 +198,19 @@ export default function RegistrationsClient({ locale = "th" }) {
     if (to) u.set("to", to);
     u.set("page", "1");
     router.push(
-      `/${locale}/k8Pz7M2xYn5R0wLq/admin/registrations?${u.toString()}`
+      `${baseAdmin}/registrations?${u.toString()}`
     );
   }
 
   function clearFilters() {
-    router.push(`/${locale}/k8Pz7M2xYn5R0wLq/admin/registrations`);
+    router.push(`${baseAdmin}/registrations`);
   }
 
   function goPage(p) {
     const u = new URLSearchParams(sp.toString());
     u.set("page", String(p));
     router.push(
-      `/${locale}/k8Pz7M2xYn5R0wLq/admin/registrations?${u.toString()}`
+      `${baseAdmin}/registrations?${u.toString()}`
     );
   }
 
@@ -543,7 +544,7 @@ export default function RegistrationsClient({ locale = "th" }) {
                         className="px-4 py-3 whitespace-nowrap cursor-pointer"
                         onClick={() =>
                           router.push(
-                            `/${locale}/k8Pz7M2xYn5R0wLq/admin/registrations/${it._id}`
+                            `${baseAdmin}/registrations/${it._id}`
                           )
                         }
                       >
@@ -554,7 +555,7 @@ export default function RegistrationsClient({ locale = "th" }) {
                         className="px-4 py-3 font-mono text-xs text-white/75 cursor-pointer"
                         onClick={() =>
                           router.push(
-                            `/${locale}/k8Pz7M2xYn5R0wLq/admin/registrations/${it._id}`
+                            `${baseAdmin}/registrations/${it._id}`
                           )
                         }
                       >
@@ -565,7 +566,7 @@ export default function RegistrationsClient({ locale = "th" }) {
                         className="px-4 py-3 cursor-pointer"
                         onClick={() =>
                           router.push(
-                            `/${locale}/k8Pz7M2xYn5R0wLq/admin/registrations/${it._id}`
+                            `${baseAdmin}/registrations/${it._id}`
                           )
                         }
                       >

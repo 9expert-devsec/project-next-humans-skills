@@ -729,7 +729,7 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
     return (
       <div className="mx-auto max-w-4xl mt-32 px-4 py-10 text-white">
         <div className="text-2xl font-extrabold">Loading...</div>
-        <div className="mt-2 text-white/60">กำลังพาท่านไปยังหน้าลงทะเบียน</div>
+        <div className="mt-2 text-white/60">กำลังพาท่านไปยังหน้าขอใบเสนอราคา</div>
         <button
           onClick={() => router.push(`/${locale}`)}
           className="mt-5 inline-flex rounded-xl bg-white px-4 py-2 text-sm font-extrabold text-slate-900"
@@ -760,12 +760,12 @@ export default function RegisterStep1Client({ locale = "th", courseSlug }) {
         </div>
         <div className="mt-4">
           <div className="text-4xl font-extrabold text-white text-center">
-            {isEN ? "Register" : "ลงทะเบียน"}
+            {isEN ? "Request Quotation" : "ขอใบเสนอราคา"}
           </div>
           <div className="mt-2 text-sm text-white/60 text-center">
             {isEN
-              ? "Fill in information for registration inquiry"
-              : "กรอกข้อมูลเพื่อส่งความสนใจลงทะเบียน"}
+              ? "Fill in information for quotation request"
+              : "กรอกข้อมูลเพื่อส่งคำขอใบเสนอราคา"}
           </div>
         </div>
         <div className="mt-6">
