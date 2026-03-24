@@ -4,12 +4,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
-function cx(...a) {
-  return a.filter(Boolean).join(" ");
-}
-
 function pickTitle(c, isEN) {
-  // รองรับทั้งรูปแบบ normalize ที่คุณส่งจาก API + เผื่อรูปแบบเก่าที่เคยใช้
   return (
     (isEN ? c?.title_en : c?.title_th) ||
     c?.title_th ||
@@ -20,25 +15,39 @@ function pickTitle(c, isEN) {
   );
 }
 
-function pickShort(c, isEN) {
-  return (
-    c?.short_description ||
-    c?.short ||
-    (isEN ? c?.short_en : c?.short_th) ||
-    c?.short_th ||
-    c?.short_en ||
-    c?.detailTh ||
-    c?.detailEn ||
-    ""
-  );
-}
-
 function pickCover(c) {
   return c?.cover_image || c?.cover || c?.coverUrl || c?.cover_url || "";
 }
 
 function pickSlug(c) {
   return c?.slug || c?.courseSlug || "";
+}
+
+function isPublicUpcomingCourse(c) {
+  return !!c?.isUpcoming;
+}
+
+function getUpcomingStatusUi(c, isEN) {
+  const tag = String(c?.upcomingTag || "").trim();
+
+  if (tag === "full") {
+    return {
+      text: isEN ? "Full" : "เต็ม",
+      dot: "bg-rose-400",
+    };
+  }
+
+  if (tag === "nearly_full") {
+    return {
+      text: isEN ? "Nearly full" : "ใกล้เต็ม",
+      dot: "bg-amber-300",
+    };
+  }
+
+  return {
+    text: isEN ? "Open" : "เปิดรับ",
+    dot: "bg-emerald-400",
+  };
 }
 
 export default function CourseGridClient({ locale = "th", limit = 4 }) {
@@ -55,7 +64,7 @@ export default function CourseGridClient({ locale = "th", limit = 4 }) {
       try {
         const res = await fetch(
           `/api/public/courses?limit=${encodeURIComponent(limit)}`,
-          { cache: "no-store" }
+          { cache: "no-store" },
         );
         const data = await res.json().catch(() => ({}));
 
@@ -80,7 +89,7 @@ export default function CourseGridClient({ locale = "th", limit = 4 }) {
 
   const emptyText = useMemo(
     () => (isEN ? "No courses yet" : "ยังไม่มีคอร์ส"),
-    [isEN]
+    [isEN],
   );
 
   if (items === null) {
@@ -91,13 +100,13 @@ export default function CourseGridClient({ locale = "th", limit = 4 }) {
             key={i}
             className="overflow-hidden rounded-3xl border border-white/10 bg-white/5"
           >
-            <div className="aspect-[16/9] w-full bg-white/5 animate-pulse" />
+            <div className="aspect-[16/9] w-full animate-pulse bg-white/5" />
             <div className="p-4">
-              <div className="h-4 w-4/5 rounded-xl bg-white/5 animate-pulse" />
-              <div className="mt-3 h-3 w-3/5 rounded-xl bg-white/5 animate-pulse" />
+              <div className="h-4 w-4/5 animate-pulse rounded-xl bg-white/5" />
+              <div className="mt-3 h-3 w-3/5 animate-pulse rounded-xl bg-white/5" />
               <div className="mt-4 flex gap-2">
-                <div className="h-6 w-20 rounded-full bg-white/5 animate-pulse" />
-                <div className="h-6 w-16 rounded-full bg-white/5 animate-pulse" />
+                <div className="h-6 w-20 animate-pulse rounded-full bg-white/5" />
+                <div className="h-6 w-16 animate-pulse rounded-full bg-white/5" />
               </div>
             </div>
           </div>
@@ -118,37 +127,34 @@ export default function CourseGridClient({ locale = "th", limit = 4 }) {
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       {items.map((c) => {
         const title = pickTitle(c, isEN);
-        const desc = pickShort(c, isEN);
         const cover = pickCover(c);
         const slug = pickSlug(c);
-
         const href = slug ? `/${locale}/courses/${slug}` : `/${locale}`;
+
+        const upcomingCourse = isPublicUpcomingCourse(c);
+        const upcomingUi = getUpcomingStatusUi(c, isEN);
 
         return (
           <Link
             key={c?._id || slug || title}
             href={href}
             className="
-        group relative block w-full overflow-hidden rounded-3xl
-        bg-white/10 backdrop-blur-xl
-        border border-white/15
-        shadow-[0_14px_40px_rgba(0,0,0,0.35)]
-        transition-transform duration-200 hover:-translate-y-1
-      "
-            // className={cx(
-            //   "group overflow-hidden rounded-3xl border border-white/10 bg-white/5",
-            //   "transition hover:bg-white/7 hover:border-white/15"
-            // )}
+              group relative block w-full overflow-hidden rounded-3xl
+              border border-white/15 bg-white/10
+              shadow-[0_14px_40px_rgba(0,0,0,0.35)]
+              backdrop-blur-xl
+              transition-transform duration-200 hover:-translate-y-1
+            "
           >
             <div
               className="pointer-events-none absolute inset-0 rounded-3xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-              style={{
-                boxShadow: `
-            inset 0 0 0 3px rgba(59, 130, 246, 0.95),
-            0 0 0 3px rgba(59, 130, 246, 0.6),
-            0 0 60px rgba(59, 130, 246, 0.55),
-          `,
-              }}
+              // style={{
+              //   boxShadow: `
+              //     inset 0 0 0 3px rgba(59, 130, 246, 0.95),
+              //     0 0 0 3px rgba(59, 130, 246, 0.6),
+              //     0 0 60px rgba(59, 130, 246, 0.55)
+              //   `,
+              // }}
             />
 
             <div className="relative aspect-[16/9] w-full bg-black/20">
@@ -165,55 +171,48 @@ export default function CourseGridClient({ locale = "th", limit = 4 }) {
                   No cover
                 </div>
               )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-black/0" />
+
+              <div className="absolute inset-0 bg-gradient-to-t from-black/0 via-black/10 to-black/0" />
             </div>
 
             <div className="relative p-5">
-              <div className="text-white text-lg font-semibold leading-snug">
+              <div className="text-lg font-semibold leading-snug text-white">
                 {title}
               </div>
 
-              {/* <div className="mt-1 text-sm text-white/60 line-clamp-2">
-                {desc
-                  ? String(desc).slice(0, 110)
-                  : isEN
-                  ? "View details"
-                  : "ดูรายละเอียด"}
-              </div> */}
-
               <div className="mt-4 flex flex-col gap-2">
                 {c?.level ? (
-                  <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-sm  text-white/70 ring-1 ring-white/10 w-fit border border-white/10 font-semibold">
+                  <span className="inline-flex w-fit items-center rounded-full border border-white/10 bg-white/10 px-3 py-1 text-sm font-semibold text-white/70 ring-1 ring-white/10">
                     {c.level}
                   </span>
                 ) : null}
 
                 <div className="flex flex-wrap gap-2">
-                  <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs  text-white/80 ring-1 ring-white/10">
-                    <span
-                      className="h-2 w-2 rounded-full"
-                      style={{ background: "var(--acc-blue)" }}
-                    />
-                    {isEN ? "Register" : "ลงทะเบียน"}
-                  </span>
+                  {upcomingCourse ? (
+                    <>
+                      <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs text-white/80 ring-1 ring-white/10">
+                        <span
+                          className="h-2 w-2 rounded-full"
+                          style={{ background: "var(--acc-blue)" }}
+                        />
+                        {isEN ? "Register" : "ลงทะเบียน"}
+                      </span>
 
-                  <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs  text-white/80 ring-1 ring-white/10 ">
-                    <span
-                      className="h-2 w-2 rounded-full"
-                      style={{
-                        background: c?.isActive
-                          ? "var(--acc-green)"
-                          : "rgba(255,255,255,.35)",
-                      }}
-                    />
-                    {c?.isActive
-                      ? isEN
-                        ? "Active"
-                        : "เปิดรับ"
-                      : isEN
-                      ? "Draft"
-                      : "ร่าง"}
-                  </span>
+                      <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs text-white/80 ring-1 ring-white/10">
+                        <span
+                          className={`h-2 w-2 rounded-full ${upcomingUi.dot}`}
+                        />
+                        {upcomingUi.text}
+                      </span>
+                    </>
+                  ) : (
+                    <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-normal text-white/80 ">
+                      <span className="h-2 w-2 rounded-full bg-amber-300" />
+                      {isEN
+                        ? "Request In-house Quotation"
+                        : "ขอใบเสนอราคา Inhouse"}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
