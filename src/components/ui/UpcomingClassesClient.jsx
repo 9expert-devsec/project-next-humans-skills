@@ -144,7 +144,7 @@ function PriceCapsule({ label, value, tone = "slate" }) {
       : "text-slate-100 text-[11px]";
 
   const markPrice =
-    tone === "amber" ? "text-[20px]" : "line-through text-white/50";
+    tone === "amber" ? "text-[20px]" : "line-through decoration-2 decoration-red-500 text-white text-[14px]";
 
   return (
     <div
@@ -198,7 +198,7 @@ export default function UpcomingClassesClient({ locale = "th", limit = 4 }) {
 
   if (items === null) {
     return (
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 w-full">
         {Array.from({ length: Math.min(limit, 4) }).map((_, i) => (
           <div
             key={i}
@@ -231,7 +231,7 @@ export default function UpcomingClassesClient({ locale = "th", limit = 4 }) {
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
+    <div className="grid grid-cols-1 gap-6 lg:w-[80%] mx-auto">
       {items.map((c) => {
         const title = pickTitle(c, isEN);
         const cover = pickCover(c);
@@ -252,7 +252,7 @@ export default function UpcomingClassesClient({ locale = "th", limit = 4 }) {
             href={href}
             scroll={true}
             className="
-              group relative overflow-hidden rounded-[28px]
+              group relative overflow-hidden rounded-[28px] lg:h-64
               border border-white/15 bg-white/10 backdrop-blur-xl
               shadow-[0_14px_40px_rgba(0,0,0,0.35)]
               transition-transform duration-300 hover:-translate-y-1
@@ -260,17 +260,18 @@ export default function UpcomingClassesClient({ locale = "th", limit = 4 }) {
           >
             <div className="pointer-events-none absolute -top-24 left-10 h-48 w-48 rounded-full bg-white blur-3xl opacity-100" />
 
-            <div className="flex flex-col sm:flex-row">
+            <div className="flex h-full flex-col sm:flex-row">
               {/* Image */}
-              <div className="relative h-44 w-full shrink-0 sm:h-auto sm:w-60">
+              <div className="aspect-video relative shrink-0  md:w-3/7">
+                
                 {cover ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={cover}
                     alt={title}
                     className="
-                      absolute inset-0 h-full w-full object-cover
-                      object-[10%_10%]
+                      absolute inset-0 h-full w-full
+                      object-cover
                       transition duration-300 group-hover:scale-[1.03]
                     "
                     loading="lazy"
@@ -290,7 +291,7 @@ export default function UpcomingClassesClient({ locale = "th", limit = 4 }) {
               </div>
 
               {/* Content */}
-              <div className="relative flex flex-1 flex-col p-5">
+              <div className="relative flex flex-1 flex-col h-full justify-between p-5 ">
                 <div className="flex flex-col gap-2">
                   <div className="line-clamp-2 text-lg font-semibold leading-snug text-white sm:text-xl">
                     {title}
