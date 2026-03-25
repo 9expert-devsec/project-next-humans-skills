@@ -250,7 +250,7 @@ export default function UpcomingClassesClient({ locale = "th", limit = 4 }) {
           <Link
             key={c?._id || slug || title}
             href={href}
-            scroll={true}
+            scroll={false}
             className="
               group relative overflow-hidden rounded-[28px] lg:h-64
               border border-white/15 bg-white/10 backdrop-blur-xl
