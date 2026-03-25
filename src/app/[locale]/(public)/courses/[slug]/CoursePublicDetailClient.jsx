@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { gaEvent } from "@/lib/ga";
 import { getCoursePublicState } from "@/lib/coursePublicState";
 import CourseAlertModal from "@/components/ui/CourseAlertModal";
@@ -56,7 +56,7 @@ export default function CoursePublicDetailClient({ locale = "th", course }) {
     });
   }, [slug]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     window.scrollTo({top: 0, behavior: "auto"});
   },[]);
 
