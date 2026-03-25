@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import dbConnect from "@/lib/dbConnect";
 import Course from "@/models/Course";
 import CourseDetailActions from "@/components/ui/CourseDetailActions";
+import ScrollToTopOnMount from "@/components/ScrollToTopOnMount";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -268,6 +269,7 @@ export default async function Page({ params }) {
 
   return (
     <div className="mx-auto max-w-7xl">
+      <ScrollToTopOnMount />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
