@@ -228,6 +228,18 @@ export default function RootLayout({ children }) {
       </head>
 
       <body suppressHydrationWarning>
+        {META_PIXEL_ID && (
+          <noscript>
+            <img
+              height="1"
+              width="1"
+              style={{ display: "none" }}
+              src={`https://www.facebook.com/tr?id=${META_PIXEL_ID}&ev=PageView&noscript=1`}
+              alt=""
+            />
+          </noscript>
+        )}
+
         {GTM_ID && (
           <noscript>
             <iframe
