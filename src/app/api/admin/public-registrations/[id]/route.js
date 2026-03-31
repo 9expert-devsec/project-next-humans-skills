@@ -1,19 +1,12 @@
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import dbConnect from "@/lib/dbConnect";
-import Registration from "@/models/Registration";
+import UpcomingRegistration from "@/models/UpcomingRegistration";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const ALLOWED_STATUS = new Set([
-  "new",
-  "contacted",
-  "quoted",
-  "done",
-  "cancelled",
-  "",
-]);
+const ALLOWED_STATUS = new Set(["new", "contacted", "done", "cancelled", ""]);
 
 const ALLOWED_SOURCE_CHANNEL = new Set([
   "Bitkub Academy",
@@ -23,6 +16,8 @@ const ALLOWED_SOURCE_CHANNEL = new Set([
   "",
 ]);
 
+const ALLOWED_TAX_TYPE = new Set(["personal", "company"]);
+
 function clean(x) {
   return String(x || "").trim();
 }
@@ -31,60 +26,82 @@ function digitsOnly(x) {
   return String(x || "").replace(/\D/g, "");
 }
 
-function toSafeInt(x, fallback = 1) {
+function toSafeInt(x, fallback = 0) {
   const n = Number(x);
   if (!Number.isFinite(n)) return fallback;
   return Math.max(0, Math.floor(n));
 }
 
-function badId(id) {
+function isBadId(id) {
   return !mongoose.Types.ObjectId.isValid(id);
+}
+
+function normalizeTrainee(t = {}) {
+  return {
+    first_name: clean(t.first_name),
+    last_name: clean(t.last_name),
+    email: clean(t.email),
+    phone: digitsOnly(t.phone),
+    phone_raw: clean(t.phone_raw || t.phone),
+  };
 }
 
 function buildPatch(body = {}) {
   const patch = {};
 
   if ("ref_no" in body) patch.ref_no = clean(body.ref_no);
-  if ("course_code" in body)
-    patch.course_code = clean(body.course_code).toUpperCase();
   if ("courseSlug" in body) patch.courseSlug = clean(body.courseSlug);
   if ("locale" in body) patch.locale = clean(body.locale) || "th";
 
   if ("trainee_count" in body) {
     patch.trainee_count = Math.max(1, toSafeInt(body.trainee_count, 1));
   }
-  if ("training_location" in body)
-    patch.training_location = clean(body.training_location);
-  if ("month_interest" in body)
-    patch.month_interest = clean(body.month_interest);
-  if ("year_interest" in body) patch.year_interest = clean(body.year_interest);
+  if ("coordinator_is_trainee" in body) {
+    patch.coordinator_is_trainee = !!body.coordinator_is_trainee;
+  }
+  if ("no_trainees_yet" in body) {
+    patch.no_trainees_yet = !!body.no_trainees_yet;
+  }
 
-  if ("first_name" in body) patch.first_name = clean(body.first_name);
-  if ("last_name" in body) patch.last_name = clean(body.last_name);
-  if ("position" in body) patch.position = clean(body.position);
-  if ("department" in body) patch.department = clean(body.department);
-  if ("contact_phone" in body)
-    patch.contact_phone = digitsOnly(body.contact_phone);
-  if ("email" in body) patch.email = clean(body.email);
+  const coordinator = body?.coordinator || {};
+  patch.coordinator = {
+    first_name: clean(coordinator.first_name),
+    last_name: clean(coordinator.last_name),
+    email: clean(coordinator.email),
+    phone: digitsOnly(coordinator.phone),
+    phone_raw: clean(coordinator.phone_raw || coordinator.phone),
+  };
 
-  if ("company" in body) patch.company = clean(body.company);
-  if ("branch" in body) patch.branch = clean(body.branch) || "สำนักงานใหญ่";
+  const trainees = Array.isArray(body?.trainees) ? body.trainees : [];
+  patch.trainees = trainees.map(normalizeTrainee);
+
+  const tax = body?.tax || {};
+  const taxType = clean(tax.type);
+  patch.tax = {
+    type: ALLOWED_TAX_TYPE.has(taxType) ? taxType : "personal",
+
+    personal_first_name: clean(tax.personal_first_name),
+    personal_last_name: clean(tax.personal_last_name),
+
+    company_name: clean(tax.company_name),
+    branch: clean(tax.branch) || "สำนักงานใหญ่",
+
+    tax_id: digitsOnly(tax.tax_id),
+    phone: digitsOnly(tax.phone),
+    phone_raw: clean(tax.phone_raw || tax.phone),
+
+    address: clean(tax.address),
+    province: clean(tax.province),
+    district: clean(tax.district),
+    subdistrict: clean(tax.subdistrict),
+    postcode: digitsOnly(tax.postcode),
+  };
 
   if ("source_channel" in body) {
     const v = clean(body.source_channel);
     patch.source_channel = ALLOWED_SOURCE_CHANNEL.has(v) ? v : "";
   }
   if ("source_other" in body) patch.source_other = clean(body.source_other);
-
-  if ("tax_id" in body) patch.tax_id = digitsOnly(body.tax_id);
-  if ("company_phone" in body)
-    patch.company_phone = digitsOnly(body.company_phone);
-  if ("receipt_address" in body)
-    patch.receipt_address = clean(body.receipt_address);
-  if ("province" in body) patch.province = clean(body.province);
-  if ("district" in body) patch.district = clean(body.district);
-  if ("subdistrict" in body) patch.subdistrict = clean(body.subdistrict);
-  if ("postcode" in body) patch.postcode = digitsOnly(body.postcode);
 
   if ("note" in body) patch.note = clean(body.note);
 
@@ -102,14 +119,14 @@ export async function GET(req, ctx) {
   await dbConnect();
   const { id } = await ctx.params;
 
-  if (badId(id)) {
+  if (isBadId(id)) {
     return NextResponse.json(
       { ok: false, error: "Invalid id" },
       { status: 400 },
     );
   }
 
-  const item = await Registration.findById(id).lean();
+  const item = await UpcomingRegistration.findById(id).lean();
 
   if (!item) {
     return NextResponse.json(
@@ -125,7 +142,7 @@ export async function PUT(req, ctx) {
   await dbConnect();
   const { id } = await ctx.params;
 
-  if (badId(id)) {
+  if (isBadId(id)) {
     return NextResponse.json(
       { ok: false, error: "Invalid id" },
       { status: 400 },
@@ -135,7 +152,7 @@ export async function PUT(req, ctx) {
   const body = await req.json().catch(() => ({}));
   const patch = buildPatch(body);
 
-  const item = await Registration.findByIdAndUpdate(id, patch, {
+  const item = await UpcomingRegistration.findByIdAndUpdate(id, patch, {
     new: true,
     runValidators: true,
   }).lean();
@@ -154,14 +171,14 @@ export async function DELETE(req, ctx) {
   await dbConnect();
   const { id } = await ctx.params;
 
-  if (badId(id)) {
+  if (isBadId(id)) {
     return NextResponse.json(
       { ok: false, error: "Invalid id" },
       { status: 400 },
     );
   }
 
-  const item = await Registration.findByIdAndDelete(id).lean();
+  const item = await UpcomingRegistration.findByIdAndDelete(id).lean();
 
   if (!item) {
     return NextResponse.json(

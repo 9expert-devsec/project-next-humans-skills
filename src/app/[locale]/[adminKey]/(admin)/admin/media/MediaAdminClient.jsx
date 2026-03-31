@@ -11,7 +11,18 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical } from "lucide-react";
+import {
+  CalendarDays,
+  Eye,
+  GripVertical,
+  Image as ImageIcon,
+  Link as LinkIcon,
+  Newspaper,
+  RefreshCw,
+  Sparkles,
+  Trash2,
+  Upload,
+} from "lucide-react";
 
 import imageCompression from "browser-image-compression";
 
@@ -46,7 +57,88 @@ function toDateInputValue(d) {
   }
 }
 
-/* ---------------- Sortable Row ---------------- */
+function fmtDateTH(d) {
+  if (!d) return "-";
+  const dt = new Date(d);
+  if (Number.isNaN(dt.getTime())) return "-";
+  return dt.toLocaleDateString("th-TH", { timeZone: "Asia/Bangkok" });
+}
+
+function StatCard({ icon: Icon, label, value, hint }) {
+  return (
+    <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_10px_30px_rgba(0,0,0,0.15)]">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="text-sm font-semibold text-white/55">{label}</div>
+          <div className="mt-2 text-3xl font-extrabold tracking-tight text-white">
+            {value}
+          </div>
+          {hint ? (
+            <div className="mt-1 text-xs font-medium text-white/40">{hint}</div>
+          ) : null}
+        </div>
+
+        <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.05]">
+          <Icon className="h-5 w-5 text-white/75" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MetaBadge({ children }) {
+  if (!children) return null;
+
+  return (
+    <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] font-semibold text-white/60">
+      {children}
+    </span>
+  );
+}
+
+function Panel({ children, className = "" }) {
+  return (
+    <section
+      className={cx(
+        "rounded-[28px] border border-white/10 bg-white/[0.04] p-4 shadow-[0_12px_40px_rgba(0,0,0,0.16)] lg:p-5",
+        className,
+      )}
+    >
+      {children}
+    </section>
+  );
+}
+
+function FieldLabel({ children }) {
+  return (
+    <div className="mb-1.5 text-sm font-medium text-white/75">{children}</div>
+  );
+}
+
+function Input(props) {
+  return (
+    <input
+      {...props}
+      className={cx(
+        "h-11 w-full rounded-2xl border border-white/10 bg-[#0b1727] px-4 text-sm text-white placeholder:text-white/35 outline-none transition focus:border-white/25",
+        props.className,
+      )}
+    />
+  );
+}
+
+function Textarea(props) {
+  return (
+    <textarea
+      {...props}
+      className={cx(
+        "w-full rounded-2xl border border-white/10 bg-[#0b1727] px-4 py-3 text-sm text-white placeholder:text-white/35 outline-none transition focus:border-white/25",
+        props.className,
+      )}
+    />
+  );
+}
+
 function SortableRow({ id, children }) {
   const {
     attributes,
@@ -68,9 +160,9 @@ function SortableRow({ id, children }) {
       <button
         type="button"
         className={cx(
-          "absolute left-3 top-3 z-10 rounded-xl border border-white/10",
-          "bg-black/40 p-2 text-white hover:bg-black/60",
-          isDragging && "bg-black/70"
+          "absolute left-4 top-4 z-10 rounded-2xl border border-white/10",
+          "bg-black/40 p-2.5 text-white hover:bg-black/60",
+          isDragging && "bg-black/70",
         )}
         {...attributes}
         {...listeners}
@@ -91,7 +183,6 @@ export default function MediaAdminClient({ locale = "th" }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // create form
   const [file, setFile] = useState(null);
   const [title, setTitle] = useState("");
   const [caption, setCaption] = useState("");
@@ -99,7 +190,7 @@ export default function MediaAdminClient({ locale = "th" }) {
   const [isActive, setIsActive] = useState(true);
 
   const [publishedAt, setPublishedAt] = useState(() =>
-    new Date().toISOString().slice(0, 10)
+    new Date().toISOString().slice(0, 10),
   );
   const [readMins, setReadMins] = useState(5);
 
@@ -113,7 +204,7 @@ export default function MediaAdminClient({ locale = "th" }) {
     try {
       const data = await jsonFetch(
         `/api/admin/media?locale=${encodeURIComponent(locale)}`,
-        { cache: "no-store" }
+        { cache: "no-store" },
       );
       setItems(Array.isArray(data?.items) ? data.items : []);
     } finally {
@@ -123,7 +214,6 @@ export default function MediaAdminClient({ locale = "th" }) {
 
   useEffect(() => {
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locale]);
 
   async function uploadToCloudinary(f) {
@@ -142,11 +232,12 @@ export default function MediaAdminClient({ locale = "th" }) {
 
     const uploadUrl = `https://api.cloudinary.com/v1_1/${sig.cloudName}/image/upload`;
     const res = await fetch(uploadUrl, { method: "POST", body: form }).catch(
-      () => null
+      () => null,
     );
     const data = await res?.json().catch(() => ({}));
-    if (!res || !res.ok)
+    if (!res || !res.ok) {
       throw new Error(data?.error?.message || "Upload failed");
+    }
 
     return { imageUrl: data.secure_url, imagePublicId: data.public_id };
   }
@@ -165,7 +256,7 @@ export default function MediaAdminClient({ locale = "th" }) {
       alert(
         isEN
           ? `File too large (>${HARD_LIMIT_MB}MB). Please resize first.`
-          : `ไฟล์ใหญ่เกิน ${HARD_LIMIT_MB}MB กรุณาย่อรูปก่อน`
+          : `ไฟล์ใหญ่เกิน ${HARD_LIMIT_MB}MB กรุณาย่อรูปก่อน`,
       );
       return;
     }
@@ -173,31 +264,27 @@ export default function MediaAdminClient({ locale = "th" }) {
     try {
       setBusy(true);
 
-      // 1) compress ถ้า > 1MB
       let uploadFile = file;
       if (file.size > 1024 * 1024) {
         setBusyMsg(isEN ? "Compressing image..." : "กำลังบีบอัดรูป...");
         uploadFile = await compressImage(file);
       }
 
-      // 2) กันชน 10MB Cloudinary
       const SAFE_MB = 9.5;
       if (uploadFile.size > SAFE_MB * 1024 * 1024) {
         alert(
           isEN
             ? "Image is still too large after compression. Please resize/crop and try again."
-            : "รูปยังใหญ่เกินหลังบีบอัด กรุณาย่อ/ครอป แล้วลองใหม่"
+            : "รูปยังใหญ่เกินหลังบีบอัด กรุณาย่อ/ครอป แล้วลองใหม่",
         );
         return;
       }
 
-      // 3) upload
       setBusyMsg(
-        isEN ? "Uploading to Cloudinary..." : "กำลังอัปโหลดไป Cloudinary..."
+        isEN ? "Uploading to Cloudinary..." : "กำลังอัปโหลดไป Cloudinary...",
       );
       const up = await uploadToCloudinary(uploadFile);
 
-      // 4) create slide
       setBusyMsg(isEN ? "Saving slide..." : "กำลังบันทึกสไลด์...");
       await jsonFetch("/api/admin/media", {
         method: "POST",
@@ -210,7 +297,7 @@ export default function MediaAdminClient({ locale = "th" }) {
           isActive,
           imageUrl: up.imageUrl,
           imagePublicId: up.imagePublicId,
-          publishedAt, // server ควร parse ให้เป็น Date
+          publishedAt,
           readMins: Math.max(1, Number(readMins || 3)),
         }),
       });
@@ -248,6 +335,7 @@ export default function MediaAdminClient({ locale = "th" }) {
 
   async function onDelete(id) {
     if (!confirm(isEN ? "Delete this slide?" : "ลบสไลด์นี้?")) return;
+
     try {
       await jsonFetch(`/api/admin/media?id=${encodeURIComponent(id)}`, {
         method: "DELETE",
@@ -294,181 +382,280 @@ export default function MediaAdminClient({ locale = "th" }) {
     saveOrder(next);
   }
 
+  const stats = useMemo(() => {
+    const total = items.length;
+    const activeCount = items.filter((x) => !!x?.isActive).length;
+    const inactiveCount = total - activeCount;
+    const publishedCount = items.filter((x) => !!x?.publishedAt).length;
+
+    return { total, activeCount, inactiveCount, publishedCount };
+  }, [items]);
+
   return (
     <div className="space-y-6">
-      {/* Create */}
-      <form
-        onSubmit={onCreate}
-        className="rounded-3xl border border-white/10 bg-white/5 p-5"
-      >
-        <div className="flex items-center justify-between gap-3">
-          <div className="text-white font-semibold text-lg">
-            {isEN ? "Add new slide" : "เพิ่มสไลด์ใหม่"}
+      <section className="rounded-[28px] border border-white/10 bg-[linear-gradient(135deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.22)] lg:p-7">
+        <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+          <div className="max-w-3xl">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-cyan-200">
+              <Sparkles className="h-3.5 w-3.5" />
+              Media slider management
+            </div>
+
+            <h1 className="text-3xl font-extrabold tracking-tight text-white lg:text-4xl">
+              Media Slider
+            </h1>
+
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-white/65">
+              อัปโหลดรูป จัดลำดับ เปิดหรือปิดการแสดงผล
+              และแก้ไขรายละเอียดของสไลด์ ให้เป็นระบบเดียวกันในหลังบ้าน
+            </p>
           </div>
 
-          {busy ? (
-            <div className="text-xs text-white/70">
-              {busyMsg || (isEN ? "Working..." : "กำลังทำงาน...")}
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={load}
+              className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/[0.08]"
+            >
+              <RefreshCw className={cx("h-4 w-4", loading && "animate-spin")} />
+              Refresh
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-4">
+        <StatCard
+          icon={ImageIcon}
+          label="Total Slides"
+          value={stats.total}
+          hint="จำนวนสไลด์ทั้งหมดในระบบ"
+        />
+        <StatCard
+          icon={Eye}
+          label="Active"
+          value={stats.activeCount}
+          hint="สไลด์ที่เปิดแสดงผล"
+        />
+        <StatCard
+          icon={Trash2}
+          label="Inactive"
+          value={stats.inactiveCount}
+          hint="สไลด์ที่ปิดการแสดงผล"
+        />
+        <StatCard
+          icon={CalendarDays}
+          label="Published Date Set"
+          value={stats.publishedCount}
+          hint="รายการที่กำหนดวันที่เผยแพร่แล้ว"
+        />
+      </section>
+
+      <Panel>
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+          <div>
+            <div className="text-lg font-bold text-white">
+              {isEN ? "Add new slide" : "เพิ่มสไลด์ใหม่"}
             </div>
-          ) : null}
+            <div className="mt-1 text-sm text-white/50">
+              {isEN
+                ? "Upload image, set metadata, then create a new media slide."
+                : "อัปโหลดรูป ตั้งค่ารายละเอียด แล้วสร้างสไลด์ใหม่"}
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <MetaBadge>Cloudinary upload</MetaBadge>
+            <MetaBadge>Auto compression</MetaBadge>
+            <MetaBadge>Published date + read time</MetaBadge>
+          </div>
         </div>
 
-        <div className="mt-4 grid gap-4 md:grid-cols-2">
-          <label className="block">
-            <div className="text-white/80 text-sm mb-1">
-              {isEN ? "Image" : "รูปภาพ"}
+        <form onSubmit={onCreate} className="mt-5">
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div>
+              <FieldLabel>{isEN ? "Image" : "รูปภาพ"}</FieldLabel>
+              <label className="flex min-h-[150px] cursor-pointer flex-col items-center justify-center rounded-[24px] border border-dashed border-white/15 bg-[#0b1727] px-4 py-6 text-center transition hover:border-white/25 hover:bg-[#0d1b2e]">
+                <Upload className="mb-3 h-6 w-6 text-white/65" />
+                <div className="text-sm font-semibold text-white">
+                  {isEN ? "Click to upload image" : "คลิกเพื่อเลือกรูปภาพ"}
+                </div>
+                <div className="mt-1 text-xs text-white/45">
+                  JPG, PNG, WEBP · Auto-compress when large
+                </div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setFile(e.target.files?.[0] || null)}
+                  className="hidden"
+                  disabled={busy}
+                />
+              </label>
+
+              {file ? (
+                <div className="mt-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white/70">
+                  <div className="font-medium text-white">{file.name}</div>
+                  <div className="mt-1 text-xs text-white/45">
+                    {(file.size / 1024 / 1024).toFixed(2)} MB
+                  </div>
+                </div>
+              ) : null}
             </div>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
-              className="block w-full text-white"
-              disabled={busy}
-            />
-            {file ? (
-              <div className="mt-1 text-xs text-white/60">
-                {file.name} • {(file.size / 1024 / 1024).toFixed(2)} MB
+
+            <div className="space-y-4">
+              <div>
+                <FieldLabel>{isEN ? "Title" : "ชื่อภาพ"}</FieldLabel>
+                <Input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder={
+                    isEN ? "e.g. Event Highlight" : "เช่น ไฮไลต์กิจกรรม"
+                  }
+                  disabled={busy}
+                />
               </div>
-            ) : null}
-          </label>
 
-          <label className="block">
-            <div className="text-white/80 text-sm mb-1">
-              {isEN ? "Title" : "ชื่อภาพ"}
+              <div>
+                <FieldLabel>{isEN ? "Caption" : "คำอธิบาย"}</FieldLabel>
+                <Textarea
+                  value={caption}
+                  onChange={(e) => setCaption(e.target.value)}
+                  className="min-h-[110px]"
+                  placeholder={isEN ? "Short description" : "คำอธิบายสั้น ๆ"}
+                  disabled={busy}
+                />
+              </div>
             </div>
-            <input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2 text-white"
-              placeholder={isEN ? "e.g. Event Highlight" : "เช่น ไฮไลต์กิจกรรม"}
-              disabled={busy}
-            />
-          </label>
 
-          <label className="block md:col-span-2">
-            <div className="text-white/80 text-sm mb-1">
-              {isEN ? "Caption" : "คำอธิบาย"}
+            <div className="lg:col-span-2">
+              <FieldLabel>
+                {isEN ? "Link (optional)" : "ลิงก์ (ถ้ามี)"}
+              </FieldLabel>
+              <div className="relative">
+                <LinkIcon className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
+                <Input
+                  value={linkUrl}
+                  onChange={(e) => setLinkUrl(e.target.value)}
+                  className="pl-11"
+                  placeholder="https://..."
+                  disabled={busy}
+                />
+              </div>
             </div>
-            <textarea
-              value={caption}
-              onChange={(e) => setCaption(e.target.value)}
-              className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2 text-white min-h-[88px]"
-              placeholder={isEN ? "Short description" : "คำอธิบายสั้น ๆ"}
-              disabled={busy}
-            />
-          </label>
 
-          <label className="block md:col-span-2">
-            <div className="text-white/80 text-sm mb-1">
-              {isEN ? "Link (optional)" : "ลิงก์ (ถ้ามี)"}
-            </div>
-            <input
-              value={linkUrl}
-              onChange={(e) => setLinkUrl(e.target.value)}
-              className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2 text-white"
-              placeholder="https://..."
-              disabled={busy}
-            />
-          </label>
-
-          <div className="grid gap-4 md:grid-cols-2 md:col-span-2">
-            <label className="block">
-              <div className="text-white/80 text-sm mb-1">
+            <div>
+              <FieldLabel>
                 {isEN ? "Published date" : "วันที่เผยแพร่"}
-              </div>
-              <input
+              </FieldLabel>
+              <Input
                 type="date"
                 value={publishedAt}
                 onChange={(e) => setPublishedAt(e.target.value)}
-                className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2 text-white"
                 disabled={busy}
               />
-            </label>
+            </div>
 
-            <label className="block">
-              <div className="text-white/80 text-sm mb-1">
+            <div>
+              <FieldLabel>
                 {isEN ? "Read time (mins)" : "เวลาอ่าน (นาที)"}
-              </div>
-              <input
+              </FieldLabel>
+              <Input
                 type="number"
                 min={1}
                 value={readMins}
                 onChange={(e) => setReadMins(e.target.value)}
-                className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2 text-white"
                 disabled={busy}
               />
-            </label>
+            </div>
+
+            <div className="lg:col-span-2">
+              <label className="inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-[#0b1727] px-4 py-3 text-sm text-white">
+                <input
+                  type="checkbox"
+                  checked={isActive}
+                  onChange={(e) => setIsActive(e.target.checked)}
+                  disabled={busy}
+                />
+                <span>{isEN ? "Active" : "เปิดแสดงผล"}</span>
+              </label>
+            </div>
           </div>
 
-          <label className="flex items-center gap-2 text-white/90 md:col-span-2">
-            <input
-              type="checkbox"
-              checked={isActive}
-              onChange={(e) => setIsActive(e.target.checked)}
+          <div className="mt-5 flex flex-col gap-3 border-t border-white/10 pt-4 md:flex-row md:items-center md:justify-between">
+            <div className="text-xs text-white/45">
+              {busy
+                ? busyMsg || (isEN ? "Working..." : "กำลังทำงาน...")
+                : isEN
+                  ? "Tip: Large images will be compressed automatically to avoid Cloudinary 10MB limit."
+                  : "ทิป: รูปใหญ่จะถูกบีบอัดอัตโนมัติ เพื่อไม่ให้ชนลิมิต 10MB ของ Cloudinary"}
+            </div>
+
+            <button
+              type="submit"
               disabled={busy}
-            />
-            {isEN ? "Active" : "เปิดแสดงผล"}
-          </label>
-        </div>
-
-        <button
-          type="submit"
-          disabled={busy}
-          className={cx(
-            "mt-4 rounded-xl px-4 py-2 text-white",
-            busy
-              ? "bg-white/5 cursor-not-allowed"
-              : "bg-white/10 hover:bg-white/15"
-          )}
-        >
-          {busy
-            ? isEN
-              ? "Working..."
-              : "กำลังทำงาน..."
-            : isEN
-            ? "Upload & Create"
-            : "อัปโหลดและสร้าง"}
-        </button>
-
-        <div className="mt-2 text-xs text-white/50">
-          {isEN
-            ? "Tip: Large images will be compressed automatically to avoid Cloudinary 10MB limit."
-            : "ทิป: รูปใหญ่จะถูกบีบอัดอัตโนมัติ เพื่อไม่ให้ชนลิมิต 10MB ของ Cloudinary"}
-        </div>
-      </form>
-
-      {/* List */}
-      <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
-        <div className="flex items-center justify-between gap-3">
-          <div className="text-white font-semibold text-lg">
-            {isEN ? "Slides" : "รายการสไลด์"}
+              className={cx(
+                "inline-flex h-11 items-center justify-center gap-2 rounded-2xl px-5 text-sm font-bold transition",
+                busy
+                  ? "border border-white/10 bg-white/[0.03] text-white/30"
+                  : "bg-white text-slate-950 hover:bg-white/90",
+              )}
+            >
+              <Upload className="h-4 w-4" />
+              {busy
+                ? isEN
+                  ? "Working..."
+                  : "กำลังทำงาน..."
+                : isEN
+                  ? "Upload & Create"
+                  : "อัปโหลดและสร้าง"}
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={load}
-            className="rounded-xl bg-white/10 hover:bg-white/15 text-white px-3 py-2"
-          >
-            {isEN ? "Refresh" : "รีเฟรช"}
-          </button>
+        </form>
+      </Panel>
+
+      <Panel>
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+          <div>
+            <div className="text-lg font-bold text-white">
+              {isEN ? "Slides" : "รายการสไลด์"}
+            </div>
+            <div className="mt-1 text-sm text-white/50">
+              {isEN
+                ? "Drag to reorder, edit inline, and toggle slide visibility."
+                : "ลากเพื่อจัดลำดับ แก้ไขข้อมูลได้ทันที และเปิดหรือปิดการแสดงผลได้"}
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <MetaBadge>Dnd reorder</MetaBadge>
+            <MetaBadge>Inline edit</MetaBadge>
+            <MetaBadge>{items.length} items</MetaBadge>
+          </div>
         </div>
 
         {loading ? (
-          <div className="text-white/70 mt-4">
+          <div className="mt-5 rounded-[24px] border border-white/10 bg-black/20 px-5 py-10 text-center text-white/60">
             {isEN ? "Loading..." : "กำลังโหลด..."}
           </div>
         ) : items.length === 0 ? (
-          <div className="text-white/70 mt-4">
-            {isEN ? "No slides yet." : "ยังไม่มีสไลด์"}
+          <div className="mt-5 rounded-[24px] border border-white/10 bg-black/20 px-5 py-10 text-center">
+            <div className="text-lg font-bold text-white">
+              {isEN ? "No slides yet" : "ยังไม่มีสไลด์"}
+            </div>
+            <div className="mt-2 text-sm text-white/45">
+              {isEN
+                ? "Create your first media slide from the form above."
+                : "เริ่มเพิ่มสไลด์แรกจากฟอร์มด้านบนได้เลย"}
+            </div>
           </div>
         ) : (
           <DndContext collisionDetection={closestCenter} onDragEnd={onDragEnd}>
             <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-              <div className="mt-4 space-y-4">
+              <div className="mt-5 space-y-4">
                 {items.map((it, idx) => (
                   <SortableRow key={it._id} id={it._id}>
-                    <div className="rounded-2xl border border-white/10 bg-black/20 p-4 pl-12">
-                      <div className="flex gap-4 items-start">
-                        <div className="relative h-24 w-40 overflow-hidden rounded-xl border border-white/10 bg-black/30">
+                    <div className="rounded-[28px] border border-white/10 bg-black/20 p-4 pl-14 shadow-[0_10px_30px_rgba(0,0,0,0.12)]">
+                      <div className="flex flex-col gap-4 2xl:flex-row 2xl:items-start">
+                        <div className="relative h-40 w-full overflow-hidden rounded-[24px] border border-white/10 bg-black/30 sm:h-44 2xl:h-32 2xl:w-[260px]">
                           <Image
                             src={it.imageUrl}
                             alt={it.title || "slide"}
@@ -477,42 +664,53 @@ export default function MediaAdminClient({ locale = "th" }) {
                           />
                         </div>
 
-                        <div className="flex-1 grid gap-2">
-                          <input
-                            defaultValue={it.title || ""}
-                            onBlur={(e) =>
-                              onPatch(it._id, { title: e.target.value })
-                            }
-                            className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2 text-white"
-                            placeholder={isEN ? "Title" : "ชื่อภาพ"}
-                          />
+                        <div className="min-w-0 flex-1 space-y-4">
+                          <div className="grid gap-4 lg:grid-cols-2">
+                            <div>
+                              <FieldLabel>
+                                {isEN ? "Title" : "ชื่อภาพ"}
+                              </FieldLabel>
+                              <Input
+                                defaultValue={it.title || ""}
+                                onBlur={(e) =>
+                                  onPatch(it._id, { title: e.target.value })
+                                }
+                                placeholder={isEN ? "Title" : "ชื่อภาพ"}
+                              />
+                            </div>
 
-                          <textarea
-                            defaultValue={it.caption || ""}
-                            onBlur={(e) =>
-                              onPatch(it._id, { caption: e.target.value })
-                            }
-                            className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2 text-white min-h-[64px]"
-                            placeholder={isEN ? "Caption" : "คำอธิบาย"}
-                          />
+                            <div>
+                              <FieldLabel>
+                                {isEN ? "Link (optional)" : "ลิงก์ (ถ้ามี)"}
+                              </FieldLabel>
+                              <Input
+                                defaultValue={it.linkUrl || ""}
+                                onBlur={(e) =>
+                                  onPatch(it._id, { linkUrl: e.target.value })
+                                }
+                                placeholder="https://..."
+                              />
+                            </div>
 
-                          <input
-                            defaultValue={it.linkUrl || ""}
-                            onBlur={(e) =>
-                              onPatch(it._id, { linkUrl: e.target.value })
-                            }
-                            className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2 text-white"
-                            placeholder={
-                              isEN ? "Link (optional)" : "ลิงก์ (ถ้ามี)"
-                            }
-                          />
+                            <div className="lg:col-span-2">
+                              <FieldLabel>
+                                {isEN ? "Caption" : "คำอธิบาย"}
+                              </FieldLabel>
+                              <Textarea
+                                defaultValue={it.caption || ""}
+                                onBlur={(e) =>
+                                  onPatch(it._id, { caption: e.target.value })
+                                }
+                                className="min-h-[90px]"
+                                placeholder={isEN ? "Caption" : "คำอธิบาย"}
+                              />
+                            </div>
 
-                          <div className="grid gap-4 md:grid-cols-2">
-                            <label className="block">
-                              <div className="text-white/80 text-sm mb-1">
+                            <div>
+                              <FieldLabel>
                                 {isEN ? "Published date" : "วันที่เผยแพร่"}
-                              </div>
-                              <input
+                              </FieldLabel>
+                              <Input
                                 type="date"
                                 defaultValue={
                                   toDateInputValue(it.publishedAt) || ""
@@ -522,15 +720,14 @@ export default function MediaAdminClient({ locale = "th" }) {
                                     publishedAt: e.target.value || null,
                                   })
                                 }
-                                className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2 text-white"
                               />
-                            </label>
+                            </div>
 
-                            <label className="block">
-                              <div className="text-white/80 text-sm mb-1">
+                            <div>
+                              <FieldLabel>
                                 {isEN ? "Read time (mins)" : "เวลาอ่าน (นาที)"}
-                              </div>
-                              <input
+                              </FieldLabel>
+                              <Input
                                 type="number"
                                 min={1}
                                 defaultValue={it.readMins ?? 3}
@@ -539,37 +736,57 @@ export default function MediaAdminClient({ locale = "th" }) {
                                     readMins: Number(e.target.value || 3),
                                   })
                                 }
-                                className="w-full rounded-xl bg-black/30 border border-white/10 px-3 py-2 text-white"
                               />
-                            </label>
+                            </div>
                           </div>
 
-                          <label className="flex items-center gap-2 text-white/90">
-                            <input
-                              type="checkbox"
-                              checked={!!it.isActive}
-                              onChange={(e) =>
-                                onPatch(it._id, { isActive: e.target.checked })
-                              }
-                            />
-                            {isEN ? "Active" : "เปิดแสดงผล"}
-                          </label>
+                          <div className="flex flex-wrap items-center gap-3">
+                            <label className="inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-[#0b1727] px-4 py-3 text-sm text-white">
+                              <input
+                                type="checkbox"
+                                checked={!!it.isActive}
+                                onChange={(e) =>
+                                  onPatch(it._id, {
+                                    isActive: e.target.checked,
+                                  })
+                                }
+                              />
+                              <span>{isEN ? "Active" : "เปิดแสดงผล"}</span>
+                            </label>
+
+                            <MetaBadge>
+                              {isEN ? "Order" : "ลำดับ"}: {it.order}
+                            </MetaBadge>
+                            <MetaBadge>
+                              {isEN ? "Published" : "เผยแพร่"}:{" "}
+                              {fmtDateTH(it.publishedAt)}
+                            </MetaBadge>
+                            <MetaBadge>ID: {it._id}</MetaBadge>
+                          </div>
                         </div>
 
-                        <div className="flex flex-col gap-2">
+                        <div className="flex shrink-0 flex-row gap-2 2xl:w-[92px] 2xl:flex-col">
                           <button
                             type="button"
                             onClick={() => move(idx, -1)}
-                            className="rounded-xl bg-white/10 hover:bg-white/15 text-white px-3 py-2"
+                            className={cx(
+                              "inline-flex h-11 flex-1 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] text-white transition hover:bg-white/[0.08] 2xl:flex-none",
+                              idx === 0 && "cursor-not-allowed opacity-40",
+                            )}
                             disabled={idx === 0}
                             title="Move up"
                           >
                             ↑
                           </button>
+
                           <button
                             type="button"
                             onClick={() => move(idx, +1)}
-                            className="rounded-xl bg-white/10 hover:bg-white/15 text-white px-3 py-2"
+                            className={cx(
+                              "inline-flex h-11 flex-1 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] text-white transition hover:bg-white/[0.08] 2xl:flex-none",
+                              idx === items.length - 1 &&
+                                "cursor-not-allowed opacity-40",
+                            )}
                             disabled={idx === items.length - 1}
                             title="Move down"
                           >
@@ -579,15 +796,11 @@ export default function MediaAdminClient({ locale = "th" }) {
                           <button
                             type="button"
                             onClick={() => onDelete(it._id)}
-                            className="rounded-xl bg-red-500/15 hover:bg-red-500/25 text-white px-3 py-2"
+                            className="inline-flex h-11 flex-1 items-center justify-center rounded-2xl bg-rose-500/15 px-3 text-sm font-bold text-rose-100 transition hover:bg-rose-500/25 2xl:flex-none"
                           >
                             {isEN ? "Delete" : "ลบ"}
                           </button>
                         </div>
-                      </div>
-
-                      <div className="mt-2 text-white/50 text-xs">
-                        order: {it.order} • id: {it._id}
                       </div>
                     </div>
                   </SortableRow>
@@ -596,7 +809,7 @@ export default function MediaAdminClient({ locale = "th" }) {
             </SortableContext>
           </DndContext>
         )}
-      </div>
+      </Panel>
     </div>
   );
 }

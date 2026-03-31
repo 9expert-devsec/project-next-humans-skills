@@ -1,5 +1,3 @@
-// src/app/[locale]/[adminKey]/(admin)/admin/courses/page.jsx
-import AdminTopbar from "@/components/admin/AdminTopbar";
 import AdminCoursesClient from "./AdminCoursesClient";
 
 export const runtime = "nodejs";
@@ -11,15 +9,5 @@ export default async function Page({ params }) {
   const safeLocale = p?.locale === "en" ? "en" : "th";
   const adminKey = String(p?.adminKey || "");
 
-  return (
-    <>
-      <AdminTopbar
-        title="Courses"
-        subtitle="จัดการคอร์สทั้งหมด"
-        locale={safeLocale}
-        adminKey={adminKey}
-      />
-      <AdminCoursesClient locale={safeLocale} adminKey={adminKey} />
-    </>
-  );
+  return <AdminCoursesClient locale={safeLocale} adminKey={adminKey} />;
 }
