@@ -120,6 +120,7 @@ function getUpcomingBadge(tag, isEN) {
     };
   }
 
+  
   if (t === "full") {
     return {
       label: isEN ? "Full" : "เต็ม",
