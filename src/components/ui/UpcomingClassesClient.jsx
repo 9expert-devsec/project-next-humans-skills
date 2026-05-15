@@ -141,12 +141,12 @@ function PriceCapsule({ label, value, tone = "slate" }) {
   const toneClass =
     tone === "amber"
       ? "text-[#ebc246] text-[14px]"
-      : "text-slate-100 text-[11px]";
+      : "text-slate-100 text-[11px]  ";
 
 
       // line-through decoration-2 decoration-red-500 
   const markPrice =
-    tone === "amber" ? "text-[20px]" : "text-white text-[18px]";
+    tone === "amber" ? "text-[20px]" : "text-white text-[18px] line-through decoration-2 decoration-red-500";
 
   return (
     <div

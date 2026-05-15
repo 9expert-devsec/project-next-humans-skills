@@ -18,7 +18,7 @@ export default function NewsMediaSliderClient({ locale = "th" }) {
   useEffect(() => {
     (async () => {
       const res = await fetch(
-        `/api/public/media?locale=${encodeURIComponent(locale)}`,
+        `/api/public/media?locale=${encodeURIComponent(locale)}&type=news`,
         { cache: "no-store" }
       ).catch(() => null);
 

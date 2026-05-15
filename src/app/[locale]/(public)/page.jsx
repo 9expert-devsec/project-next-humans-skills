@@ -5,6 +5,7 @@ import CourseGridClient from "@/components/ui/CourseGridClient";
 import ProfileFlipCard from "@/components/cards/ProfileFlipCard";
 import AudiencePill from "@/components/cards/AudiencePill";
 import NewsMediaPanelClient from "@/components/public/NewsMediaPanelClient";
+import TrainingGallerySection from "@/components/public/TrainingGallerySection";
 import UpcomingClassesClient from "@/components/ui/UpcomingClassesClient";
 import ScrollToUpcomingButton from "@/components/ui/ScrollToUpcomingButton";
 
@@ -307,6 +308,9 @@ export default async function Page({ params }) {
           <CourseGridClient locale={locale} limit={4} />
         </div>
       </section>
+
+      {/* ✅ Training Gallery */}
+      <TrainingGallerySection locale={locale} />
 
       {/* ✅ News / Media */}
       <section id="news" className="mx-auto w-full max-w-7xl px-4 pb-20">

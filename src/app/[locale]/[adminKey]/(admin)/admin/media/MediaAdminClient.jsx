@@ -180,6 +180,7 @@ function SortableRow({ id, children }) {
 export default function MediaAdminClient({ locale = "th" }) {
   const isEN = locale === "en";
 
+  const [activeTab, setActiveTab] = useState("news"); // "news" | "gallery"
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -203,7 +204,7 @@ export default function MediaAdminClient({ locale = "th" }) {
     setLoading(true);
     try {
       const data = await jsonFetch(
-        `/api/admin/media?locale=${encodeURIComponent(locale)}`,
+        `/api/admin/media?locale=${encodeURIComponent(locale)}&type=${activeTab}`,
         { cache: "no-store" },
       );
       setItems(Array.isArray(data?.items) ? data.items : []);
@@ -214,7 +215,7 @@ export default function MediaAdminClient({ locale = "th" }) {
 
   useEffect(() => {
     load();
-  }, [locale]);
+  }, [locale, activeTab]);
 
   async function uploadToCloudinary(f) {
     const sig = await jsonFetch("/api/admin/media/signature", {
@@ -291,6 +292,7 @@ export default function MediaAdminClient({ locale = "th" }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           locale,
+          slideType: activeTab,
           title,
           caption,
           linkUrl,
@@ -402,13 +404,37 @@ export default function MediaAdminClient({ locale = "th" }) {
             </div>
 
             <h1 className="text-3xl font-extrabold tracking-tight text-white lg:text-4xl">
-              Media Slider
+              {activeTab === "news" ? "News Slides" : "Training Gallery"}
             </h1>
 
             <p className="mt-3 max-w-2xl text-sm leading-6 text-white/65">
-              อัปโหลดรูป จัดลำดับ เปิดหรือปิดการแสดงผล
-              และแก้ไขรายละเอียดของสไลด์ ให้เป็นระบบเดียวกันในหลังบ้าน
+              {activeTab === "news"
+                ? "อัปโหลดรูปสำหรับส่วนข่าวประชาสัมพันธ์ จัดลำดับ เปิดหรือปิดการแสดงผล"
+                : "อัปโหลดรูปภาพบรรยากาศการอบรม จัดลำดับ และเปิดหรือปิดการแสดงผล"}
             </p>
+
+            {/* Tab switcher */}
+            <div className="mt-5 flex gap-2">
+              {[
+                { key: "news", label: "News Slides", icon: Newspaper },
+                { key: "gallery", label: "Training Gallery", icon: ImageIcon },
+              ].map(({ key, label, icon: Icon }) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setActiveTab(key)}
+                  className={cx(
+                    "inline-flex items-center gap-2 rounded-2xl border px-4 py-2.5 text-sm font-semibold transition",
+                    activeTab === key
+                      ? "border-white/20 bg-white text-slate-950"
+                      : "border-white/10 bg-white/[0.04] text-white/70 hover:bg-white/[0.08] hover:text-white",
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
@@ -542,30 +568,34 @@ export default function MediaAdminClient({ locale = "th" }) {
               </div>
             </div>
 
-            <div>
-              <FieldLabel>
-                {isEN ? "Published date" : "วันที่เผยแพร่"}
-              </FieldLabel>
-              <Input
-                type="date"
-                value={publishedAt}
-                onChange={(e) => setPublishedAt(e.target.value)}
-                disabled={busy}
-              />
-            </div>
+            {activeTab === "news" && (
+              <div>
+                <FieldLabel>
+                  {isEN ? "Published date" : "วันที่เผยแพร่"}
+                </FieldLabel>
+                <Input
+                  type="date"
+                  value={publishedAt}
+                  onChange={(e) => setPublishedAt(e.target.value)}
+                  disabled={busy}
+                />
+              </div>
+            )}
 
-            <div>
-              <FieldLabel>
-                {isEN ? "Read time (mins)" : "เวลาอ่าน (นาที)"}
-              </FieldLabel>
-              <Input
-                type="number"
-                min={1}
-                value={readMins}
-                onChange={(e) => setReadMins(e.target.value)}
-                disabled={busy}
-              />
-            </div>
+            {activeTab === "news" && (
+              <div>
+                <FieldLabel>
+                  {isEN ? "Read time (mins)" : "เวลาอ่าน (นาที)"}
+                </FieldLabel>
+                <Input
+                  type="number"
+                  min={1}
+                  value={readMins}
+                  onChange={(e) => setReadMins(e.target.value)}
+                  disabled={busy}
+                />
+              </div>
+            )}
 
             <div className="lg:col-span-2">
               <label className="inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-[#0b1727] px-4 py-3 text-sm text-white">
@@ -706,38 +736,44 @@ export default function MediaAdminClient({ locale = "th" }) {
                               />
                             </div>
 
-                            <div>
-                              <FieldLabel>
-                                {isEN ? "Published date" : "วันที่เผยแพร่"}
-                              </FieldLabel>
-                              <Input
-                                type="date"
-                                defaultValue={
-                                  toDateInputValue(it.publishedAt) || ""
-                                }
-                                onBlur={(e) =>
-                                  onPatch(it._id, {
-                                    publishedAt: e.target.value || null,
-                                  })
-                                }
-                              />
-                            </div>
+                            {activeTab === "news" && (
+                              <div>
+                                <FieldLabel>
+                                  {isEN ? "Published date" : "วันที่เผยแพร่"}
+                                </FieldLabel>
+                                <Input
+                                  type="date"
+                                  defaultValue={
+                                    toDateInputValue(it.publishedAt) || ""
+                                  }
+                                  onBlur={(e) =>
+                                    onPatch(it._id, {
+                                      publishedAt: e.target.value || null,
+                                    })
+                                  }
+                                />
+                              </div>
+                            )}
 
-                            <div>
-                              <FieldLabel>
-                                {isEN ? "Read time (mins)" : "เวลาอ่าน (นาที)"}
-                              </FieldLabel>
-                              <Input
-                                type="number"
-                                min={1}
-                                defaultValue={it.readMins ?? 3}
-                                onBlur={(e) =>
-                                  onPatch(it._id, {
-                                    readMins: Number(e.target.value || 3),
-                                  })
-                                }
-                              />
-                            </div>
+                            {activeTab === "news" && (
+                              <div>
+                                <FieldLabel>
+                                  {isEN
+                                    ? "Read time (mins)"
+                                    : "เวลาอ่าน (นาที)"}
+                                </FieldLabel>
+                                <Input
+                                  type="number"
+                                  min={1}
+                                  defaultValue={it.readMins ?? 3}
+                                  onBlur={(e) =>
+                                    onPatch(it._id, {
+                                      readMins: Number(e.target.value || 3),
+                                    })
+                                  }
+                                />
+                              </div>
+                            )}
                           </div>
 
                           <div className="flex flex-wrap items-center gap-3">
@@ -757,10 +793,12 @@ export default function MediaAdminClient({ locale = "th" }) {
                             <MetaBadge>
                               {isEN ? "Order" : "ลำดับ"}: {it.order}
                             </MetaBadge>
-                            <MetaBadge>
-                              {isEN ? "Published" : "เผยแพร่"}:{" "}
-                              {fmtDateTH(it.publishedAt)}
-                            </MetaBadge>
+                            {activeTab === "news" && (
+                              <MetaBadge>
+                                {isEN ? "Published" : "เผยแพร่"}:{" "}
+                                {fmtDateTH(it.publishedAt)}
+                              </MetaBadge>
+                            )}
                             <MetaBadge>ID: {it._id}</MetaBadge>
                           </div>
                         </div>

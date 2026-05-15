@@ -13,18 +13,27 @@ export async function GET(req) {
     const locale =
       String(searchParams.get("locale") || "th") === "en" ? "en" : "th";
     const limit = Math.min(Number(searchParams.get("limit") || 20), 50);
+    const slideType =
+      searchParams.get("type") === "gallery" ? "gallery" : "news";
 
-    // base query
-    const query = {
-      locale,
-    };
+    const slideTypeOr = [
+      { slideType },
+      ...(slideType === "news"
+        ? [{ slideType: { $exists: false } }, { slideType: null }]
+        : []),
+    ];
 
     // รองรับทั้ง published / isActive (กัน schema ต่างเวอร์ชัน)
-    query.$or = [
+    const publishedOr = [
       { published: true },
       { isActive: true },
       { published: { $exists: false }, isActive: { $exists: false } },
     ];
+
+    const query = {
+      locale,
+      $and: [{ $or: slideTypeOr }, { $or: publishedOr }],
+    };
 
     const items = await MediaSlide.find(query)
       .sort({ order: 1, createdAt: -1 })

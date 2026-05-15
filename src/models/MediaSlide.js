@@ -22,6 +22,13 @@ const MediaSlideSchema = new mongoose.Schema(
       index: true,
     },
 
+    slideType: {
+      type: String,
+      enum: ["news", "gallery"],
+      default: "news",
+      index: true,
+    },
+
     publishedAt: {
       type: Date,
       default: Date.now,

@@ -15,8 +15,22 @@ export async function GET(req) {
     const { searchParams } = new URL(req.url);
     const locale =
       String(searchParams.get("locale") || "th") === "en" ? "en" : "th";
+    const slideType =
+      searchParams.get("type") === "gallery" ? "gallery" : "news";
 
-    const items = await MediaSlide.find({ locale })
+    const slideTypeOr = [
+      { slideType },
+      ...(slideType === "news"
+        ? [{ slideType: { $exists: false } }, { slideType: null }]
+        : []),
+    ];
+
+    const query = {
+      locale,
+      $or: slideTypeOr,
+    };
+
+    const items = await MediaSlide.find(query)
       .sort({ order: 1, publishedAt: -1, createdAt: -1 })
       .lean();
 
@@ -33,6 +47,7 @@ export async function POST(req) {
 
     const body = await req.json().catch(() => ({}));
     const locale = body?.locale === "en" ? "en" : "th";
+    const slideType = body?.slideType === "gallery" ? "gallery" : "news";
 
     if (!body?.imageUrl) {
       return Response.json(
@@ -41,13 +56,14 @@ export async function POST(req) {
       );
     }
 
-    const last = await MediaSlide.findOne({ locale })
+    const last = await MediaSlide.findOne({ locale, slideType })
       .sort({ order: -1 })
       .lean();
     const nextOrder = (last?.order ?? 0) + 1;
 
     const doc = await MediaSlide.create({
       locale,
+      slideType,
       title: String(body?.title || ""),
       caption: String(body?.caption || ""),
       linkUrl: String(body?.linkUrl || ""),
@@ -84,6 +100,9 @@ export async function PUT(req) {
     if ("caption" in body) patch.caption = String(body.caption || "");
     if ("linkUrl" in body) patch.linkUrl = String(body.linkUrl || "");
     if ("isActive" in body) patch.isActive = !!body.isActive;
+    if ("slideType" in body) {
+      patch.slideType = body.slideType === "gallery" ? "gallery" : "news";
+    }
 
     if ("publishedAt" in body) {
       patch.publishedAt = body.publishedAt ? new Date(body.publishedAt) : null;
