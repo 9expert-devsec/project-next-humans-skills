@@ -15,7 +15,7 @@ export default function ProfileFlipCard({
   const [flipped, setFlipped] = useState(false);
 
   return (
-    <div className="perspective-1000 w-[330px] h-[440px]">
+    <div className="perspective-1000 w-[330px] h-[300px]">
       <button
         type="button"
         onClick={() => setFlipped((v) => !v)}
@@ -37,9 +37,9 @@ export default function ProfileFlipCard({
               className="relative h-full w-full overflow-hidden rounded-[28px] bg-white shadow-[0_18px_50px_rgba(0,0,0,0.25)]
               "
             >
-              {/* Top: logo */}
-              <div className="relative z-20 flex items-center justify-center pt-8">
-                <div className="relative h-12 w-[180px]">
+              {/* Top: logo note : relative z-20 flex items-center justify-center pt-8 */}
+              <div className="absolute inset-0 z-20 flex items-center justify-center">
+                <div className="relative h-24 w-[250px]">
                   <Image
                     src={logoSrc}
                     alt={`${company} front-logo`}
@@ -51,7 +51,7 @@ export default function ProfileFlipCard({
               </div>
 
               {/* Person (ชิดล่าง) */}
-              <div className="absolute inset-x-0 bottom-0 z-0 flex justify-center">
+              {/* <div className="absolute inset-x-0 bottom-0 z-0 flex justify-center">
                 <div className="relative h-[340px] w-[270px]">
                   <Image
                     src={personSrc}
@@ -61,12 +61,12 @@ export default function ProfileFlipCard({
                     priority
                   />
                 </div>
-              </div>
+              </div> */}
 
               {/* Info pill (glass) */}
-              <div className="absolute bottom-5 left-4 right-4 z-30">
+              {/* <div className="absolute bottom-5 left-4 right-4 z-30">
                 <div className="relative overflow-hidden rounded-2xl bg-[#1a1f23]/40 px-4 py-3 text-center text-white backdrop-blur-xs shadow-[0_10px_30px_rgba(0,0,0,0.25)]">
-                  {/* shine */}
+               
                   <div className="pointer-events-none absolute -top-10 left-1/2 h-24 w-72 -translate-x-1/2 rounded-full bg-white/25 blur-2xl" />
 
                   <div className="relative">
@@ -81,10 +81,10 @@ export default function ProfileFlipCard({
                     </div>
                   </div>
                 </div>
-              </div>
+              </div> */}
 
               {/* border */}
-              <div className="pointer-events-none absolute inset-0 rounded-[28px] ring-1 ring-black/10" />
+              {/* <div className="pointer-events-none absolute inset-0 rounded-[28px] ring-1 ring-black/10" /> */}
             </div>
           </div>
 
