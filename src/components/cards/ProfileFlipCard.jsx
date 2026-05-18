@@ -37,7 +37,7 @@ export default function ProfileFlipCard({
               className="relative h-full w-full overflow-hidden rounded-[28px] bg-white shadow-[0_18px_50px_rgba(0,0,0,0.25)]
               "
             >
-              {/* Top: logo note : relative z-20 flex items-center justify-center pt-8 */}
+              {/* Top: logo  note : relative z-20 flex items-center justify-center pt-8 */}
               <div className="absolute inset-0 z-20 flex items-center justify-center">
                 <div className="relative h-24 w-[250px]">
                   <Image
