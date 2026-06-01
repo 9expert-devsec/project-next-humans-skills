@@ -145,7 +145,7 @@ export default async function Page({ params }) {
       <section id="banner" className="mx-auto mt-24 max-w-7xl">
         <div className="relative overflow-hidden rounded-3xl">
           <Image
-            src="/banner-landingpage-thenexthumansskills4.png"
+            src="/banner-landingpage-thenexthumansskills5.png"
             alt="The Next Humans Skills"
             width={1600}
             height={600}
