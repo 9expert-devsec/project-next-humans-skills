@@ -282,7 +282,7 @@ export default async function Page({ params }) {
           และเติบโตอย่างยั่งยืนในยุค Digital
         </div>
       </section>
-{/* 
+
       <section id="upcoming-classes" className="section">
         <h2 className="text-center text-white text-4xl font-semibold">
           {isEN ? "Upcoming Classes" : "คลาสที่กำลังจะมาถึง"}
@@ -292,7 +292,7 @@ export default async function Page({ params }) {
         <div className="panel mt-8">
           <UpcomingClassesClient locale={locale} limit={4} />
         </div>
-      </section> */}
+      </section>
 
       <section id="courses" className="section">
         <h2 className="text-center text-white text-4xl font-semibold">
