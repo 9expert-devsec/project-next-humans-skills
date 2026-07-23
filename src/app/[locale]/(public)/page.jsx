@@ -1,6 +1,8 @@
 // src/app/[locale]/(public)/page.jsx
 import Image from "next/image";
 
+import { SITE_URL, DEFAULT_OG_IMAGE } from "@/lib/seo";
+
 import CourseGridClient from "@/components/ui/CourseGridClient";
 import ProfileFlipCard from "@/components/cards/ProfileFlipCard";
 import AudiencePill from "@/components/cards/AudiencePill";
@@ -16,7 +18,7 @@ export const dynamic = "force-dynamic";
 
 /* ---------------- SEO: Home Metadata ---------------- */
 export async function generateMetadata({ params }) {
-  const p = params;
+  const p = await params;
   const locale = p?.locale === "en" ? "en" : "th";
   const isEN = locale === "en";
 
@@ -28,13 +30,13 @@ export async function generateMetadata({ params }) {
     ? "A modern training-registration platform by 9Expert Training, Key Solutions Training, and Bitkub Academy. Explore leadership, AI, data, and digital skills programs."
     : "แพลตฟอร์มลงทะเบียนอบรมยุคใหม่ โดย 9Expert Training, Key Solutions Training และ Bitkub Academy รวมหลักสูตรผู้นำ AI Data และทักษะดิจิทัล";
 
-  const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL || "https://www.thenexthumansskills.com";
+  const baseUrl = SITE_URL;
   const url = `${baseUrl}/${locale}`;
 
-  // แนะนำทำไฟล์ OG แยก 1200x630 ที่ public/og/home-og.png
-  // ถ้ายังไม่มี ใช้ banner ที่มีอยู่ก็ได้
-  const ogImage = `${baseUrl}/og/home-og.png`;
+  // OG image: 1200x630 JPEG generated from the approved banner (npm run og).
+  // URL + dimensions + type live in the shared SEO config so home & course
+  // pages stay in sync. See src/lib/seo.js.
+  const ogImage = DEFAULT_OG_IMAGE.url;
 
   return {
     metadataBase: new URL(baseUrl),
@@ -62,7 +64,15 @@ export async function generateMetadata({ params }) {
       siteName: "The Next Humans Skills",
       locale: isEN ? "en_US" : "th_TH",
       type: "website",
-      images: [{ url: ogImage, width: 1200, height: 630, alt: title }],
+      images: [
+        {
+          url: ogImage,
+          width: DEFAULT_OG_IMAGE.width,
+          height: DEFAULT_OG_IMAGE.height,
+          type: DEFAULT_OG_IMAGE.type,
+          alt: title,
+        },
+      ],
     },
 
     twitter: {

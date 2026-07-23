@@ -5,6 +5,18 @@ import dbConnect from "@/lib/dbConnect";
 import Course from "@/models/Course";
 import CourseDetailActions from "@/components/ui/CourseDetailActions";
 import ScrollToTopOnMount from "@/components/ScrollToTopOnMount";
+import { SITE_URL, DEFAULT_OG_IMAGE } from "@/lib/seo";
+
+// Infer OG image mime type from a file extension. Returns undefined when the
+// extension is unknown so we never declare a wrong `type`.
+function ogTypeFromUrl(url) {
+  const clean = String(url || "").split("?")[0].toLowerCase();
+  if (clean.endsWith(".jpg") || clean.endsWith(".jpeg")) return "image/jpeg";
+  if (clean.endsWith(".png")) return "image/png";
+  if (clean.endsWith(".webp")) return "image/webp";
+  if (clean.endsWith(".gif")) return "image/gif";
+  return undefined;
+}
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -125,8 +137,7 @@ export async function generateMetadata({ params }) {
   const locale = p?.locale === "en" ? "en" : "th";
   const slug = decodeURIComponent(String(p?.slug || "")).trim();
 
-  const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL || "https://thenexthumansskills.com";
+  const baseUrl = SITE_URL;
 
   if (!slug) {
     return {
@@ -161,7 +172,27 @@ export async function generateMetadata({ params }) {
     "หลักสูตรอบรมเพื่อพัฒนาทักษะบุคลากรยุคใหม่";
 
   const url = `${baseUrl}/${locale}/courses/${slug}`;
-  const image = course.cover_image || `${baseUrl}/og/course-default.png`;
+
+  // A course cover image can be any size, so we must NOT fabricate width/height
+  // for it (that would emit a mismatched dimension declaration). We only declare
+  // `type` when it can be inferred from the extension. Courses with no cover fall
+  // back to the shared DEFAULT_OG_IMAGE, whose dimensions are known-correct.
+  let ogImages;
+  let twitterImage;
+  if (course.cover_image) {
+    const coverType = ogTypeFromUrl(course.cover_image);
+    ogImages = [
+      {
+        url: course.cover_image,
+        ...(coverType ? { type: coverType } : {}),
+        alt: title,
+      },
+    ];
+    twitterImage = course.cover_image;
+  } else {
+    ogImages = [{ ...DEFAULT_OG_IMAGE, alt: title }];
+    twitterImage = DEFAULT_OG_IMAGE.url;
+  }
 
   return {
     title: `${title} | The Next Humans Skills`,
@@ -181,13 +212,13 @@ export async function generateMetadata({ params }) {
       siteName: "The Next Humans Skills",
       locale: locale === "en" ? "en_US" : "th_TH",
       type: "article",
-      images: [{ url: image, width: 1200, height: 630, alt: title }],
+      images: ogImages,
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: [image],
+      images: [twitterImage],
     },
   };
 }
